@@ -40,7 +40,43 @@ export default function RecordPage() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const processRecording = useCallback(async (blob: Blob) => {
+    setState('processing');
+
+    try {
+      const formData = new FormData();
+      formData.append('audio', blob, 'recording.webm');
+      formData.append('projectId', id);
+
+      const transcribeRes = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!transcribeRes.ok) throw new Error('Transcription failed');
+      const { transcript: rawTranscript, sessionId: newSessionId } = await transcribeRes.json();
+      setTranscript(rawTranscript);
+      setSessionId(newSessionId);
+
+      setState('analyzing');
+      const analyzeRes = await fetch(`/api/projects/${id}/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: newSessionId, transcript: rawTranscript }),
+      });
+
+      if (analyzeRes.ok) {
+        const analysisData = await analyzeRes.json();
+        setAnalysis(analysisData);
+      }
+
+      setState('done');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Processing failed');
+      setState('idle');
+    }
+  }, [id]);
+
   const startRecording = useCallback(async () => {
     setError(null);
     setLiveTranscript('');
@@ -92,7 +128,7 @@ export default function RecordPage() {
       setError('Could not access microphone. Please allow microphone access.');
       console.error(err);
     }
-  }, []);
+  }, [processRecording]);
 
   const stopRecording = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -104,43 +140,6 @@ export default function RecordPage() {
       mediaRecorderRef.current.stop();
     }
   }, []);
-
-  const processRecording = async (blob: Blob) => {
-    setState('processing');
-
-    try {
-      const formData = new FormData();
-      formData.append('audio', blob, 'recording.webm');
-      formData.append('projectId', id);
-
-      const transcribeRes = await fetch('/api/transcribe', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!transcribeRes.ok) throw new Error('Transcription failed');
-      const { transcript: rawTranscript, sessionId: newSessionId } = await transcribeRes.json();
-      setTranscript(rawTranscript);
-      setSessionId(newSessionId);
-
-      setState('analyzing');
-      const analyzeRes = await fetch(`/api/projects/${id}/analyze`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: newSessionId, transcript: rawTranscript }),
-      });
-
-      if (analyzeRes.ok) {
-        const analysisData = await analyzeRes.json();
-        setAnalysis(analysisData);
-      }
-
-      setState('done');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Processing failed');
-      setState('idle');
-    }
-  };
 
   const formatDuration = (seconds: number) => {
     const m = Math.floor(seconds / 60);

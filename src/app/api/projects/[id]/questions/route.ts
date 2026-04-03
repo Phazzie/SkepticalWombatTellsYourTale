@@ -12,10 +12,7 @@ export async function GET(
   });
 
   const questions: Array<{ text: string; sessionRef: string; createdAt: string }> = [];
-  for (const session of sessions) {
-    const annotations = JSON.parse(session.aiAnnotations || '[]');
-    void annotations;
-  }
+  void sessions;
 
   return NextResponse.json(questions);
 }
