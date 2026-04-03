@@ -4,15 +4,15 @@ import { useState, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 
-interface ISpeechRecognitionResults {
+interface SpeechRecognitionResults {
   [key: number]: { [key: number]: { transcript: string } };
   length: number;
 }
 
-interface ISpeechRecognition {
+interface BrowserSpeechRecognition {
   continuous: boolean;
   interimResults: boolean;
-  onresult: ((event: { results: ISpeechRecognitionResults }) => void) | null;
+  onresult: ((event: { results: SpeechRecognitionResults }) => void) | null;
   start(): void;
   stop(): void;
 }
@@ -42,7 +42,7 @@ export default function RecordPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const recognitionRef = useRef<ISpeechRecognition | null>(null);
+  const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
 
   const processRecording = useCallback(async (blob: Blob) => {
     setState('processing');
@@ -111,13 +111,13 @@ export default function RecordPage() {
 
       if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognitionAPI = (
-          (window as unknown as Record<string, new () => ISpeechRecognition>).SpeechRecognition ||
-          (window as unknown as Record<string, new () => ISpeechRecognition>).webkitSpeechRecognition
+          (window as unknown as Record<string, new () => BrowserSpeechRecognition>).SpeechRecognition ||
+          (window as unknown as Record<string, new () => BrowserSpeechRecognition>).webkitSpeechRecognition
         );
         const recognition = new SpeechRecognitionAPI();
         recognition.continuous = true;
         recognition.interimResults = true;
-        recognition.onresult = (event: { results: ISpeechRecognitionResults }) => {
+        recognition.onresult = (event: { results: SpeechRecognitionResults }) => {
           let text = '';
           for (let i = 0; i < event.results.length; i++) {
             text += event.results[i][0].transcript;

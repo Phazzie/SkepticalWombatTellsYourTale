@@ -3,7 +3,8 @@ import { prisma } from '@/lib/db';
 import { openai } from '@/lib/openai';
 
 export async function GET() {
-  // Questions are generated on demand via POST; no persistent store
+  // Questions are generated on demand via POST and not persisted.
+  // The UI calls POST to generate fresh AI questions each time.
   return NextResponse.json([]);
 }
 
