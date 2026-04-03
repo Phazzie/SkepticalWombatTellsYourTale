@@ -4,10 +4,15 @@ import { useState, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 
+interface ISpeechRecognitionResults {
+  [key: number]: { [key: number]: { transcript: string } };
+  length: number;
+}
+
 interface ISpeechRecognition {
   continuous: boolean;
   interimResults: boolean;
-  onresult: ((event: { results: { [key: number]: { [key: number]: { transcript: string } } } }) => void) | null;
+  onresult: ((event: { results: ISpeechRecognitionResults }) => void) | null;
   start(): void;
   stop(): void;
 }
@@ -112,9 +117,9 @@ export default function RecordPage() {
         const recognition = new SpeechRecognitionAPI();
         recognition.continuous = true;
         recognition.interimResults = true;
-        recognition.onresult = (event: { results: { [key: number]: { [key: number]: { transcript: string } } } }) => {
+        recognition.onresult = (event: { results: ISpeechRecognitionResults }) => {
           let text = '';
-          for (let i = 0; i < (event.results as unknown as unknown[]).length; i++) {
+          for (let i = 0; i < event.results.length; i++) {
             text += event.results[i][0].transcript;
           }
           setLiveTranscript(text);
