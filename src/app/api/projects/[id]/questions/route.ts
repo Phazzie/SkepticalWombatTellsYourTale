@@ -2,19 +2,9 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { openai } from '@/lib/openai';
 
-export async function GET(
-  _request: Request,
-  { params }: { params: { id: string } }
-) {
-  const sessions = await prisma.session.findMany({
-    where: { projectId: params.id },
-    orderBy: { createdAt: 'desc' },
-  });
-
-  const questions: Array<{ text: string; sessionRef: string; createdAt: string }> = [];
-  void sessions;
-
-  return NextResponse.json(questions);
+export async function GET() {
+  // Questions are generated on demand via POST; no persistent store
+  return NextResponse.json([]);
 }
 
 export async function POST(
