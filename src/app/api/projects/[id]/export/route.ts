@@ -3,12 +3,13 @@ import { prisma } from '@/lib/db';
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const { level, includeTranscripts, includeAnnotations, includeGaps } = await request.json();
 
   const project = await prisma.project.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       documents: true,
       sessions: { orderBy: { createdAt: 'asc' } },

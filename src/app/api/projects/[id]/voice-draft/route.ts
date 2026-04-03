@@ -4,13 +4,14 @@ import { generateVoicePreservedDraft } from '@/lib/openai';
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const { documentId, prompt } = await request.json();
 
   const [sessions, document] = await Promise.all([
     prisma.session.findMany({
-      where: { projectId: params.id },
+      where: { projectId: id },
       orderBy: { createdAt: 'desc' },
       take: 10,
     }),

@@ -10,10 +10,11 @@ export async function GET() {
 
 export async function POST(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const project = await prisma.project.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       documents: true,
       sessions: { orderBy: { createdAt: 'desc' }, take: 5 },

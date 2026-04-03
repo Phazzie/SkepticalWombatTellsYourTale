@@ -4,12 +4,13 @@ import { analyzeTranscript } from '@/lib/openai';
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const { sessionId, transcript } = await request.json();
 
   const project = await prisma.project.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       documents: true,
       sessions: {
@@ -39,7 +40,7 @@ export async function POST(
     if (analysis.tangents && analysis.tangents.length > 0) {
       await prisma.tangent.createMany({
         data: analysis.tangents.map((t) => ({
-          projectId: params.id,
+          projectId: id,
           sessionId,
           thread: t.thread,
           context: t.context || '',
@@ -51,7 +52,7 @@ export async function POST(
     if (analysis.patterns && analysis.patterns.length > 0) {
       await prisma.pattern.createMany({
         data: analysis.patterns.map((p) => ({
-          projectId: params.id,
+          projectId: id,
           description: p.description,
           sessionRefs: JSON.stringify(p.sessionRefs),
           acknowledged: false,
@@ -62,7 +63,7 @@ export async function POST(
     if (analysis.gaps && analysis.gaps.length > 0) {
       await prisma.gap.createMany({
         data: analysis.gaps.map((g) => ({
-          projectId: params.id,
+          projectId: id,
           description: g.description,
           documentRef: g.documentRef || null,
           resolved: false,

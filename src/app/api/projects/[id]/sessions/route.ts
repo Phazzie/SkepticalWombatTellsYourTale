@@ -3,10 +3,11 @@ import { prisma } from '@/lib/db';
 
 export async function GET(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const sessions = await prisma.session.findMany({
-    where: { projectId: params.id },
+    where: { projectId: id },
     orderBy: { createdAt: 'desc' },
     include: { tangents: true },
   });
@@ -15,12 +16,13 @@ export async function GET(
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const data = await request.json();
   const session = await prisma.session.create({
     data: {
-      projectId: params.id,
+      projectId: id,
       transcript: data.transcript || '',
       aiAnnotations: JSON.stringify(data.aiAnnotations || []),
     },

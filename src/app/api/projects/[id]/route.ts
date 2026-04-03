@@ -3,13 +3,14 @@ import { prisma } from '@/lib/db';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const url = new URL(request.url);
   const includeAll = url.searchParams.get('include') === 'all';
 
   const project = await prisma.project.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: includeAll
       ? {
           documents: true,
@@ -27,11 +28,12 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const data = await request.json();
   const project = await prisma.project.update({
-    where: { id: params.id },
+    where: { id },
     data,
   });
   return NextResponse.json(project);
@@ -39,8 +41,9 @@ export async function PATCH(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  await prisma.project.delete({ where: { id: params.id } });
+  const { id } = await params;
+  await prisma.project.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }
