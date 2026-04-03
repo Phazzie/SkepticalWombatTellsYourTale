@@ -30,7 +30,6 @@ export default function RecordPage() {
   const [state, setState] = useState<RecordingState>('idle');
   const [transcript, setTranscript] = useState('');
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
-  const [, setSessionId] = useState<string | null>(null);
   const [duration, setDuration] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [liveTranscript, setLiveTranscript] = useState('');
@@ -56,7 +55,6 @@ export default function RecordPage() {
       if (!transcribeRes.ok) throw new Error('Transcription failed');
       const { transcript: rawTranscript, sessionId: newSessionId } = await transcribeRes.json();
       setTranscript(rawTranscript);
-      setSessionId(newSessionId);
 
       setState('analyzing');
       const analyzeRes = await fetch(`/api/projects/${id}/analyze`, {
@@ -311,7 +309,6 @@ export default function RecordPage() {
                   setState('idle');
                   setTranscript('');
                   setAnalysis(null);
-                  setSessionId(null);
                   setDuration(0);
                   setLiveTranscript('');
                 }}
