@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { generateVoicePreservedDraft, detectVoiceDrift } from '@/lib/openai';
 
+function getErrorMeta(error: unknown): { status?: unknown; code?: unknown } | null {
+  if (!error || typeof error !== 'object') {
+    return null;
+  }
+  const candidate = error as { status?: unknown; code?: unknown };
+  return { status: candidate.status, code: candidate.code };
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -33,10 +41,8 @@ export async function POST(
     return NextResponse.json({ draft, drift });
   } catch (error) {
     console.error('Voice draft error:', error);
-    const isErrorObject = typeof error === 'object' && error !== null;
-    const errorStatus = isErrorObject ? (error as { status?: unknown }).status : undefined;
-    const errorCode = isErrorObject ? (error as { code?: unknown }).code : undefined;
-    const isMissingOpenAiKey = errorStatus === 401 || errorCode === 'invalid_api_key';
+    const errorMeta = getErrorMeta(error);
+    const isMissingOpenAiKey = errorMeta?.status === 401 || errorMeta?.code === 'invalid_api_key';
 
     if (isMissingOpenAiKey) {
       return NextResponse.json(
