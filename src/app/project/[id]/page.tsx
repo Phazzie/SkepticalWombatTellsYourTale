@@ -244,7 +244,7 @@ export default function ProjectPage() {
         {actionError && (
           <div
             role="alert"
-            aria-live="polite"
+            aria-live="assertive"
             className="mb-6 rounded-xl border border-red-700 bg-red-900/20 p-4 text-sm text-red-300"
           >
             {actionError}
