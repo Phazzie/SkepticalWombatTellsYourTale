@@ -13,6 +13,7 @@ export default function ExportPage() {
   const [includeAnnotations, setIncludeAnnotations] = useState(true);
   const [includeGaps, setIncludeGaps] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const exportLevels: Array<{ value: ExportLevel; label: string; description: string }> = [
     { value: 'raw', label: 'Raw Transcripts', description: 'Just the transcripts. Exactly as spoken. Nothing cleaned.' },
@@ -23,6 +24,7 @@ export default function ExportPage() {
 
   const handleExport = async () => {
     setExporting(true);
+    setError(null);
     const res = await fetch(`/api/projects/${id}/export`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -42,6 +44,9 @@ export default function ExportPage() {
       a.download = `export-${exportLevel}-${new Date().toISOString().split('T')[0]}.md`;
       a.click();
       URL.revokeObjectURL(url);
+    } else {
+      const body = await res.json().catch(() => null);
+      setError(typeof body?.error === 'string' ? body.error : 'Export failed.');
     }
 
     setExporting(false);
@@ -107,6 +112,7 @@ export default function ExportPage() {
         >
           {exporting ? 'Exporting...' : `Export as Markdown`}
         </button>
+        {error && <p className="text-red-400 text-sm mt-3 text-center">{error}</p>}
       </div>
     </div>
   );

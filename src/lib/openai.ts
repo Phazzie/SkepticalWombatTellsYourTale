@@ -115,7 +115,25 @@ Return a JSON object with this exact structure:
   });
 
   const content = response.choices[0].message.content || '{}';
-  return normalizeAnalysisFromContent(content);
+  const normalized = normalizeAnalysisFromContent(content);
+  const hasAnalysisSignal =
+    normalized.tangents.length > 0 ||
+    normalized.patterns.length > 0 ||
+    normalized.gaps.length > 0 ||
+    normalized.contradictions.length > 0 ||
+    normalized.questions.length > 0 ||
+    normalized.annotations.length > 0 ||
+    !!normalized.significance ||
+    !!normalized.voicePreservedDraft ||
+    !!normalized.documentSuggestion;
+
+  if (!hasAnalysisSignal && content.trim() !== '{}' && content.trim().length > 0) {
+    console.warn('OpenAI analysis response normalized to empty result.', {
+      sample: content.slice(0, 300),
+    });
+  }
+
+  return normalized;
 }
 
 export async function generateVoicePreservedDraft(

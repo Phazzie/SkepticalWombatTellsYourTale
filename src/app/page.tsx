@@ -7,6 +7,7 @@ import { Project } from '@/lib/types';
 export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
@@ -14,12 +15,24 @@ export default function HomePage() {
 
   useEffect(() => {
     fetch('/api/projects')
-      .then((r) => r.json())
+      .then(async (r) => {
+        if (!r.ok) {
+          const body = await r.json().catch(() => null);
+          throw new Error(
+            typeof body?.error === 'string' ? body.error : 'Failed to load projects.'
+          );
+        }
+        return r.json();
+      })
       .then((data) => {
         setProjects(data);
+        setError(null);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : 'Failed to load projects.');
+        setLoading(false);
+      });
   }, []);
 
   const createProject = async () => {
@@ -30,8 +43,14 @@ export default function HomePage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newName, description: newDesc }),
     });
-    const project = await res.json();
-    setProjects((prev) => [project, ...prev]);
+    const body = await res.json().catch(() => null);
+    if (!res.ok) {
+      setError(typeof body?.error === 'string' ? body.error : 'Failed to create project.');
+      setCreating(false);
+      return;
+    }
+    setProjects((prev) => [body, ...prev]);
+    setError(null);
     setNewName('');
     setNewDesc('');
     setShowNew(false);
@@ -95,6 +114,8 @@ export default function HomePage() {
 
         {loading ? (
           <div className="text-gray-500 text-center py-12">Loading projects...</div>
+        ) : error ? (
+          <div className="text-center py-12 text-red-400">{error}</div>
         ) : projects.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
             <div className="text-6xl mb-4">🎙️</div>

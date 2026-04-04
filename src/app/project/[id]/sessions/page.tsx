@@ -9,16 +9,29 @@ export default function SessionsPage() {
   const { id } = useParams<{ id: string }>();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/projects/${id}/sessions`)
-      .then((r) => r.json())
+      .then(async (r) => {
+        if (!r.ok) {
+          const body = await r.json().catch(() => null);
+          throw new Error(
+            typeof body?.error === 'string' ? body.error : 'Failed to load sessions.'
+          );
+        }
+        return r.json();
+      })
       .then((data) => {
         setSessions(data);
+        setError(null);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : 'Failed to load sessions.');
+        setLoading(false);
+      });
   }, [id]);
 
   const annotationColors: Record<string, string> = {
@@ -55,7 +68,9 @@ export default function SessionsPage() {
           <h1 className="text-2xl font-bold">Sessions</h1>
         </div>
 
-        {sessions.length === 0 ? (
+        {error ? (
+          <div className="text-center py-16 text-red-400">{error}</div>
+        ) : sessions.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
             <div className="text-5xl mb-4">📼</div>
             <p>No sessions yet.</p>
