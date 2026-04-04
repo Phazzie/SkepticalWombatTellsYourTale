@@ -16,7 +16,10 @@ export default function SessionsPage() {
   useEffect(() => {
     fetch(`/api/projects/${id}/sessions`)
       .then(async (r) => {
-        if (!r.ok) throw new Error('Failed to load sessions');
+        if (!r.ok) {
+          const data = (await r.json()) as { error?: string };
+          throw new Error(data.error || 'Failed to load sessions');
+        }
         return r.json();
       })
       .then((data) => {

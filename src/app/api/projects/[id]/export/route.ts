@@ -8,7 +8,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
+  return handleRoute(async () => {
     const { userId } = await requireUser();
     const { id } = await params;
     await requireProjectAccess(id, userId);
@@ -94,9 +94,5 @@ export async function POST(
         'Content-Disposition': `attachment; filename="export-${level}-${Date.now()}.md"`,
       },
     });
-  } catch (error) {
-    return handleRoute(async () => {
-      throw error;
-    });
-  }
+  });
 }

@@ -15,6 +15,11 @@ export async function POST(request: Request) {
     const password = assertString(body.password, 'password', { min: 8, max: 200 });
     const name = typeof body.name === 'string' ? body.name.trim() : null;
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw badRequest('email must be a valid email address');
+    }
+
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       throw badRequest('Email is already registered');

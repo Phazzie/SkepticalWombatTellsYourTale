@@ -5,6 +5,8 @@ type Bucket = {
   resetAt: number;
 };
 
+// Note: this in-memory limiter is process-local and resets on restart.
+// Use a shared store (e.g., Redis) for distributed/production deployments.
 const buckets = new Map<string, Bucket>();
 
 export function enforceRateLimit(key: string, limit: number, windowMs: number) {

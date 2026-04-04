@@ -34,20 +34,22 @@ export function SecondaryButton(props: React.ButtonHTMLAttributes<HTMLButtonElem
 }
 
 export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  const { className = '', ...rest } = props;
+  const { className = '', 'aria-label': ariaLabel, ...rest } = props;
   return (
     <input
       {...rest}
+      aria-label={ariaLabel ?? rest.placeholder ?? 'Text input'}
       className={`w-full rounded-xl border border-app-border bg-app-surface-muted px-4 py-2 text-sm text-app-fg placeholder:text-app-fg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent ${className}`}
     />
   );
 }
 
 export function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  const { className = '', ...rest } = props;
+  const { className = '', 'aria-label': ariaLabel, ...rest } = props;
   return (
     <textarea
       {...rest}
+      aria-label={ariaLabel ?? rest.placeholder ?? 'Text area'}
       className={`w-full rounded-xl border border-app-border bg-app-surface-muted px-4 py-2 text-sm text-app-fg placeholder:text-app-fg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent ${className}`}
     />
   );

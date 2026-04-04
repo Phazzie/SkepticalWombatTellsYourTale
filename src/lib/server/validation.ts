@@ -1,5 +1,9 @@
 import { badRequest } from '@/lib/server/errors';
 
+/**
+ * Validates that a value is a string and optionally enforces trimmed length constraints.
+ * Throws AppError(400) when validation fails.
+ */
 export function assertString(value: unknown, field: string, opts?: { min?: number; max?: number }) {
   if (typeof value !== 'string') {
     throw badRequest(`${field} must be a string`);
@@ -17,6 +21,10 @@ export function assertString(value: unknown, field: string, opts?: { min?: numbe
   return trimmed;
 }
 
+/**
+ * Validates that a value is a boolean.
+ * Throws AppError(400) when validation fails.
+ */
 export function assertBoolean(value: unknown, field: string): boolean {
   if (typeof value !== 'boolean') {
     throw badRequest(`${field} must be a boolean`);
@@ -24,6 +32,10 @@ export function assertBoolean(value: unknown, field: string): boolean {
   return value;
 }
 
+/**
+ * Validates an optional string field. Returns null for null/undefined.
+ * Throws AppError(400) when validation fails.
+ */
 export function asOptionalString(value: unknown, field: string, opts?: { max?: number }) {
   if (value === null || value === undefined) {
     return null;
