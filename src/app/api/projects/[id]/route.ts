@@ -26,6 +26,9 @@ export async function GET(
         tangents: { orderBy: { createdAt: 'desc' } },
         patterns: { orderBy: { createdAt: 'desc' } },
         gaps: { orderBy: { createdAt: 'desc' } },
+        questions: { orderBy: { createdAt: 'desc' } },
+        concepts: { orderBy: { createdAt: 'desc' } },
+        contradictions: { orderBy: { createdAt: 'desc' } },
       },
     });
     if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 });

@@ -13,6 +13,12 @@ export async function POST(
     where: { id },
     include: {
       documents: true,
+      concepts: true,
+      contradictions: {
+        where: { status: 'open' },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      },
       sessions: {
         orderBy: { createdAt: 'desc' },
         take: 10,
@@ -23,6 +29,12 @@ export async function POST(
   if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   const projectContext = `Project: "${project.name}"\n${project.description || ''}`;
+  const conceptContext = project.concepts
+    .map((c) => `${c.name}: ${c.definition} [${c.status}]`)
+    .join('\n');
+  const contradictionContext = project.contradictions
+    .map((c) => `${c.description}\nExisting: ${c.existing}\nNew: ${c.new}`)
+    .join('\n\n');
   const sessionHistory = project.sessions
     .filter((s) => s.id !== sessionId)
     .map((s) => `Session ${s.id.slice(0, 8)} (${s.createdAt.toISOString().split('T')[0]}): ${s.transcript.slice(0, 300)}`)
@@ -30,12 +42,12 @@ export async function POST(
 
   try {
     const analysis = await analyzeTranscript(
-      transcript,
-      projectContext,
-      sessionHistory,
-      project.documents.map((d) => ({ id: d.id, name: d.name, content: d.content })),
-      sessionId
-    );
+        transcript,
+        `${projectContext}\n\nCONCEPT LIBRARY:\n${conceptContext || 'None yet'}\n\nOPEN CONTRADICTIONS:\n${contradictionContext || 'None yet'}`,
+        sessionHistory,
+        project.documents.map((d) => ({ id: d.id, name: d.name, content: d.content })),
+        sessionId
+      );
 
     if (analysis.tangents && analysis.tangents.length > 0) {
       await prisma.tangent.createMany({
@@ -67,6 +79,43 @@ export async function POST(
           description: g.description,
           documentRef: g.documentRef || null,
           resolved: false,
+        })),
+      });
+    }
+
+    if (analysis.contradictions && analysis.contradictions.length > 0) {
+      await prisma.contradiction.createMany({
+        data: analysis.contradictions.map((c) => ({
+          projectId: id,
+          description: c.description,
+          existing: c.existing,
+          new: c.new,
+          status: 'open',
+        })),
+      });
+    }
+
+    if (analysis.concepts && analysis.concepts.length > 0) {
+      await prisma.concept.createMany({
+        data: analysis.concepts.map((c) => ({
+          projectId: id,
+          name: c.name,
+          definition: c.definition,
+          sourceSession: c.sourceSession || sessionId,
+          linkedDocument: c.linkedDocument || analysis.documentSuggestion?.documentName || null,
+          status: c.status || 'developing',
+          approved: false,
+        })),
+      });
+    }
+
+    if (analysis.questions && analysis.questions.length > 0) {
+      await prisma.question.createMany({
+        data: analysis.questions.map((q) => ({
+          projectId: id,
+          text: q,
+          sessionRef: sessionId,
+          status: 'pending',
         })),
       });
     }

@@ -5,8 +5,10 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 
 interface Question {
+  id: string;
   text: string;
   sessionRef?: string;
+  status: 'pending' | 'answered' | 'dismissed';
   createdAt: string;
 }
 
@@ -15,23 +17,39 @@ export default function QuestionsPage() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'answered' | 'dismissed'>('pending');
 
   useEffect(() => {
-    fetch(`/api/projects/${id}/questions`)
+    fetch(`/api/projects/${id}/questions?status=${activeFilter === 'all' ? '' : activeFilter}`)
       .then((r) => r.json())
       .then((data) => {
         setQuestions(data);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [id]);
+  }, [id, activeFilter]);
 
   const generateQuestions = async () => {
     setGenerating(true);
-    const res = await fetch(`/api/projects/${id}/questions`, { method: 'POST' });
+    const res = await fetch(`/api/projects/${id}/questions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'generate' }),
+    });
     const data = await res.json();
     setQuestions((prev) => [...data, ...prev]);
     setGenerating(false);
+  };
+
+  const setQuestionStatus = async (questionId: string, status: 'pending' | 'answered' | 'dismissed') => {
+    const res = await fetch(`/api/projects/${id}/questions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'update', questionId, status }),
+    });
+    if (!res.ok) return;
+    const updated = await res.json();
+    setQuestions((prev) => prev.map((q) => (q.id === updated.id ? updated : q)));
   };
 
   if (loading) {
@@ -64,6 +82,21 @@ export default function QuestionsPage() {
             These are specific questions based on what you&apos;ve said — not generic prompts. Answer any of them
             by recording a new voice session.
           </p>
+          <div className="flex gap-2 mt-3">
+            {(['all', 'pending', 'answered', 'dismissed'] as const).map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className={`text-xs px-3 py-1 rounded-full border ${
+                  activeFilter === filter
+                    ? 'bg-indigo-600 border-indigo-500 text-white'
+                    : 'bg-gray-800 border-gray-700 text-gray-300'
+                }`}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
         </div>
 
         {questions.length === 0 ? (
@@ -81,16 +114,35 @@ export default function QuestionsPage() {
                 <span className="text-gray-600 text-sm mt-0.5 font-mono w-6">{i + 1}.</span>
                 <div className="flex-1">
                   <p className="text-gray-200">{q.text}</p>
+                  <p className="text-xs text-gray-500 mt-1">Status: {q.status}</p>
                   {q.sessionRef && (
                     <p className="text-xs text-gray-600 mt-1">From session {q.sessionRef.slice(0, 8)}...</p>
                   )}
                 </div>
-                <Link
-                  href={`/project/${id}/record`}
-                  className="text-xs text-indigo-400 hover:text-indigo-300 shrink-0"
-                >
-                  Answer →
-                </Link>
+                <div className="flex flex-col items-end gap-2">
+                  <Link
+                    href={`/project/${id}/record?questionId=${q.id}`}
+                    className="text-xs text-indigo-400 hover:text-indigo-300 shrink-0"
+                  >
+                    Answer →
+                  </Link>
+                  {q.status !== 'dismissed' && (
+                    <button
+                      onClick={() => setQuestionStatus(q.id, 'dismissed')}
+                      className="text-[11px] text-gray-500 hover:text-gray-300"
+                    >
+                      Dismiss
+                    </button>
+                  )}
+                  {q.status !== 'pending' && (
+                    <button
+                      onClick={() => setQuestionStatus(q.id, 'pending')}
+                      className="text-[11px] text-gray-500 hover:text-gray-300"
+                    >
+                      Re-open
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

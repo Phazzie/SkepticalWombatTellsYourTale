@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { generateVoicePreservedDraft } from '@/lib/openai';
+import { generateVoicePreservedDraft, detectVoiceDrift } from '@/lib/openai';
 
 export async function POST(
   request: Request,
@@ -29,9 +29,10 @@ export async function POST(
 
   try {
     const draft = await generateVoicePreservedDraft(prompt, transcripts, docContext);
-    return NextResponse.json({ draft });
+    const drift = await detectVoiceDrift(draft, transcripts);
+    return NextResponse.json({ draft, drift });
   } catch (error) {
     console.error('Voice draft error:', error);
-    return NextResponse.json({ draft: 'Voice draft generation requires OpenAI API key.' });
+    return NextResponse.json({ draft: 'Voice draft generation requires OpenAI API key.', drift: null });
   }
 }

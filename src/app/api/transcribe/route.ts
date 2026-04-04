@@ -6,6 +6,7 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const audioFile = formData.get('audio');
   const projectId = formData.get('projectId');
+  const questionId = formData.get('questionId');
 
   if (!(audioFile instanceof File) || typeof projectId !== 'string' || !projectId) {
     return NextResponse.json({ error: 'Missing or invalid audio or projectId' }, { status: 400 });
@@ -24,10 +25,18 @@ export async function POST(request: Request) {
   const session = await prisma.session.create({
     data: {
       projectId,
+      questionId: typeof questionId === 'string' && questionId ? questionId : null,
       transcript,
       aiAnnotations: '[]',
     },
   });
+
+  if (typeof questionId === 'string' && questionId) {
+    await prisma.question.updateMany({
+      where: { id: questionId, projectId },
+      data: { status: 'answered' },
+    });
+  }
 
   return NextResponse.json({ transcript, sessionId: session.id });
 }

@@ -17,6 +17,7 @@ export default function DocumentsPage() {
   const [saving, setSaving] = useState(false);
   const [voicePrompt, setVoicePrompt] = useState('');
   const [generatingDraft, setGeneratingDraft] = useState(false);
+  const [driftFeedback, setDriftFeedback] = useState<{ hasDrift: boolean; details: string; rewriteSuggestion?: string } | null>(null);
 
   useEffect(() => {
     fetch(`/api/projects/${id}/documents`)
@@ -58,17 +59,19 @@ export default function DocumentsPage() {
   const generateDraft = async (docId: string) => {
     if (!voicePrompt.trim()) return;
     setGeneratingDraft(true);
+    setDriftFeedback(null);
     const res = await fetch(`/api/projects/${id}/voice-draft`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ documentId: docId, prompt: voicePrompt }),
     });
-    const { draft } = await res.json();
+    const { draft, drift } = await res.json();
     const doc = documents.find((d) => d.id === docId);
     if (doc) {
       const newContent = doc.content ? `${doc.content}\n\n---\n\n${draft}` : draft;
       setEditContent(newContent);
     }
+    if (drift) setDriftFeedback(drift);
     setVoicePrompt('');
     setGeneratingDraft(false);
   };
@@ -180,6 +183,21 @@ export default function DocumentsPage() {
                       >
                         {generatingDraft ? 'Writing in your voice...' : 'Generate Draft'}
                       </button>
+                      {driftFeedback && (
+                        <div
+                          className={`mt-3 border rounded p-3 text-xs ${
+                            driftFeedback.hasDrift
+                              ? 'border-amber-700 bg-amber-900/20 text-amber-300'
+                              : 'border-green-700 bg-green-900/20 text-green-300'
+                          }`}
+                        >
+                          <p>{driftFeedback.hasDrift ? 'Voice drift detected.' : 'Voice match looks strong.'}</p>
+                          {driftFeedback.details && <p className="mt-1 text-gray-300">{driftFeedback.details}</p>}
+                          {driftFeedback.rewriteSuggestion && (
+                            <p className="mt-1 text-gray-400">Suggestion: {driftFeedback.rewriteSuggestion}</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="flex gap-3 mt-3">
                       <button

@@ -17,7 +17,7 @@ export async function GET(
   const sessions = await prisma.session.findMany({
     where: { projectId: id },
     orderBy: { createdAt: 'desc' },
-    include: { tangents: true },
+    include: { tangents: true, promptedBy: true },
   });
   const parsed = sessions.map((s) => ({
     ...s,

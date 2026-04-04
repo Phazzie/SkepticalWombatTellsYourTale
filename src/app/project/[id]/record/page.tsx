@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 interface SpeechRecognitionResults {
@@ -48,6 +48,8 @@ const annotationIcons: Record<string, string> = {
 
 export default function RecordPage() {
   const { id } = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
+  const questionId = searchParams.get('questionId');
   const [state, setState] = useState<RecordingState>('idle');
   const [transcript, setTranscript] = useState('');
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
@@ -67,6 +69,7 @@ export default function RecordPage() {
       const formData = new FormData();
       formData.append('audio', blob, 'recording.webm');
       formData.append('projectId', id);
+      if (questionId) formData.append('questionId', questionId);
 
       const transcribeRes = await fetch('/api/transcribe', {
         method: 'POST',
@@ -94,7 +97,7 @@ export default function RecordPage() {
       setError(err instanceof Error ? err.message : 'Processing failed');
       setState('idle');
     }
-  }, [id]);
+  }, [id, questionId]);
 
   const startRecording = useCallback(async () => {
     setError(null);
@@ -179,6 +182,14 @@ export default function RecordPage() {
         {error && (
           <div className="bg-red-900/50 border border-red-700 rounded-xl p-4 mb-6 text-red-300">
             {error}
+          </div>
+        )}
+
+        {questionId && (
+          <div className="bg-indigo-900/30 border border-indigo-700 rounded-xl p-4 mb-6">
+            <p className="text-indigo-300 text-sm">
+              Prompted response mode: this recording will be linked to question {questionId.slice(0, 8)}...
+            </p>
           </div>
         )}
 
