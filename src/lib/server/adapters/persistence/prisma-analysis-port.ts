@@ -5,6 +5,15 @@ import { aiWorkflowsRepository } from '@/lib/server/repositories/ai-workflows';
 
 export const prismaAnalysisPort: AnalysisPersistencePort = {
   async getProjectAnalysisContext(projectId: string, sessionId: string) {
+    const session = await prisma.voiceSession.findFirst({
+      where: { id: sessionId, projectId },
+      select: { id: true },
+    });
+
+    if (!session) {
+      return null;
+    }
+
     const project = await prisma.project.findUnique({
       where: { id: projectId },
       include: {

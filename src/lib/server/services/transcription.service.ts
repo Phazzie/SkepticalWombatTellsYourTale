@@ -19,7 +19,7 @@ export async function transcribeAndCreateSession(
     transcript = await ai.transcribeAudio(input.audioBuffer, input.filename);
   } catch (error) {
     log('error', 'Transcription failed, storing fallback transcript', { error: String(error) });
-    transcript = '[Transcription requires OpenAI API key — raw audio saved]';
+    transcript = '[Transcription unavailable — configure OpenAI API key]';
   }
 
   const session = await aiWorkflowsRepository.createTranscribedSession(

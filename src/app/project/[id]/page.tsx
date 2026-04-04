@@ -25,7 +25,7 @@ export default function ProjectPage() {
   }, [id]);
 
   const resolveTangent = async (tangentId: string) => {
-    const previous = project;
+    const previousStatus = project?.tangents?.find((t) => t.id === tangentId)?.status;
     setActionError(null);
     setProject((prev) =>
       prev
@@ -47,13 +47,24 @@ export default function ProjectPage() {
         throw new Error(`Failed to resolve thread (${response.status})`);
       }
     } catch (error) {
-      setProject(previous);
+      if (previousStatus) {
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                tangents: prev.tangents?.map((t) =>
+                  t.id === tangentId ? { ...t, status: previousStatus } : t
+                ),
+              }
+            : prev
+        );
+      }
       setActionError(error instanceof Error ? error.message : 'Failed to resolve thread');
     }
   };
 
   const resolveGap = async (gapId: string) => {
-    const previous = project;
+    const previousResolved = project?.gaps?.find((g) => g.id === gapId)?.resolved;
     setActionError(null);
     setProject((prev) =>
       prev
@@ -75,7 +86,18 @@ export default function ProjectPage() {
         throw new Error(`Failed to resolve gap (${response.status})`);
       }
     } catch (error) {
-      setProject(previous);
+      if (typeof previousResolved === 'boolean') {
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                gaps: prev.gaps?.map((g) =>
+                  g.id === gapId ? { ...g, resolved: previousResolved } : g
+                ),
+              }
+            : prev
+        );
+      }
       setActionError(error instanceof Error ? error.message : 'Failed to resolve gap');
     }
   };
@@ -92,7 +114,9 @@ export default function ProjectPage() {
   const updateConcept = async (conceptId: string, approved: boolean) => {
     const current = project?.concepts?.find((c) => c.id === conceptId);
     const nextStatus = getNextConceptStatus(current?.status, approved);
-    const previous = project;
+    const previousConcept = current
+      ? { approved: current.approved, status: current.status }
+      : null;
     setActionError(null);
     setProject((prev) =>
       prev
@@ -114,13 +138,26 @@ export default function ProjectPage() {
         throw new Error(`Failed to update concept (${response.status})`);
       }
     } catch (error) {
-      setProject(previous);
+      if (previousConcept) {
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                concepts: prev.concepts?.map((c) =>
+                  c.id === conceptId
+                    ? { ...c, approved: previousConcept.approved, status: previousConcept.status }
+                    : c
+                ),
+              }
+            : prev
+        );
+      }
       setActionError(error instanceof Error ? error.message : 'Failed to update concept');
     }
   };
 
   const updateContradiction = async (contradictionId: string, status: 'open' | 'explored' | 'dismissed') => {
-    const previous = project;
+    const previousStatus = project?.contradictions?.find((c) => c.id === contradictionId)?.status;
     setActionError(null);
     setProject((prev) =>
       prev
@@ -142,7 +179,18 @@ export default function ProjectPage() {
         throw new Error(`Failed to update contradiction (${response.status})`);
       }
     } catch (error) {
-      setProject(previous);
+      if (previousStatus) {
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                contradictions: prev.contradictions?.map((c) =>
+                  c.id === contradictionId ? { ...c, status: previousStatus } : c
+                ),
+              }
+            : prev
+        );
+      }
       setActionError(error instanceof Error ? error.message : 'Failed to update contradiction');
     }
   };

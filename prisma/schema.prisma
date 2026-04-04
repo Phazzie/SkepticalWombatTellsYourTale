@@ -8,95 +8,94 @@ datasource db {
 }
 
 model Project {
-  id          String     @id @default(uuid())
-  userId      String?
-  name        String
-  description String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  owner       User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
-  members     ProjectMember[]
-  documents   Document[]
-  sessions    VoiceSession[]
-  tangents    Tangent[]
-  patterns    Pattern[]
-  gaps        Gap[]
-  questions   Question[]
-  concepts    Concept[]
+  id             String          @id @default(uuid())
+  userId         String?
+  name           String
+  description    String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  owner          User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  members        ProjectMember[]
+  documents      Document[]
+  sessions       VoiceSession[]
+  tangents       Tangent[]
+  patterns       Pattern[]
+  gaps           Gap[]
+  questions      Question[]
+  concepts       Concept[]
   contradictions Contradiction[]
 }
 
 model Document {
-  id          String    @id @default(uuid())
-  projectId   String
-  name        String
-  type        String    @default("general")
-  content     String    @default("")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  projectId String
+  name      String
+  type      String   @default("general")
+  content   String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model VoiceSession {
-  id            String      @id @default(uuid())
+  id            String    @id @default(uuid())
   projectId     String
   questionId    String?
   audioUrl      String?
-  transcript    String      @default("")
-  aiAnnotations String      @default("[]")
+  transcript    String    @default("")
+  aiAnnotations String    @default("[]")
   tangents      Tangent[]
-  promptedBy    Question?   @relation(fields: [questionId], references: [id], onDelete: SetNull)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  promptedBy    Question? @relation(fields: [questionId], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("Session")
 }
 
 model Tangent {
-  id          String    @id @default(uuid())
-  projectId   String
-  sessionId   String
-  thread      String
-  context     String    @default("")
-  status      String    @default("pending")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  session     VoiceSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  id        String       @id @default(uuid())
+  projectId String
+  sessionId String
+  thread    String
+  context   String       @default("")
+  status    String       @default("pending")
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  session   VoiceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
 
 model Pattern {
-  id          String    @id @default(uuid())
-  projectId   String
-  description String
-  sessionRefs String    @default("[]")
+  id           String   @id @default(uuid())
+  projectId    String
+  description  String
+  sessionRefs  String   @default("[]")
   acknowledged Boolean  @default(false)
-  createdAt   DateTime  @default(now())
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model Gap {
-  id          String    @id @default(uuid())
+  id          String   @id @default(uuid())
   projectId   String
   description String
   documentRef String?
-  resolved    Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  resolved    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
-
 model Question {
-  id          String        @id @default(uuid())
-  projectId   String
-  text        String
-  sessionRef  String?
-  status      String        @default("pending")
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  responses   VoiceSession[]
+  id         String         @id @default(uuid())
+  projectId  String
+  text       String
+  sessionRef String?
+  status     String         @default("pending")
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  project    Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  responses  VoiceSession[]
 }
 
 model Concept {
