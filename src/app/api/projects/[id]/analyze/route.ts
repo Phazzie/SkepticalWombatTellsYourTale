@@ -3,11 +3,18 @@ import { prisma } from '@/lib/db';
 import { analyzeTranscript } from '@/lib/openai';
 
 const VALID_CONCEPT_STATUSES = ['developing', 'complete', 'contradicted'] as const;
-const VALID_CONCEPT_STATUS_SET = new Set<string>(VALID_CONCEPT_STATUSES);
+type ConceptStatus = (typeof VALID_CONCEPT_STATUSES)[number];
 
-function normalizeConceptStatus(status: unknown): 'developing' | 'complete' | 'contradicted' {
-  if (typeof status === 'string' && VALID_CONCEPT_STATUS_SET.has(status)) {
-    return status as 'developing' | 'complete' | 'contradicted';
+function isConceptStatus(status: unknown): status is ConceptStatus {
+  return (
+    typeof status === 'string' &&
+    VALID_CONCEPT_STATUSES.includes(status as (typeof VALID_CONCEPT_STATUSES)[number])
+  );
+}
+
+function normalizeConceptStatus(status: unknown): ConceptStatus {
+  if (isConceptStatus(status)) {
+    return status;
   }
   return 'developing';
 }

@@ -196,7 +196,8 @@ Return JSON:
   let result: unknown = {};
   try {
     result = JSON.parse(response.choices[0].message.content || '{}');
-  } catch {
+  } catch (error) {
+    console.error('Voice drift JSON parse failed:', error);
     result = {};
   }
 
