@@ -95,7 +95,7 @@ model Question {
 
 model Concept {
   id            String    @id @default(uuid())
-  projectId      String
+  projectId     String
   name           String
   definition     String
   sourceSession  String?

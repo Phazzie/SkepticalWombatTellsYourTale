@@ -2,6 +2,25 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { analyzeTranscript } from '@/lib/openai';
 
+function buildAugmentedProjectContext(input: {
+  projectName: string;
+  projectDescription?: string | null;
+  conceptContext: string;
+  contradictionContext: string;
+}) {
+  const { projectName, projectDescription, conceptContext, contradictionContext } = input;
+  return [
+    `Project: "${projectName}"`,
+    projectDescription || '',
+    '',
+    'CONCEPT LIBRARY:',
+    conceptContext || 'None yet',
+    '',
+    'OPEN CONTRADICTIONS:',
+    contradictionContext || 'None yet',
+  ].join('\n');
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -28,7 +47,6 @@ export async function POST(
 
   if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const projectContext = `Project: "${project.name}"\n${project.description || ''}`;
   const conceptContext = project.concepts
     .map((c) => `${c.name}: ${c.definition} [${c.status}]`)
     .join('\n');
@@ -41,13 +59,20 @@ export async function POST(
     .join('\n\n');
 
   try {
+    const augmentedProjectContext = buildAugmentedProjectContext({
+      projectName: project.name,
+      projectDescription: project.description,
+      conceptContext,
+      contradictionContext,
+    });
+
     const analysis = await analyzeTranscript(
-        transcript,
-        `${projectContext}\n\nCONCEPT LIBRARY:\n${conceptContext || 'None yet'}\n\nOPEN CONTRADICTIONS:\n${contradictionContext || 'None yet'}`,
-        sessionHistory,
-        project.documents.map((d) => ({ id: d.id, name: d.name, content: d.content })),
-        sessionId
-      );
+      transcript,
+      augmentedProjectContext,
+      sessionHistory,
+      project.documents.map((d) => ({ id: d.id, name: d.name, content: d.content })),
+      sessionId
+    );
 
     if (analysis.tangents && analysis.tangents.length > 0) {
       await prisma.tangent.createMany({
