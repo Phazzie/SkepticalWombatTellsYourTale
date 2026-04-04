@@ -27,7 +27,7 @@ export function asRequiredString(value: unknown, field: string): string {
   if (typeof value !== 'string' || value.trim().length === 0) {
     throw new RequestValidationError(`\`${field}\` must be a non-empty string.`);
   }
-  return value;
+  return value.trim();
 }
 
 export function asOptionalString(value: unknown, field: string): string | undefined {
