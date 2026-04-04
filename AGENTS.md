@@ -83,7 +83,8 @@ If dependencies are missing, run `npm ci` first.
 - Keep existing route paths and methods stable (`GET/POST/PATCH/DELETE`) unless explicitly requested.
 - Maintain current response conventions:
   - Success returns entity/array payloads currently consumed by UI.
-  - Errors return `{ error: string }` with explicit HTTP status.
+  - Error payloads are not fully uniform across the repo today; preserve the existing shape each route's callers expect unless the task explicitly includes standardizing that contract.
+  - Preferred standard for new or intentionally migrated endpoints: return `{ error: string }` with an explicit HTTP status.
 - Keep query/body field names backward-compatible; if changed, update all callers in the same PR.
 - For JSON-like Prisma string fields (`aiAnnotations`, `sessionRefs`), keep safe parse/stringify behavior consistent with existing routes.
 - Match current transport patterns:
