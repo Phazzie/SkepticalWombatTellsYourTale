@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { analyzeTranscript } from '@/lib/openai';
 
-const VALID_CONCEPT_STATUSES = new Set(['developing', 'complete', 'contradicted'] as const);
+const VALID_CONCEPT_STATUSES = ['developing', 'complete', 'contradicted'] as const;
+const VALID_CONCEPT_STATUS_SET = new Set<string>(VALID_CONCEPT_STATUSES);
 
 function normalizeConceptStatus(status: unknown): 'developing' | 'complete' | 'contradicted' {
-  if (typeof status === 'string' && VALID_CONCEPT_STATUSES.has(status as never)) {
+  if (typeof status === 'string' && VALID_CONCEPT_STATUS_SET.has(status)) {
     return status as 'developing' | 'complete' | 'contradicted';
   }
   return 'developing';
