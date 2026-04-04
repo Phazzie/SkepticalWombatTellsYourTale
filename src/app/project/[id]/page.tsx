@@ -370,7 +370,7 @@ export default function ProjectPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && searchProject()}
-              aria-label="Search across sessions, documents, concepts, questions, gaps, tangents, and contradictions"
+              aria-label="Search project content"
               placeholder="Search sessions, docs, concepts, questions..."
               className="flex-1 bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-500"
             />

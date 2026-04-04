@@ -87,7 +87,6 @@ export default function QuestionsPage() {
               <button
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
-                aria-label={`Filter questions by ${filter}`}
                 className={`text-xs px-3 py-1 rounded-full border ${
                   activeFilter === filter
                     ? 'bg-indigo-600 border-indigo-500 text-white'
