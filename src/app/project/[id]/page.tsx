@@ -59,9 +59,18 @@ export default function ProjectPage() {
     );
   };
 
+  const getNextConceptStatus = (
+    currentStatus: 'developing' | 'complete' | 'contradicted' | undefined,
+    approved: boolean
+  ): 'developing' | 'complete' | 'contradicted' => {
+    if (approved) return 'complete';
+    if (currentStatus === 'complete') return 'developing';
+    return currentStatus || 'developing';
+  };
+
   const updateConcept = async (conceptId: string, approved: boolean) => {
     const current = project?.concepts?.find((c) => c.id === conceptId);
-    const nextStatus = approved ? 'complete' : (current?.status === 'complete' ? 'developing' : current?.status || 'developing');
+    const nextStatus = getNextConceptStatus(current?.status, approved);
     await fetch(`/api/projects/${id}/concepts`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
