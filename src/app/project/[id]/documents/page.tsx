@@ -63,7 +63,11 @@ export default function DocumentsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ documentId: docId, prompt: voicePrompt }),
     });
-    const { draft } = await res.json();
+    const body = await res.json();
+    const draft =
+      res.ok && typeof body.draft === 'string'
+        ? body.draft
+        : 'Voice draft generation requires OpenAI API key.';
     const doc = documents.find((d) => d.id === docId);
     if (doc) {
       const newContent = doc.content ? `${doc.content}\n\n---\n\n${draft}` : draft;

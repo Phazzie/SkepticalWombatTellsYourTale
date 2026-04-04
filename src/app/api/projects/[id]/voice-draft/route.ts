@@ -50,6 +50,9 @@ export async function POST(
     return NextResponse.json({ draft });
   } catch (error) {
     console.error('Voice draft error:', error);
-    return NextResponse.json({ draft: 'Voice draft generation requires OpenAI API key.' });
+    return NextResponse.json(
+      { error: 'Voice draft generation requires OpenAI API key.' },
+      { status: 500 }
+    );
   }
 }
