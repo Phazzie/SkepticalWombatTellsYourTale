@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "name": "autonomous-coding-agent-contract",
-  "repository": "Phazzie/SkepticalWombatTellsYourTale",
+  "repository": "current",
   "objective": "Safely implement requested changes end-to-end with deterministic validation and auditable outputs.",
   "allowedTasks": [
     "analysis",

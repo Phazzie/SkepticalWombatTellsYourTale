@@ -2,7 +2,7 @@
 
 This repository provides a machine-readable contract at:
 
-- `/home/runner/work/SkepticalWombatTellsYourTale/SkepticalWombatTellsYourTale/agent.exec.contract.json`
+- `./agent.exec.contract.json`
 
 Use that file as source of truth for autonomous execution behavior.
 
