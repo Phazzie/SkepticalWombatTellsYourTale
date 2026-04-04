@@ -39,6 +39,7 @@ Your analysis must:
 7. Annotate the transcript with markers for important moments, connections, and unfinished threads
 8. Name the significance of things the speaker seems to minimize
 9. Note if any passage could be written in the speaker's voice for a draft
+10. Propose concept/library candidates that should be named and tracked
 
 Respond with valid JSON only.`;
 
@@ -91,6 +92,15 @@ Return a JSON object with this exact structure:
   "questions": [
     "specific question 1",
     "specific question 2"
+  ],
+  "concepts": [
+    {
+      "name": "proposed concept name",
+      "definition": "one-line definition",
+      "sourceSession": "session id",
+      "linkedDocument": "document name if relevant",
+      "status": "developing|complete|contradicted (must be one of these exact values)"
+    }
   ],
   "annotations": [
     {
@@ -147,6 +157,57 @@ Write this in the speaker's actual voice as learned from the transcripts above.`
   });
 
   return response.choices[0].message.content || '';
+}
+
+export async function detectVoiceDrift(
+  draft: string,
+  transcripts: string[]
+): Promise<{ hasDrift: boolean; details: string; rewriteSuggestion?: string }> {
+  const voiceSamples = transcripts.slice(0, 8).join('\n\n---\n\n');
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [
+      {
+        role: 'system',
+        content: 'You compare generated writing to transcript voice patterns and detect drift. Return only valid JSON.',
+      },
+      {
+        role: 'user',
+        content: `Analyze whether this generated draft has drifted from the speaker's natural voice.
+
+VOICE SAMPLES:
+${voiceSamples}
+
+GENERATED DRAFT:
+${draft}
+
+Return JSON:
+{
+  "hasDrift": true/false,
+  "details": "specific explanation of what drifted or why it matches",
+  "rewriteSuggestion": "optional short suggestion closer to voice"
+}`,
+      },
+    ],
+    response_format: { type: 'json_object' },
+    temperature: 0.3,
+  });
+
+  let result: unknown = {};
+  try {
+    result = JSON.parse(response.choices[0].message.content || '{}');
+  } catch (error) {
+    console.error('Voice drift JSON parse failed:', error);
+    result = {};
+  }
+
+  const parsed = (result && typeof result === 'object' ? result : {}) as Record<string, unknown>;
+  return {
+    hasDrift: Boolean(parsed.hasDrift),
+    details: typeof parsed.details === 'string' ? parsed.details : '',
+    rewriteSuggestion:
+      typeof parsed.rewriteSuggestion === 'string' ? parsed.rewriteSuggestion : undefined,
+  };
 }
 
 export async function detectGapsAcrossProject(

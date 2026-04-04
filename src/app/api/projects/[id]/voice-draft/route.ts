@@ -1,47 +1,60 @@
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { generateVoicePreservedDraft } from '@/lib/openai';
-import { handleRoute } from '@/lib/server/http';
-import { requireUser } from '@/lib/server/auth';
-import { requireProjectAccess } from '@/lib/server/services/project-access';
-import { assertString } from '@/lib/server/validation';
-import { notFound } from '@/lib/server/errors';
-import { sessionsRepository } from '@/lib/server/repositories/sessions';
+import { generateVoicePreservedDraft, detectVoiceDrift } from '@/lib/openai';
+
+function getErrorMeta(error: unknown): { status?: unknown; code?: unknown } {
+  if (!error || typeof error !== 'object') {
+    return {};
+  }
+  const candidate = error as { status?: unknown; code?: unknown };
+  return { status: candidate.status, code: candidate.code };
+}
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  return handleRoute(async () => {
-    const { userId } = await requireUser();
-    const { id } = await params;
-    await requireProjectAccess(id, userId);
+  const { id } = await params;
+  const { documentId, prompt } = await request.json();
 
-    const body = (await request.json()) as { documentId?: unknown; prompt?: unknown };
-    const prompt = assertString(body.prompt, 'prompt', { min: 1, max: 2000 });
-    const documentId = typeof body.documentId === 'string' && body.documentId.trim() ? body.documentId : null;
+  const [sessions, document] = await Promise.all([
+    prisma.voiceSession.findMany({
+      where: { projectId: id },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    }),
+    documentId
+      ? prisma.document.findFirst({ where: { id: documentId, projectId: id } })
+      : Promise.resolve(null),
+  ]);
 
-    const [sessions, document] = await Promise.all([
-      sessionsRepository.listRecentByProject(id, 10),
-      documentId
-        ? prisma.document.findFirst({ where: { id: documentId, projectId: id } })
-        : Promise.resolve(null),
-    ]);
+  if (documentId && !document) {
+    return NextResponse.json({ error: 'Document not found' }, { status: 404 });
+  }
 
-    if (documentId && !document) {
-      throw notFound('Document not found');
-    }
+  const transcripts = sessions.map((s) => s.transcript);
+  const docContext = document ? document.content : '';
 
-    try {
-      const draft = await generateVoicePreservedDraft(
-        prompt,
-        sessions.map((s) => s.transcript),
-        document ? document.content : ''
+  try {
+    const draft = await generateVoicePreservedDraft(prompt, transcripts, docContext);
+    const drift = await detectVoiceDrift(draft, transcripts);
+    return NextResponse.json({ draft, drift });
+  } catch (error) {
+    console.error('Voice draft error:', error);
+    const errorMeta = getErrorMeta(error);
+    const isMissingOpenAiKey = errorMeta.status === 401 || errorMeta.code === 'invalid_api_key';
+
+    if (isMissingOpenAiKey) {
+      return NextResponse.json(
+        { draft: 'Voice draft generation requires OpenAI API key.', drift: null },
+        { status: 500 }
       );
-
-      return { draft };
-    } catch (error) {
-      console.error('Voice draft error:', error);
-      return { draft: 'Voice draft generation requires OpenAI API key.' };
     }
-  });
+
+    const failureReason = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json(
+      { draft: `Voice draft generation failed: ${failureReason}`, drift: null },
+      { status: 500 }
+    );
+  }
 }

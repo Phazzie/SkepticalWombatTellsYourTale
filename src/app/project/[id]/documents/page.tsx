@@ -2,19 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { Document } from '@/lib/types';
-import { AppHeader } from '@/components/layout/app-header';
-import {
-  AppBackLink,
-  Card,
-  Container,
-  PrimaryButton,
-  SecondaryButton,
-  Shell,
-  StatusMessage,
-  TextArea,
-  TextInput,
-} from '@/components/ui/primitives';
 
 export default function DocumentsPage() {
   const { id } = useParams<{ id: string }>();
@@ -28,39 +17,25 @@ export default function DocumentsPage() {
   const [saving, setSaving] = useState(false);
   const [voicePrompt, setVoicePrompt] = useState('');
   const [generatingDraft, setGeneratingDraft] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [driftFeedback, setDriftFeedback] = useState<{ hasDrift: boolean; details: string; rewriteSuggestion?: string } | null>(null);
 
   useEffect(() => {
     fetch(`/api/projects/${id}/documents`)
-      .then(async (r) => {
-        if (!r.ok) throw new Error('Failed to load documents');
-        return r.json();
-      })
+      .then((r) => r.json())
       .then((data) => {
         setDocuments(data);
         setLoading(false);
       })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : 'Failed to load documents');
-        setLoading(false);
-      });
+      .catch(() => setLoading(false));
   }, [id]);
 
   const createDocument = async () => {
     if (!newName.trim()) return;
-
     const res = await fetch(`/api/projects/${id}/documents`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newName, type: newType }),
     });
-
-    if (!res.ok) {
-      const data = (await res.json()) as { error?: string };
-      setError(data.error || 'Failed to create document');
-      return;
-    }
-
     const doc = await res.json();
     setDocuments((prev) => [...prev, doc]);
     setNewName('');
@@ -69,20 +44,14 @@ export default function DocumentsPage() {
 
   const saveDocument = async (docId: string) => {
     setSaving(true);
-    const res = await fetch(`/api/projects/${id}/documents/${docId}`, {
+    await fetch(`/api/projects/${id}/documents/${docId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content: editContent }),
     });
-
-    if (!res.ok) {
-      const data = (await res.json()) as { error?: string };
-      setError(data.error || 'Failed to save document');
-      setSaving(false);
-      return;
-    }
-
-    setDocuments((prev) => prev.map((d) => (d.id === docId ? { ...d, content: editContent } : d)));
+    setDocuments((prev) =>
+      prev.map((d) => (d.id === docId ? { ...d, content: editContent } : d))
+    );
     setSaving(false);
     setEditingId(null);
   };
@@ -90,27 +59,19 @@ export default function DocumentsPage() {
   const generateDraft = async (docId: string) => {
     if (!voicePrompt.trim()) return;
     setGeneratingDraft(true);
-
+    setDriftFeedback(null);
     const res = await fetch(`/api/projects/${id}/voice-draft`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ documentId: docId, prompt: voicePrompt }),
     });
-
-    if (!res.ok) {
-      const data = (await res.json()) as { error?: string };
-      setError(data.error || 'Failed to generate draft');
-      setGeneratingDraft(false);
-      return;
-    }
-
-    const { draft } = (await res.json()) as { draft: string };
+    const { draft, drift } = await res.json();
     const doc = documents.find((d) => d.id === docId);
     if (doc) {
       const newContent = doc.content ? `${doc.content}\n\n---\n\n${draft}` : draft;
       setEditContent(newContent);
     }
-
+    if (drift) setDriftFeedback(drift);
     setVoicePrompt('');
     setGeneratingDraft(false);
   };
@@ -119,74 +80,79 @@ export default function DocumentsPage() {
 
   if (loading) {
     return (
-      <Shell>
-        <Container wide>
-          <StatusMessage state="loading" title="Loading documents..." />
-        </Container>
-      </Shell>
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-gray-500">Loading documents...</div>
+      </div>
     );
   }
 
   return (
-    <Shell>
-      <Container wide>
-        <AppBackLink href={`/project/${id}`} />
-        <div className="mt-4" />
-        <AppHeader
-          title="Documents"
-          actions={<PrimaryButton onClick={() => setShowNew(true)}>+ New Document</PrimaryButton>}
-        />
-
-        {error && <StatusMessage state="error" title="Something went wrong" description={error} />}
+    <div className="min-h-screen bg-gray-950 text-gray-100">
+      <div className="max-w-5xl mx-auto px-6 py-8">
+        <div className="flex items-center gap-4 mb-6">
+          <Link href={`/project/${id}`} className="text-gray-500 hover:text-gray-300 text-sm">
+            ← Back
+          </Link>
+          <h1 className="text-2xl font-bold">Documents</h1>
+          <button
+            onClick={() => setShowNew(true)}
+            className="ml-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+          >
+            + New Document
+          </button>
+        </div>
 
         {showNew && (
-          <Card className="mb-6">
-            <h3 className="mb-3 font-semibold">New Document</h3>
-            <TextInput
+          <div className="bg-gray-900 border border-gray-700 rounded-xl p-5 mb-6">
+            <h3 className="font-semibold mb-3">New Document</h3>
+            <input
               type="text"
               placeholder="Document name..."
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              className="mb-3"
+              className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 mb-3 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
               autoFocus
             />
             <select
               value={newType}
               onChange={(e) => setNewType(e.target.value)}
-              className="mb-4 w-full rounded-xl border border-app-border bg-app-surface-muted px-4 py-2 text-sm text-app-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent"
+              className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 mb-4 text-white focus:outline-none focus:border-indigo-500"
             >
               {documentTypes.map((t) => (
                 <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
               ))}
             </select>
             <div className="flex gap-3">
-              <PrimaryButton onClick={createDocument}>Create</PrimaryButton>
-              <SecondaryButton onClick={() => setShowNew(false)}>Cancel</SecondaryButton>
+              <button onClick={createDocument} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium">
+                Create
+              </button>
+              <button onClick={() => setShowNew(false)} className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium">
+                Cancel
+              </button>
             </div>
-          </Card>
+          </div>
         )}
 
         {documents.length === 0 ? (
-          <StatusMessage
-            state="empty"
-            title="No documents yet"
-            description="Create your first working document."
-          />
+          <div className="text-center py-16 text-gray-500">
+            <div className="text-5xl mb-4">📄</div>
+            <p>No documents yet. Create your first working document.</p>
+          </div>
         ) : (
           <div className="space-y-4">
             {documents.map((doc) => (
-              <Card key={doc.id} className="overflow-hidden p-0">
-                <div className="flex items-center justify-between border-b border-app-border px-5 py-4">
+              <div key={doc.id} className="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-700">
                   <div>
                     <span className="font-semibold text-white">{doc.name}</span>
-                    <span className="ml-2 rounded bg-app-surface-muted px-2 py-0.5 text-xs text-app-fg-muted">{doc.type}</span>
+                    <span className="ml-2 text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded">{doc.type}</span>
                   </div>
                   <button
                     onClick={() => {
                       setEditingId(editingId === doc.id ? null : doc.id);
                       setEditContent(doc.content);
                     }}
-                    className="text-sm text-indigo-300 hover:text-indigo-200"
+                    className="text-sm text-indigo-400 hover:text-indigo-300"
                   >
                     {editingId === doc.id ? 'Cancel' : 'Edit'}
                   </button>
@@ -194,52 +160,71 @@ export default function DocumentsPage() {
 
                 {editingId === doc.id ? (
                   <div className="p-5">
-                    <TextArea
+                    <textarea
                       value={editContent}
                       onChange={(e) => setEditContent(e.target.value)}
                       rows={12}
-                      className="resize-none font-mono text-sm"
+                      className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 resize-none font-mono text-sm"
                       placeholder="Document content..."
                     />
-                    <div className="mt-4 rounded-xl border border-app-border bg-app-surface-muted p-4">
-                      <p className="mb-2 text-xs text-emerald-300">✍️ Generate in your voice</p>
-                      <TextInput
+                    <div className="mt-4 p-4 bg-gray-800 rounded-lg">
+                      <p className="text-xs text-green-400 mb-2">✍️ Generate in your voice</p>
+                      <input
                         type="text"
-                        placeholder="What do you want written?"
+                        placeholder="What do you want written? (e.g., 'the story about my father')"
                         value={voicePrompt}
                         onChange={(e) => setVoicePrompt(e.target.value)}
-                        className="mb-2"
+                        className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none mb-2"
                       />
-                      <PrimaryButton
+                      <button
                         onClick={() => generateDraft(doc.id)}
                         disabled={generatingDraft || !voicePrompt.trim()}
-                        className="text-xs"
+                        className="text-xs bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white px-4 py-1.5 rounded"
                       >
                         {generatingDraft ? 'Writing in your voice...' : 'Generate Draft'}
-                      </PrimaryButton>
+                      </button>
+                      {driftFeedback && (
+                        <div
+                          className={`mt-3 border rounded p-3 text-xs ${
+                            driftFeedback.hasDrift
+                              ? 'border-amber-700 bg-amber-900/20 text-amber-300'
+                              : 'border-green-700 bg-green-900/20 text-green-300'
+                          }`}
+                        >
+                          <p>{driftFeedback.hasDrift ? 'Voice drift detected.' : 'Voice match looks strong.'}</p>
+                          {driftFeedback.details && <p className="mt-1 text-gray-300">{driftFeedback.details}</p>}
+                          {driftFeedback.rewriteSuggestion && (
+                            <p className="mt-1 text-gray-400">Suggestion: {driftFeedback.rewriteSuggestion}</p>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div className="mt-3 flex gap-3">
-                      <PrimaryButton onClick={() => saveDocument(doc.id)} disabled={saving}>
+                    <div className="flex gap-3 mt-3">
+                      <button
+                        onClick={() => saveDocument(doc.id)}
+                        disabled={saving}
+                        className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-6 py-2 rounded-lg font-medium text-sm"
+                      >
                         {saving ? 'Saving...' : 'Save'}
-                      </PrimaryButton>
+                      </button>
                     </div>
                   </div>
                 ) : (
                   <div className="px-5 py-4">
                     {doc.content ? (
-                      <p className="line-clamp-6 whitespace-pre-wrap text-sm leading-relaxed text-app-fg-muted">
+                      <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap line-clamp-6">
                         {doc.content}
                       </p>
                     ) : (
-                      <p className="text-sm italic text-app-fg-muted">Empty document</p>
+                      <p className="text-gray-600 text-sm italic">Empty document</p>
                     )}
                   </div>
                 )}
-              </Card>
+              </div>
             ))}
           </div>
         )}
-      </Container>
-    </Shell>
+      </div>
+    </div>
   );
 }
