@@ -45,7 +45,12 @@ export async function POST(
       content += `${session.transcript}\n\n`;
 
       if (includeAnnotations) {
-        const annotations = JSON.parse(session.aiAnnotations || '[]');
+        let annotations: Array<{ type: string; text: string }> = [];
+        try {
+          annotations = JSON.parse(session.aiAnnotations || '[]');
+        } catch {
+          annotations = [];
+        }
         if (annotations.length > 0) {
           content += `### AI Notes\n\n`;
           for (const ann of annotations) {

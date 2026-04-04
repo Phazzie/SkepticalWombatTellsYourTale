@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
+function safeParseJson<T>(value: string, fallback: T): T {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -11,7 +19,11 @@ export async function GET(
     orderBy: { createdAt: 'desc' },
     include: { tangents: true },
   });
-  return NextResponse.json(sessions);
+  const parsed = sessions.map((s) => ({
+    ...s,
+    aiAnnotations: safeParseJson(s.aiAnnotations, []),
+  }));
+  return NextResponse.json(parsed);
 }
 
 export async function POST(

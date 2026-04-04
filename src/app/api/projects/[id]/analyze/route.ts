@@ -72,8 +72,8 @@ export async function POST(
     }
 
     if (analysis.annotations && sessionId) {
-      await prisma.session.update({
-        where: { id: sessionId },
+      await prisma.session.updateMany({
+        where: { id: sessionId, projectId: id },
         data: { aiAnnotations: JSON.stringify(analysis.annotations) },
       });
     }

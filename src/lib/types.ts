@@ -2,8 +2,8 @@ export interface Project {
   id: string;
   name: string;
   description?: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   documents?: Document[];
   sessions?: Session[];
   tangents?: Tangent[];
@@ -17,8 +17,8 @@ export interface Document {
   name: string;
   type: string;
   content: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Session {
@@ -27,8 +27,8 @@ export interface Session {
   audioUrl?: string | null;
   transcript: string;
   aiAnnotations: AIAnnotation[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   tangents?: Tangent[];
 }
 
@@ -46,8 +46,8 @@ export interface Tangent {
   thread: string;
   context: string;
   status: 'pending' | 'resolved' | 'dismissed';
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Pattern {
@@ -56,7 +56,7 @@ export interface Pattern {
   description: string;
   sessionRefs: string[];
   acknowledged: boolean;
-  createdAt: Date;
+  createdAt: string;
 }
 
 export interface Gap {
@@ -65,7 +65,7 @@ export interface Gap {
   description: string;
   documentRef?: string | null;
   resolved: boolean;
-  createdAt: Date;
+  createdAt: string;
 }
 
 export interface AnalysisResult {

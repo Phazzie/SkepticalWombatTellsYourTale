@@ -19,7 +19,7 @@
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 (App Router) + TypeScript
+- **Framework**: Next.js 15 (App Router) + TypeScript
 - **Styling**: Tailwind CSS
 - **Database**: SQLite via Prisma
 - **AI**: OpenAI GPT-4o (analysis) + Whisper (transcription)

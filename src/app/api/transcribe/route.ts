@@ -4,11 +4,11 @@ import { transcribeAudio } from '@/lib/openai';
 
 export async function POST(request: Request) {
   const formData = await request.formData();
-  const audioFile = formData.get('audio') as File;
-  const projectId = formData.get('projectId') as string;
+  const audioFile = formData.get('audio');
+  const projectId = formData.get('projectId');
 
-  if (!audioFile || !projectId) {
-    return NextResponse.json({ error: 'Missing audio or projectId' }, { status: 400 });
+  if (!(audioFile instanceof File) || typeof projectId !== 'string' || !projectId) {
+    return NextResponse.json({ error: 'Missing or invalid audio or projectId' }, { status: 400 });
   }
 
   const audioBuffer = Buffer.from(await audioFile.arrayBuffer());

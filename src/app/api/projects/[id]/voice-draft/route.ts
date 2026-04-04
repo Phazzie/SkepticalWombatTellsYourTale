@@ -16,9 +16,13 @@ export async function POST(
       take: 10,
     }),
     documentId
-      ? prisma.document.findUnique({ where: { id: documentId } })
+      ? prisma.document.findFirst({ where: { id: documentId, projectId: id } })
       : Promise.resolve(null),
   ]);
+
+  if (documentId && !document) {
+    return NextResponse.json({ error: 'Document not found' }, { status: 404 });
+  }
 
   const transcripts = sessions.map((s) => s.transcript);
   const docContext = document ? document.content : '';

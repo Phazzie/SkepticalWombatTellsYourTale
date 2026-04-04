@@ -66,10 +66,9 @@ export default function SessionsPage() {
         ) : (
           <div className="space-y-4">
             {sessions.map((session) => {
-              const annotations: AIAnnotation[] =
-                typeof session.aiAnnotations === 'string'
-                  ? JSON.parse(session.aiAnnotations as unknown as string)
-                  : session.aiAnnotations;
+              const annotations: AIAnnotation[] = Array.isArray(session.aiAnnotations)
+                ? session.aiAnnotations
+                : [];
 
               return (
                 <div key={session.id} className="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden">
