@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { AIAnnotation } from '@/lib/types';
 
 const annotationColors: Record<AIAnnotation['type'], string> = {
@@ -38,32 +39,45 @@ interface AnnotationListProps {
   showReference?: boolean;
 }
 
+function getAnnotationKeyBase(annotation: AIAnnotation): string {
+  return JSON.stringify({
+    timestamp: annotation.timestamp ?? null,
+    type: annotation.type,
+    reference: annotation.reference ?? null,
+    text: annotation.text,
+  });
+}
+
 export function AnnotationList({ annotations, showReference = false }: AnnotationListProps) {
-  const keyCounts = new Map<string, number>();
+  const keyedAnnotations = useMemo(() => {
+    const keyCounts = new Map<string, number>();
+
+    return annotations.map((ann) => {
+      const keyBase = getAnnotationKeyBase(ann);
+      const occurrence = keyCounts.get(keyBase) ?? 0;
+      keyCounts.set(keyBase, occurrence + 1);
+      const key = occurrence === 0 ? keyBase : `${keyBase}:${occurrence}`;
+
+      const annotationType = isKnownAnnotationType(ann.type) ? ann.type : null;
+      const rowClass = annotationType ? annotationColors[annotationType] : fallbackAnnotationClass;
+      const icon = annotationType ? annotationIcons[annotationType] : fallbackAnnotationIcon;
+
+      return { ann, key, rowClass, icon };
+    });
+  }, [annotations]);
 
   return (
     <div className="space-y-2">
-      {annotations.map((ann) => {
-        const keyBase = `${ann.timestamp ?? ''}:${ann.type}:${ann.reference ?? ''}:${ann.text}`;
-        const occurrence = keyCounts.get(keyBase) ?? 0;
-        keyCounts.set(keyBase, occurrence + 1);
-        const key = occurrence === 0 ? keyBase : `${keyBase}:${occurrence}`;
-
-        const annotationType = isKnownAnnotationType(ann.type) ? ann.type : null;
-        const rowClass = annotationType ? annotationColors[annotationType] : fallbackAnnotationClass;
-        const icon = annotationType ? annotationIcons[annotationType] : fallbackAnnotationIcon;
-
-        return (
-          <div
-            key={key}
-            className={`rounded-lg border px-3 py-2 text-sm ${rowClass}`}
-          >
-            <span className="mr-2">{icon}</span>
-            {ann.text}
-            {showReference && ann.reference && <span className="ml-2 text-xs opacity-70">({ann.reference})</span>}
-          </div>
-        );
-      })}
+      {keyedAnnotations.map(({ ann, key, rowClass, icon }) => (
+        <div
+          key={key}
+          className={`rounded-lg border px-3 py-2 text-sm ${rowClass}`}
+        >
+          <span className="mr-2">{icon}</span>
+          {ann.text}
+          {showReference && ann.reference && <span className="ml-2 text-xs opacity-70">({ann.reference})</span>}
+        </div>
+      ))}
     </div>
   );
 }
