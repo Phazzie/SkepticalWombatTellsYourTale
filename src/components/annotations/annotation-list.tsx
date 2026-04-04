@@ -18,24 +18,52 @@ const annotationIcons: Record<AIAnnotation['type'], string> = {
   pattern: '🔁',
 };
 
+const fallbackAnnotationClass = 'bg-app-surface-muted border-app-border text-app-fg';
+const fallbackAnnotationIcon = '💡';
+
+const knownAnnotationTypes = new Set<AIAnnotation['type']>([
+  'important',
+  'connection',
+  'unfinished',
+  'tangent',
+  'pattern',
+]);
+
+function isKnownAnnotationType(value: unknown): value is AIAnnotation['type'] {
+  return typeof value === 'string' && knownAnnotationTypes.has(value as AIAnnotation['type']);
+}
+
 interface AnnotationListProps {
   annotations: AIAnnotation[];
   showReference?: boolean;
 }
 
 export function AnnotationList({ annotations, showReference = false }: AnnotationListProps) {
+  const keyCounts = new Map<string, number>();
+
   return (
     <div className="space-y-2">
-      {annotations.map((ann, i) => (
-        <div
-          key={`${ann.timestamp ?? 'na'}-${i}`}
-          className={`rounded-lg border px-3 py-2 text-sm ${annotationColors[ann.type]}`}
-        >
-          <span className="mr-2">{annotationIcons[ann.type]}</span>
-          {ann.text}
-          {showReference && ann.reference && <span className="ml-2 text-xs opacity-70">({ann.reference})</span>}
-        </div>
-      ))}
+      {annotations.map((ann) => {
+        const keyBase = `${ann.timestamp ?? ''}:${ann.type}:${ann.reference ?? ''}:${ann.text}`;
+        const occurrence = keyCounts.get(keyBase) ?? 0;
+        keyCounts.set(keyBase, occurrence + 1);
+        const key = occurrence === 0 ? keyBase : `${keyBase}:${occurrence}`;
+
+        const annotationType = isKnownAnnotationType(ann.type) ? ann.type : null;
+        const rowClass = annotationType ? annotationColors[annotationType] : fallbackAnnotationClass;
+        const icon = annotationType ? annotationIcons[annotationType] : fallbackAnnotationIcon;
+
+        return (
+          <div
+            key={key}
+            className={`rounded-lg border px-3 py-2 text-sm ${rowClass}`}
+          >
+            <span className="mr-2">{icon}</span>
+            {ann.text}
+            {showReference && ann.reference && <span className="ml-2 text-xs opacity-70">({ann.reference})</span>}
+          </div>
+        );
+      })}
     </div>
   );
 }
