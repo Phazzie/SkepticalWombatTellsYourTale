@@ -28,7 +28,7 @@ export function AnnotationList({ annotations, showReference = false }: Annotatio
     <div className="space-y-2">
       {annotations.map((ann, i) => (
         <div
-          key={`${ann.type}:${ann.reference ?? ''}:${ann.text}:${i}`}
+          key={i}
           className={`rounded-lg border px-3 py-2 text-sm ${annotationColors[ann.type]}`}
         >
           <span className="mr-2">{annotationIcons[ann.type]}</span>
