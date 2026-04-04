@@ -60,6 +60,47 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## CI
+
+This repository uses GitHub Actions for CI, security, and release-readiness checks.
+
+### Required pull request checks
+
+- **CI / Quality** — `npm ci` + `npm run lint`
+- **CI / Build** — `npm ci` + `npm run build`
+- **CI / Prisma Schema** — `npx prisma validate`, `npx prisma format --check`, and schema diff generation check
+- **Security / CodeQL**
+- **Security / Dependency Audit**
+
+Set these checks as **required** in branch protection for `main` so merges are blocked until they pass.
+
+### Expected local verification commands
+
+```bash
+npm ci
+npm run lint
+npm run build
+npx prisma validate
+npx prisma format --check
+npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > /tmp/prisma-schema.sql
+```
+
+### CI failure triage flow
+
+1. **lint fails** → fix ESLint issues and re-run `npm run lint`.
+2. **build fails** → reproduce with `npm run build`, fix compile/type/runtime build errors.
+3. **schema fails** → run Prisma commands locally, then fix `prisma/schema.prisma` formatting or compatibility issues.
+4. **security fails**:
+   - **Dependency Audit**: upgrade vulnerable packages and regenerate lockfile.
+   - **CodeQL**: review alert details, patch risky patterns, and confirm checks pass.
+
+### Rollout and hardening guidance
+
+- Start by monitoring CI signal quality (flake rate, false positives) and tune where needed.
+- Keep `cancel-in-progress` enabled to avoid duplicate runs on active branches.
+- Revisit pinned action versions and dependency policy regularly.
+- After observation, enforce all listed checks as required on `main`.
+
 ## How It Works
 
 1. **Create a project** — Give it a name. This is your book, your memoir, your story.
