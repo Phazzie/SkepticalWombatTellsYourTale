@@ -35,7 +35,7 @@ export function asOptionalString(value: unknown, field: string): string | undefi
   if (typeof value !== 'string') {
     throw new RequestValidationError(`\`${field}\` must be a string when provided.`);
   }
-  return value;
+  return value.trim();
 }
 
 export function asOptionalNullableString(
@@ -47,7 +47,7 @@ export function asOptionalNullableString(
   if (typeof value !== 'string') {
     throw new RequestValidationError(`\`${field}\` must be a string, null, or undefined.`);
   }
-  return value;
+  return value.trim();
 }
 
 export function asBoolean(value: unknown, field: string): boolean {
