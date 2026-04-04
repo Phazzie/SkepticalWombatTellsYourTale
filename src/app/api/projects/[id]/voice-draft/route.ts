@@ -33,8 +33,9 @@ export async function POST(
     return NextResponse.json({ draft, drift });
   } catch (error) {
     console.error('Voice draft error:', error);
-    const errorStatus = typeof error === 'object' && error !== null ? (error as { status?: unknown }).status : undefined;
-    const errorCode = typeof error === 'object' && error !== null ? (error as { code?: unknown }).code : undefined;
+    const isErrorObject = typeof error === 'object' && error !== null;
+    const errorStatus = isErrorObject ? (error as { status?: unknown }).status : undefined;
+    const errorCode = isErrorObject ? (error as { code?: unknown }).code : undefined;
     const isMissingOpenAiKey = errorStatus === 401 || errorCode === 'invalid_api_key';
 
     if (isMissingOpenAiKey) {
