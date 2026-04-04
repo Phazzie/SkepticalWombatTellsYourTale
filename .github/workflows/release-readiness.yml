@@ -17,6 +17,8 @@ jobs:
   quality-gates:
     name: Quality Gates (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: file:./dev.db
     strategy:
       fail-fast: false
       matrix:

@@ -66,11 +66,13 @@ This repository uses GitHub Actions for CI, security, and release-readiness chec
 
 ### Required pull request checks
 
-- **CI / Quality** — `npm ci` + `npm run lint`
-- **CI / Build** — `npm ci` + `npm run build`
-- **CI / Prisma Schema** — `npx prisma validate`, `npx prisma format --check`, and schema diff generation check
+The CI workflow uses a Node matrix (`18.x`, `20.x`), so each check appears once per Node version:
+
+- **CI / Quality (Node 18.x)** and **CI / Quality (Node 20.x)** — `npm ci` + `npm run lint`
+- **CI / Build (Node 18.x)** and **CI / Build (Node 20.x)** — `npm ci` + `npm run build`
+- **CI / Prisma Schema (Node 18.x)** and **CI / Prisma Schema (Node 20.x)** — `npx prisma validate`, `npx prisma format --check`, and schema diff generation check
 - **Security / CodeQL**
-- **Security / Dependency Audit**
+- **Security / Dependency Audit (Node 18.x)** and **Security / Dependency Audit (Node 20.x)**
 
 Set these checks as **required** in branch protection for `main` so merges are blocked until they pass.
 
