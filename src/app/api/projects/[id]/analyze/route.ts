@@ -140,7 +140,11 @@ export async function POST(
     if (analysis.concepts && analysis.concepts.length > 0) {
       await prisma.concept.createMany({
         data: analysis.concepts.map((c) => {
-          const linkedDocumentRef = c.linkedDocument || analysis.documentSuggestion?.documentName || null;
+          const linkedDocumentRef =
+            c.linkedDocument ||
+            analysis.documentSuggestion?.documentName ||
+            analysis.documentSuggestion?.documentId ||
+            null;
 
           return {
             projectId: id,
