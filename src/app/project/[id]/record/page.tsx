@@ -326,9 +326,9 @@ export default function RecordPage() {
                   <div className="bg-gray-900 border border-purple-700/50 rounded-xl p-5">
                     <h2 className="font-semibold text-purple-400 mb-3">🤖 AI Coach Notes</h2>
                     <div className="space-y-2">
-                      {analysis.annotations.map((ann) => (
+                      {analysis.annotations.map((ann, i) => (
                         <div
-                          key={`${ann.type}:${ann.reference ?? ''}:${ann.text}`}
+                          key={`${ann.type}:${ann.reference ?? ''}:${ann.text}:${i}`}
                           className={`border rounded-lg px-3 py-2 text-sm ${
                             annotationColors[ann.type] || 'bg-gray-800 border-gray-600 text-gray-300'
                           }`}
