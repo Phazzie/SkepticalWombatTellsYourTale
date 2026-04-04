@@ -1,37 +1,51 @@
-import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { openai } from '@/lib/openai';
+import { handleRoute } from '@/lib/server/http';
+import { requireUser } from '@/lib/server/auth';
+import { requireProjectAccess } from '@/lib/server/services/project-access';
 
-export async function GET() {
-  // Questions are generated on demand via POST and not persisted.
-  // The UI calls POST to generate fresh AI questions each time.
-  return NextResponse.json([]);
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id } = await params;
+    await requireProjectAccess(id, userId);
+
+    return [];
+  });
 }
 
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const project = await prisma.project.findUnique({
-    where: { id },
-    include: {
-      documents: true,
-      sessions: { orderBy: { createdAt: 'desc' }, take: 5 },
-    },
-  });
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id } = await params;
+    await requireProjectAccess(id, userId);
 
-  if (!project) return NextResponse.json([], { status: 404 });
+    const project = await prisma.project.findUnique({
+      where: { id },
+      include: {
+        documents: true,
+        sessions: { orderBy: { createdAt: 'desc' }, take: 5 },
+      },
+    });
 
-  const context = project.sessions
-    .map((s) => s.transcript.slice(0, 500))
-    .join('\n\n');
+    if (!project) {
+      return [];
+    }
 
-  const docsContext = project.documents
-    .map((d) => `${d.name}: ${d.content.slice(0, 300)}`)
-    .join('\n');
+    const context = project.sessions
+      .map((s) => s.transcript.slice(0, 500))
+      .join('\n\n');
 
-  try {
+    const docsContext = project.documents
+      .map((d) => `${d.name}: ${d.content.slice(0, 300)}`)
+      .join('\n');
+
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
@@ -41,29 +55,20 @@ export async function POST(
         },
         {
           role: 'user',
-          content: `Generate 8 specific questions for this project.
-
-RECENT TRANSCRIPTS:
-${context}
-
-DOCUMENTS:
-${docsContext}
-
-Return JSON: { "questions": [{ "text": "question text", "sessionRef": null }] }`,
+          content: `Generate 8 specific questions for this project.\n\nRECENT TRANSCRIPTS:\n${context}\n\nDOCUMENTS:\n${docsContext}\n\nReturn JSON: { "questions": [{ "text": "question text", "sessionRef": null }] }`,
         },
       ],
       response_format: { type: 'json_object' },
       temperature: 0.8,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || '{"questions":[]}');
-    const questions = (result.questions || []).map((q: { text: string; sessionRef?: string }) => ({
+    const result = JSON.parse(response.choices[0].message.content || '{"questions":[]}') as {
+      questions?: Array<{ text: string; sessionRef?: string }>;
+    };
+
+    return (result.questions || []).map((q) => ({
       ...q,
       createdAt: new Date().toISOString(),
     }));
-    return NextResponse.json(questions);
-  } catch (error) {
-    console.error('Question generation error:', error);
-    return NextResponse.json([]);
-  }
+  });
 }

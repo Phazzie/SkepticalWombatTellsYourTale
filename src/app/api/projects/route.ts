@@ -1,17 +1,24 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { handleRoute } from '@/lib/server/http';
+import { requireUser } from '@/lib/server/auth';
+import { asOptionalString, assertString } from '@/lib/server/validation';
+import { projectsRepository } from '@/lib/server/repositories/projects';
+import { projectsService } from '@/lib/server/services/projects';
 
 export async function GET() {
-  const projects = await prisma.project.findMany({
-    orderBy: { createdAt: 'desc' },
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    return projectsService.listForUser(userId);
   });
-  return NextResponse.json(projects);
 }
 
 export async function POST(request: Request) {
-  const { name, description } = await request.json();
-  const project = await prisma.project.create({
-    data: { name, description },
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const body = (await request.json()) as { name?: unknown; description?: unknown };
+
+    const name = assertString(body.name, 'name', { min: 1, max: 120 });
+    const description = asOptionalString(body.description, 'description', { max: 1000 });
+
+    return projectsRepository.createForUser(userId, name, description);
   });
-  return NextResponse.json(project);
 }

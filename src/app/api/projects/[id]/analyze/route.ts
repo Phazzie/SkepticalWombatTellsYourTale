@@ -1,34 +1,46 @@
-import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { analyzeTranscript } from '@/lib/openai';
+import { handleRoute } from '@/lib/server/http';
+import { requireUser } from '@/lib/server/auth';
+import { requireProjectAccess } from '@/lib/server/services/project-access';
+import { assertString } from '@/lib/server/validation';
+import { analysisRepository } from '@/lib/server/repositories/analysis';
+import { sessionsRepository } from '@/lib/server/repositories/sessions';
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const { sessionId, transcript } = await request.json();
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id } = await params;
+    await requireProjectAccess(id, userId);
 
-  const project = await prisma.project.findUnique({
-    where: { id },
-    include: {
-      documents: true,
-      sessions: {
-        orderBy: { createdAt: 'desc' },
-        take: 10,
+    const body = (await request.json()) as { sessionId?: unknown; transcript?: unknown };
+    const sessionId = assertString(body.sessionId, 'sessionId', { min: 1, max: 100 });
+    const transcript = assertString(body.transcript, 'transcript', { min: 1, max: 200000 });
+
+    const project = await prisma.project.findUnique({
+      where: { id },
+      include: {
+        documents: true,
+        sessions: {
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        },
       },
-    },
-  });
+    });
 
-  if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (!project) {
+      throw new Error('Project not found');
+    }
 
-  const projectContext = `Project: "${project.name}"\n${project.description || ''}`;
-  const sessionHistory = project.sessions
-    .filter((s) => s.id !== sessionId)
-    .map((s) => `Session ${s.id.slice(0, 8)} (${s.createdAt.toISOString().split('T')[0]}): ${s.transcript.slice(0, 300)}`)
-    .join('\n\n');
+    const projectContext = `Project: "${project.name}"\n${project.description || ''}`;
+    const sessionHistory = project.sessions
+      .filter((s) => s.id !== sessionId)
+      .map((s) => `Session ${s.id.slice(0, 8)} (${s.createdAt.toISOString().split('T')[0]}): ${s.transcript.slice(0, 300)}`)
+      .join('\n\n');
 
-  try {
     const analysis = await analyzeTranscript(
       transcript,
       projectContext,
@@ -37,50 +49,13 @@ export async function POST(
       sessionId
     );
 
-    if (analysis.tangents && analysis.tangents.length > 0) {
-      await prisma.tangent.createMany({
-        data: analysis.tangents.map((t) => ({
-          projectId: id,
-          sessionId,
-          thread: t.thread,
-          context: t.context || '',
-          status: 'pending',
-        })),
-      });
-    }
+    await Promise.all([
+      analysisRepository.createTangents(id, sessionId, analysis.tangents || []),
+      analysisRepository.createPatterns(id, analysis.patterns || []),
+      analysisRepository.createGaps(id, analysis.gaps || []),
+      sessionsRepository.updateAnnotations(id, sessionId, JSON.stringify(analysis.annotations || [])),
+    ]);
 
-    if (analysis.patterns && analysis.patterns.length > 0) {
-      await prisma.pattern.createMany({
-        data: analysis.patterns.map((p) => ({
-          projectId: id,
-          description: p.description,
-          sessionRefs: JSON.stringify(p.sessionRefs),
-          acknowledged: false,
-        })),
-      });
-    }
-
-    if (analysis.gaps && analysis.gaps.length > 0) {
-      await prisma.gap.createMany({
-        data: analysis.gaps.map((g) => ({
-          projectId: id,
-          description: g.description,
-          documentRef: g.documentRef || null,
-          resolved: false,
-        })),
-      });
-    }
-
-    if (analysis.annotations && sessionId) {
-      await prisma.session.updateMany({
-        where: { id: sessionId, projectId: id },
-        data: { aiAnnotations: JSON.stringify(analysis.annotations) },
-      });
-    }
-
-    return NextResponse.json(analysis);
-  } catch (error) {
-    console.error('Analysis error:', error);
-    return NextResponse.json({ error: 'Analysis failed' }, { status: 500 });
-  }
+    return analysis;
+  });
 }
