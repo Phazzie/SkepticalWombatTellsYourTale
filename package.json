@@ -10,8 +10,8 @@
     "verify": "npm run lint && npm run build",
     "test": "npm run verify",
     "db:bootstrap": "DATABASE_URL='file:./dev.db' npx prisma db push && npx prisma generate",
-    "preflight": "npm ci && npm run db:bootstrap && npm run lint && npm run build",
-    "verify:postchange": "npm run lint && npm run build && npm run test",
+    "preflight": "npm ci && npm run db:bootstrap",
+    "verify:postchange": "npm run verify",
     "security:audit": "npm audit --audit-level=high",
     "agent:run": "npm run preflight && npm run verify:postchange"
   },

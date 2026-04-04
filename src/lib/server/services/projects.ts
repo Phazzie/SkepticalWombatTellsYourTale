@@ -1,5 +1,6 @@
 import { projectsRepository } from '@/lib/server/repositories/projects';
-import { safeParseJson } from '@/lib/server/json';
+import { parseAiAnnotations } from '@/lib/server/mappers/ai-annotations';
+import { parseSessionRefs } from '@/lib/server/mappers/session-refs';
 import { notFound } from '@/lib/server/errors';
 
 export const projectsService = {
@@ -16,11 +17,11 @@ export const projectsService = {
         ...project,
         sessions: project.sessions.map((s) => ({
           ...s,
-          aiAnnotations: safeParseJson(s.aiAnnotations, []),
+          aiAnnotations: parseAiAnnotations(s.aiAnnotations),
         })),
         patterns: project.patterns.map((p) => ({
           ...p,
-          sessionRefs: safeParseJson(p.sessionRefs, []),
+          sessionRefs: parseSessionRefs(p.sessionRefs),
         })),
       };
     }

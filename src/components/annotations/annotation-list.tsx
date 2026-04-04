@@ -40,12 +40,7 @@ interface AnnotationListProps {
 }
 
 function getAnnotationKeyBase(annotation: AIAnnotation): string {
-  return JSON.stringify({
-    timestamp: annotation.timestamp ?? null,
-    type: annotation.type,
-    reference: annotation.reference ?? null,
-    text: annotation.text,
-  });
+  return `${annotation.timestamp ?? ''}\u0000${annotation.type}\u0000${annotation.reference ?? ''}\u0000${annotation.text}`;
 }
 
 export function AnnotationList({ annotations, showReference = false }: AnnotationListProps) {

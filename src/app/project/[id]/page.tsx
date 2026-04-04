@@ -12,6 +12,7 @@ export default function ProjectPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Array<{ kind: string; id: string; title: string; snippet: string }>>([]);
   const [searching, setSearching] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/projects/${id}?include=all`)
@@ -24,11 +25,8 @@ export default function ProjectPage() {
   }, [id]);
 
   const resolveTangent = async (tangentId: string) => {
-    await fetch(`/api/projects/${id}/tangents/${tangentId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'resolved' }),
-    });
+    const previousStatus = project?.tangents?.find((t) => t.id === tangentId)?.status;
+    setActionError(null);
     setProject((prev) =>
       prev
         ? {
@@ -39,14 +37,35 @@ export default function ProjectPage() {
           }
         : prev
     );
+    try {
+      const response = await fetch(`/api/projects/${id}/tangents/${tangentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'resolved' }),
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to resolve thread (${response.status})`);
+      }
+    } catch (error) {
+      if (previousStatus) {
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                tangents: prev.tangents?.map((t) =>
+                  t.id === tangentId ? { ...t, status: previousStatus } : t
+                ),
+              }
+            : prev
+        );
+      }
+      setActionError(error instanceof Error ? error.message : 'Failed to resolve thread');
+    }
   };
 
   const resolveGap = async (gapId: string) => {
-    await fetch(`/api/projects/${id}/gaps/${gapId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ resolved: true }),
-    });
+    const previousResolved = project?.gaps?.find((g) => g.id === gapId)?.resolved;
+    setActionError(null);
     setProject((prev) =>
       prev
         ? {
@@ -57,6 +76,30 @@ export default function ProjectPage() {
           }
         : prev
     );
+    try {
+      const response = await fetch(`/api/projects/${id}/gaps/${gapId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resolved: true }),
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to resolve gap (${response.status})`);
+      }
+    } catch (error) {
+      if (typeof previousResolved === 'boolean') {
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                gaps: prev.gaps?.map((g) =>
+                  g.id === gapId ? { ...g, resolved: previousResolved } : g
+                ),
+              }
+            : prev
+        );
+      }
+      setActionError(error instanceof Error ? error.message : 'Failed to resolve gap');
+    }
   };
 
   const getNextConceptStatus = (
@@ -71,11 +114,10 @@ export default function ProjectPage() {
   const updateConcept = async (conceptId: string, approved: boolean) => {
     const current = project?.concepts?.find((c) => c.id === conceptId);
     const nextStatus = getNextConceptStatus(current?.status, approved);
-    await fetch(`/api/projects/${id}/concepts`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ conceptId, approved, status: nextStatus }),
-    });
+    const previousConcept = current
+      ? { approved: current.approved, status: current.status }
+      : null;
+    setActionError(null);
     setProject((prev) =>
       prev
         ? {
@@ -86,14 +128,37 @@ export default function ProjectPage() {
           }
         : prev
     );
+    try {
+      const response = await fetch(`/api/projects/${id}/concepts`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conceptId, approved, status: nextStatus }),
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to update concept (${response.status})`);
+      }
+    } catch (error) {
+      if (previousConcept) {
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                concepts: prev.concepts?.map((c) =>
+                  c.id === conceptId
+                    ? { ...c, approved: previousConcept.approved, status: previousConcept.status }
+                    : c
+                ),
+              }
+            : prev
+        );
+      }
+      setActionError(error instanceof Error ? error.message : 'Failed to update concept');
+    }
   };
 
   const updateContradiction = async (contradictionId: string, status: 'open' | 'explored' | 'dismissed') => {
-    await fetch(`/api/projects/${id}/contradictions`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contradictionId, status }),
-    });
+    const previousStatus = project?.contradictions?.find((c) => c.id === contradictionId)?.status;
+    setActionError(null);
     setProject((prev) =>
       prev
         ? {
@@ -104,6 +169,30 @@ export default function ProjectPage() {
           }
         : prev
     );
+    try {
+      const response = await fetch(`/api/projects/${id}/contradictions`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contradictionId, status }),
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to update contradiction (${response.status})`);
+      }
+    } catch (error) {
+      if (previousStatus) {
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                contradictions: prev.contradictions?.map((c) =>
+                  c.id === contradictionId ? { ...c, status: previousStatus } : c
+                ),
+              }
+            : prev
+        );
+      }
+      setActionError(error instanceof Error ? error.message : 'Failed to update contradiction');
+    }
   };
 
   const searchProject = async () => {
@@ -199,6 +288,16 @@ export default function ProjectPage() {
             <div className="text-gray-400 text-xs mt-1">Export work</div>
           </Link>
         </div>
+
+        {actionError && (
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="mb-6 rounded-xl border border-red-700 bg-red-900/20 p-4 text-sm text-red-300"
+          >
+            {actionError}
+          </div>
+        )}
 
         <div className="grid md:grid-cols-3 gap-6">
           {/* Tangent Tracker */}

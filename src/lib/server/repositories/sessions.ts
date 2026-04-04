@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { stringifyAiAnnotations } from '@/lib/server/mappers/ai-annotations';
 
 export const sessionsRepository = {
   listByProject(projectId: string) {
@@ -9,20 +10,20 @@ export const sessionsRepository = {
     });
   },
 
-  create(projectId: string, transcript: string, aiAnnotations: string) {
+  create(projectId: string, transcript: string, aiAnnotations: unknown) {
     return prisma.voiceSession.create({
       data: {
         projectId,
         transcript,
-        aiAnnotations,
+        aiAnnotations: stringifyAiAnnotations(aiAnnotations),
       },
     });
   },
 
-  updateAnnotations(projectId: string, sessionId: string, aiAnnotations: string) {
+  updateAnnotations(projectId: string, sessionId: string, aiAnnotations: unknown) {
     return prisma.voiceSession.updateMany({
       where: { id: sessionId, projectId },
-      data: { aiAnnotations },
+      data: { aiAnnotations: stringifyAiAnnotations(aiAnnotations) },
     });
   },
 

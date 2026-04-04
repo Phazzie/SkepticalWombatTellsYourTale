@@ -1,63 +1,23 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { generateVoicePreservedDraft, detectVoiceDrift } from '@/lib/openai';
-
-function getErrorMeta(error: unknown): { status?: number; code?: string } {
-  if (!error || typeof error !== 'object') {
-    return {};
-  }
-  const candidate = error as { status?: unknown; code?: unknown };
-  return {
-    status: typeof candidate.status === 'number' ? candidate.status : undefined,
-    code: typeof candidate.code === 'string' ? candidate.code : undefined,
-  };
-}
+import { handleRoute } from '@/lib/server/http';
+import { requireUser } from '@/lib/server/auth';
+import { requireProjectAccess } from '@/lib/server/services/project-access';
+import { validateSchema } from '@/lib/server/schema';
+import { voiceDraftRequestSchema } from '@/lib/server/schemas/api/voice-draft';
+import { generateVoiceDraft } from '@/lib/server/services/voice-draft.service';
+import { enforceRateLimit } from '@/lib/server/rate-limit';
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const { documentId, prompt } = await request.json();
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id } = await params;
+    await requireProjectAccess(id, userId);
 
-  const [sessions, document] = await Promise.all([
-    prisma.voiceSession.findMany({
-      where: { projectId: id },
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-    }),
-    documentId
-      ? prisma.document.findFirst({ where: { id: documentId, projectId: id } })
-      : Promise.resolve(null),
-  ]);
+    enforceRateLimit(`voice-draft:${userId}:${id}`, 3, 60 * 60_000);
 
-  if (documentId && !document) {
-    return NextResponse.json({ error: 'Document not found' }, { status: 404 });
-  }
-
-  const transcripts = sessions.map((s) => s.transcript);
-  const docContext = document ? document.content : '';
-
-  try {
-    const draft = await generateVoicePreservedDraft(prompt, transcripts, docContext);
-    const drift = await detectVoiceDrift(draft, transcripts);
-    return NextResponse.json({ draft, drift });
-  } catch (error) {
-    console.error('Voice draft error:', error);
-    const errorMeta = getErrorMeta(error);
-    const isMissingOpenAiKey = errorMeta.status === 401 || errorMeta.code === 'invalid_api_key';
-
-    if (isMissingOpenAiKey) {
-      return NextResponse.json(
-        { draft: 'Voice draft generation requires OpenAI API key.', drift: null },
-        { status: 503 }
-      );
-    }
-
-    const failureReason = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json(
-      { draft: `Voice draft generation failed: ${failureReason}`, drift: null },
-      { status: 500 }
-    );
-  }
+    const body = validateSchema(await request.json(), voiceDraftRequestSchema);
+    return generateVoiceDraft({ projectId: id, documentId: body.documentId || undefined, prompt: body.prompt });
+  }, { request, operation: 'projects.voiceDraft' });
 }

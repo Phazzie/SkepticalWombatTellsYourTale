@@ -3,6 +3,7 @@ import { handleRoute } from '@/lib/server/http';
 import { requireUser } from '@/lib/server/auth';
 import { requireProjectAccess } from '@/lib/server/services/project-access';
 import { notFound } from '@/lib/server/errors';
+import { parseAiAnnotations } from '@/lib/server/mappers/ai-annotations';
 
 export async function POST(
   request: Request,
@@ -50,12 +51,7 @@ export async function POST(
         content += `${session.transcript}\n\n`;
 
         if (includeAnnotations) {
-          let annotations: Array<{ type: string; text: string }> = [];
-          try {
-            annotations = JSON.parse(session.aiAnnotations || '[]') as Array<{ type: string; text: string }>;
-          } catch {
-            annotations = [];
-          }
+          const annotations = parseAiAnnotations(session.aiAnnotations);
           if (annotations.length > 0) {
             content += '### AI Notes\n\n';
             for (const ann of annotations) {
@@ -94,5 +90,5 @@ export async function POST(
         'Content-Disposition': `attachment; filename="export-${level}-${Date.now()}.md"`,
       },
     });
-  });
+  }, { request, operation: 'projects.export' });
 }

@@ -1,0 +1,49 @@
+import { notFound } from '@/lib/server/errors';
+import { AiPort } from '@/lib/server/ports/ai';
+import { QuestionStatus, QuestionsPersistencePort } from '@/lib/server/ports/questions';
+import { openAiPort } from '@/lib/server/adapters/ai/openai-ai-port';
+import { prismaQuestionsPort } from '@/lib/server/adapters/persistence/prisma-questions-port';
+
+export async function listQuestions(
+  projectId: string,
+  status: QuestionStatus | undefined,
+  deps: { persistence?: QuestionsPersistencePort } = {}
+) {
+  const persistence = deps.persistence || prismaQuestionsPort;
+  return persistence.list(projectId, status);
+}
+
+export async function updateQuestionStatus(
+  input: { projectId: string; questionId: string; status: QuestionStatus },
+  deps: { persistence?: QuestionsPersistencePort } = {}
+) {
+  const persistence = deps.persistence || prismaQuestionsPort;
+  const updated = await persistence.updateStatus(input.projectId, input.questionId, input.status);
+  if (!updated) {
+    throw notFound('Question not found');
+  }
+  return updated;
+}
+
+export async function generateQuestions(
+  projectId: string,
+  deps: { ai?: AiPort; persistence?: QuestionsPersistencePort } = {}
+) {
+  const ai = deps.ai || openAiPort;
+  const persistence = deps.persistence || prismaQuestionsPort;
+
+  const context = await persistence.getGenerationContext(projectId);
+  if (!context) {
+    throw notFound('Project not found');
+  }
+
+  const candidates = await ai.generateQuestionsFromProjectContext(
+    context.recentTranscriptContext,
+    context.documentContext
+  );
+  if (candidates.length === 0) {
+    return [];
+  }
+
+  return persistence.createGenerated(projectId, candidates);
+}

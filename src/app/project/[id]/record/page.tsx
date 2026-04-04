@@ -4,9 +4,7 @@ import { useState, useRef, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { AppHeader } from '@/components/layout/app-header';
-import { AnnotationList } from '@/components/annotations/annotation-list';
 import { AppBackLink, Card, Container, PrimaryButton, SecondaryButton, Shell, StatusMessage } from '@/components/ui/primitives';
-import { AIAnnotation } from '@/lib/types';
 
 interface SpeechRecognitionResults {
   [key: number]: { [key: number]: { transcript: string } };
@@ -29,9 +27,165 @@ interface AnalysisResult {
   questions?: string[];
   significance?: string;
   contradictions?: Array<{ description: string }>;
-  annotations?: AIAnnotation[];
+  annotations?: Array<{ text: string; type: string; reference?: string }>;
   gaps?: Array<{ description: string }>;
   voicePreservedDraft?: string;
+}
+
+const annotationColors: Record<string, string> = {
+  important: 'bg-amber-500/20 border-amber-500/50 text-amber-300',
+  connection: 'bg-blue-500/20 border-blue-500/50 text-blue-300',
+  unfinished: 'bg-orange-500/20 border-orange-500/50 text-orange-300',
+  tangent: 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300',
+  pattern: 'bg-purple-500/20 border-purple-500/50 text-purple-300',
+};
+
+const annotationIcons: Record<string, string> = {
+  important: '⚡',
+  connection: '🔗',
+  unfinished: '🧵',
+  tangent: '↪️',
+  pattern: '🔁',
+};
+
+const formatDuration = (seconds: number) => {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+};
+
+function RecordingControlCard({
+  state,
+  duration,
+  onToggle,
+}: {
+  state: RecordingState;
+  duration: number;
+  onToggle: () => void;
+}) {
+  return (
+    <Card className="mb-6 text-center">
+      <button
+        className={`mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full transition-all ${
+          state === 'recording'
+            ? 'recording-pulse bg-red-600 shadow-lg shadow-red-900'
+            : 'bg-app-accent hover:brightness-110'
+        }`}
+        onClick={onToggle}
+      >
+        <span className="text-4xl">{state === 'recording' ? '⏹' : '🎙️'}</span>
+      </button>
+
+      {state === 'recording' ? (
+        <div>
+          <div className="mb-3 flex items-center justify-center gap-1">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="waveform-bar w-1 rounded-full bg-red-500"
+                style={{ animationDelay: `${i * 0.15}s` }}
+              />
+            ))}
+          </div>
+          <p className="text-lg font-medium text-red-400">{formatDuration(duration)}</p>
+          <p className="mt-1 text-sm text-app-fg-muted">Recording... tap to stop</p>
+        </div>
+      ) : (
+        <div>
+          <p className="text-xl font-medium text-white">Tap to start talking</p>
+          <p className="mt-2 text-sm text-app-fg-muted">Don&apos;t worry about structure. Say everything.</p>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function AnalysisPanels({ analysis }: { analysis: AnalysisResult }) {
+  return (
+    <>
+      {analysis.documentSuggestion && (
+        <Card className="border-indigo-700 bg-indigo-900/30">
+          <h2 className="mb-2 font-semibold text-indigo-300">📄 Goes in: {analysis.documentSuggestion.documentName}</h2>
+          <p className="text-sm text-app-fg-muted">{analysis.documentSuggestion.reason}</p>
+        </Card>
+      )}
+
+      {analysis.significance && (
+        <Card className="border-amber-700 bg-amber-900/30">
+          <h2 className="mb-2 font-semibold text-amber-300">⚡ What the AI noticed</h2>
+          <p className="text-sm text-app-fg">{analysis.significance}</p>
+        </Card>
+      )}
+
+      {analysis.tangents && analysis.tangents.length > 0 && (
+        <Card className="border-amber-700/50">
+          <h2 className="mb-3 font-semibold text-amber-400">🧵 You dropped these threads</h2>
+          <div className="space-y-3">
+            {analysis.tangents.map((t, i) => (
+              <div key={i} className="rounded-lg bg-app-surface-muted p-3">
+                <p className="text-sm font-medium text-amber-300">{t.thread}</p>
+                {t.context && <p className="mt-1 text-xs italic text-app-fg-muted">&quot;{t.context}&quot;</p>}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {analysis.contradictions && analysis.contradictions.length > 0 && (
+        <Card className="border-red-700/50 bg-red-900/20">
+          <h2 className="mb-3 font-semibold text-red-400">⚠️ This conflicts with something</h2>
+          <div className="space-y-3">
+            {analysis.contradictions.map((c, i) => (
+              <div key={i} className="rounded-lg bg-app-surface-muted p-3">
+                <p className="text-sm text-red-300">{c.description}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {analysis.questions && analysis.questions.length > 0 && (
+        <Card>
+          <h2 className="mb-3 font-semibold text-white">❓ Questions for next time</h2>
+          <ul className="space-y-2">
+            {analysis.questions.map((q, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-indigo-300">
+                <span className="mt-0.5 text-app-fg-muted">{i + 1}.</span>
+                {q}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {analysis.voicePreservedDraft && (
+        <Card className="border-green-700/50">
+          <h2 className="mb-3 font-semibold text-green-400">✍️ In your voice</h2>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-app-fg">{analysis.voicePreservedDraft}</p>
+        </Card>
+      )}
+
+      {analysis.annotations && analysis.annotations.length > 0 && (
+        <Card className="border-purple-700/50">
+          <h2 className="mb-3 font-semibold text-purple-400">🤖 AI Coach Notes</h2>
+          <div className="space-y-2">
+            {analysis.annotations.map((ann, i) => (
+              <div
+                key={`${ann.type}:${ann.reference ?? ''}:${ann.text}:${i}`}
+                className={`rounded-lg border px-3 py-2 text-sm ${
+                  annotationColors[ann.type] || 'border-app-border bg-app-surface-muted text-app-fg'
+                }`}
+              >
+                <span className="mr-2">{annotationIcons[ann.type] || '💡'}</span>
+                {ann.text}
+                {ann.reference && <span className="ml-2 text-xs opacity-70">({ann.reference})</span>}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+    </>
+  );
 }
 
 export default function RecordPage() {
@@ -155,12 +309,6 @@ export default function RecordPage() {
     }
   }, []);
 
-  const formatDuration = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, '0')}`;
-  };
-
   return (
     <Shell>
       <Container>
@@ -179,39 +327,11 @@ export default function RecordPage() {
         )}
 
         {(state === 'idle' || state === 'recording') && (
-          <Card className="mb-6 text-center">
-            <button
-              className={`mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full transition-all ${
-                state === 'recording'
-                  ? 'recording-pulse bg-red-600 shadow-lg shadow-red-900'
-                  : 'bg-app-accent hover:brightness-110'
-              }`}
-              onClick={state === 'idle' ? startRecording : stopRecording}
-            >
-              <span className="text-4xl">{state === 'recording' ? '⏹' : '🎙️'}</span>
-            </button>
-
-            {state === 'recording' ? (
-              <div>
-                <div className="mb-3 flex items-center justify-center gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="waveform-bar w-1 rounded-full bg-red-500"
-                      style={{ animationDelay: `${i * 0.15}s` }}
-                    />
-                  ))}
-                </div>
-                <p className="text-lg font-medium text-red-400">{formatDuration(duration)}</p>
-                <p className="mt-1 text-sm text-app-fg-muted">Recording... tap to stop</p>
-              </div>
-            ) : (
-              <div>
-                <p className="text-xl font-medium text-white">Tap to start talking</p>
-                <p className="mt-2 text-sm text-app-fg-muted">Don&apos;t worry about structure. Say everything.</p>
-              </div>
-            )}
-          </Card>
+          <RecordingControlCard
+            state={state}
+            duration={duration}
+            onToggle={state === 'idle' ? startRecording : stopRecording}
+          />
         )}
 
         {state === 'recording' && liveTranscript && (
@@ -243,76 +363,7 @@ export default function RecordPage() {
             </Card>
 
             {analysis && (
-              <>
-                {analysis.documentSuggestion && (
-                  <Card className="border-indigo-700 bg-indigo-900/30">
-                    <h2 className="mb-2 font-semibold text-indigo-300">📄 Goes in: {analysis.documentSuggestion.documentName}</h2>
-                    <p className="text-sm text-app-fg-muted">{analysis.documentSuggestion.reason}</p>
-                  </Card>
-                )}
-
-                {analysis.significance && (
-                  <Card className="border-amber-700 bg-amber-900/30">
-                    <h2 className="mb-2 font-semibold text-amber-300">⚡ What the AI noticed</h2>
-                    <p className="text-sm text-app-fg">{analysis.significance}</p>
-                  </Card>
-                )}
-
-                {analysis.tangents && analysis.tangents.length > 0 && (
-                  <Card className="border-amber-700/50">
-                    <h2 className="mb-3 font-semibold text-amber-400">🧵 You dropped these threads</h2>
-                    <div className="space-y-3">
-                      {analysis.tangents.map((t, i) => (
-                        <div key={i} className="rounded-lg bg-app-surface-muted p-3">
-                          <p className="text-sm font-medium text-amber-300">{t.thread}</p>
-                          {t.context && <p className="mt-1 text-xs italic text-app-fg-muted">&quot;{t.context}&quot;</p>}
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                )}
-
-                {analysis.contradictions && analysis.contradictions.length > 0 && (
-                  <Card className="border-red-700/50 bg-red-900/20">
-                    <h2 className="mb-3 font-semibold text-red-400">⚠️ This conflicts with something</h2>
-                    <div className="space-y-3">
-                      {analysis.contradictions.map((c, i) => (
-                        <div key={i} className="rounded-lg bg-app-surface-muted p-3">
-                          <p className="text-sm text-red-300">{c.description}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </Card>
-                )}
-
-                {analysis.questions && analysis.questions.length > 0 && (
-                  <Card>
-                    <h2 className="mb-3 font-semibold text-white">❓ Questions for next time</h2>
-                    <ul className="space-y-2">
-                      {analysis.questions.map((q, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-indigo-300">
-                          <span className="mt-0.5 text-app-fg-muted">{i + 1}.</span>
-                          {q}
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                )}
-
-                {analysis.voicePreservedDraft && (
-                  <Card className="border-green-700/50">
-                    <h2 className="mb-3 font-semibold text-green-400">✍️ In your voice</h2>
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-app-fg">{analysis.voicePreservedDraft}</p>
-                  </Card>
-                )}
-
-                {analysis.annotations && analysis.annotations.length > 0 && (
-                  <Card className="border-purple-700/50">
-                    <h2 className="mb-3 font-semibold text-purple-400">🤖 AI Coach Notes</h2>
-                    <AnnotationList annotations={analysis.annotations} showReference />
-                  </Card>
-                )}
-              </>
+              <AnalysisPanels analysis={analysis} />
             )}
 
             <div className="flex gap-4">
