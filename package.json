@@ -8,10 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "verify": "npm run lint && npm run build",
-    "test": "echo \"No standalone test suite configured\"",
+    "test": "npm run lint && npm run build",
     "db:bootstrap": "DATABASE_URL='file:./dev.db' npx prisma db push && npx prisma generate",
-    "preflight": "npm ci && npm run db:bootstrap && npm run lint && npm run build",
-    "verify:postchange": "npm run verify && npm run test",
+    "preflight": "npm ci && npm run db:bootstrap && npm run verify",
+    "verify:postchange": "npm run verify",
     "security:audit": "npm audit --audit-level=high",
     "agent:run": "npm run preflight && npm run verify:postchange"
   },

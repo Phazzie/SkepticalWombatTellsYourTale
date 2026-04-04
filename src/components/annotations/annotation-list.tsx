@@ -41,10 +41,10 @@ interface AnnotationListProps {
 
 function getAnnotationKeyBase(annotation: AIAnnotation): string {
   return [
-    annotation.timestamp ?? '',
-    annotation.type,
-    annotation.reference ?? '',
-    annotation.text,
+    JSON.stringify(annotation.timestamp ?? ''),
+    JSON.stringify(annotation.type),
+    JSON.stringify(annotation.reference ?? ''),
+    JSON.stringify(annotation.text),
   ].join('|');
 }
 
