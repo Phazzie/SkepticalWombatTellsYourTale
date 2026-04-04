@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db';
 import { handleRoute } from '@/lib/server/http';
 import { requireUser } from '@/lib/server/auth';
 import { requireProjectAccess } from '@/lib/server/services/project-access';
+import { notFound } from '@/lib/server/errors';
 
 export async function POST(
   request: Request,
@@ -26,7 +27,7 @@ export async function POST(
     });
 
     if (!project) {
-      throw new Error('Project not found');
+      throw notFound('Project not found');
     }
 
     let content = `# ${project.name}\n`;

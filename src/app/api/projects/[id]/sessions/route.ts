@@ -1,7 +1,6 @@
 import { handleRoute } from '@/lib/server/http';
 import { requireUser } from '@/lib/server/auth';
 import { requireProjectAccess } from '@/lib/server/services/project-access';
-import { assertString } from '@/lib/server/validation';
 import { safeParseJson } from '@/lib/server/json';
 import { sessionsRepository } from '@/lib/server/repositories/sessions';
 

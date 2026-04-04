@@ -3,6 +3,7 @@ import { analyzeTranscript } from '@/lib/openai';
 import { handleRoute } from '@/lib/server/http';
 import { requireUser } from '@/lib/server/auth';
 import { requireProjectAccess } from '@/lib/server/services/project-access';
+import { notFound } from '@/lib/server/errors';
 import { assertString } from '@/lib/server/validation';
 import { analysisRepository } from '@/lib/server/repositories/analysis';
 import { sessionsRepository } from '@/lib/server/repositories/sessions';
@@ -32,7 +33,7 @@ export async function POST(
     });
 
     if (!project) {
-      throw new Error('Project not found');
+      throw notFound('Project not found');
     }
 
     const projectContext = `Project: "${project.name}"\n${project.description || ''}`;

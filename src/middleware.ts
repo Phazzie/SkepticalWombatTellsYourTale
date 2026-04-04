@@ -1,5 +1,11 @@
-export { default } from 'next-auth/middleware';
+import { withAuth } from 'next-auth/middleware';
+
+export default withAuth({
+  pages: {
+    signIn: '/sign-in',
+  },
+});
 
 export const config = {
-  matcher: ['/api/projects/:path*', '/api/transcribe'],
+  matcher: ['/api/projects/:path*', '/api/transcribe', '/project/:path*', '/'],
 };

@@ -1,5 +1,6 @@
 import { handleRoute } from '@/lib/server/http';
 import { requireUser, ensureProjectAccess } from '@/lib/server/auth';
+import { forbidden } from '@/lib/server/errors';
 import { asOptionalString, assertString } from '@/lib/server/validation';
 import { projectsRepository } from '@/lib/server/repositories/projects';
 import { projectsService } from '@/lib/server/services/projects';
@@ -54,7 +55,7 @@ export async function DELETE(
     const project = await ensureProjectAccess(id, userId);
 
     if (project.userId !== userId) {
-      throw new Error('Only project owner can delete project');
+      throw forbidden('Only project owner can delete project');
     }
 
     await projectsRepository.deleteProject(id);

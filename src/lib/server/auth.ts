@@ -1,17 +1,26 @@
-import { getServerSession } from 'next-auth';
+import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db';
 import { forbidden, notFound, unauthorized } from '@/lib/server/errors';
 
 export async function requireUser() {
   const session = await getServerSession(authOptions);
-  const userId = session?.user?.id;
+  const email = session?.user?.email;
 
-  if (!userId) {
+  if (!email) {
     throw unauthorized();
   }
 
-  return { userId, session };
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
+
+  if (!user) {
+    throw unauthorized();
+  }
+
+  return { userId: user.id, session };
 }
 
 export async function ensureProjectAccess(projectId: string, userId: string) {
