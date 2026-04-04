@@ -45,7 +45,7 @@ export async function POST(
       );
     }
 
-    const failureReason = error instanceof Error && error.message ? error.message : 'Unknown error';
+    const failureReason = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
       { draft: `Voice draft generation failed: ${failureReason}`, drift: null },
       { status: 500 }

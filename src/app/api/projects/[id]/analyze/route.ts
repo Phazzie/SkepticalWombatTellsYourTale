@@ -6,10 +6,7 @@ const VALID_CONCEPT_STATUSES = ['developing', 'complete', 'contradicted'] as con
 type ConceptStatus = (typeof VALID_CONCEPT_STATUSES)[number];
 
 function isConceptStatus(status: unknown): status is ConceptStatus {
-  return (
-    typeof status === 'string' &&
-    VALID_CONCEPT_STATUSES.includes(status as (typeof VALID_CONCEPT_STATUSES)[number])
-  );
+  return typeof status === 'string' && VALID_CONCEPT_STATUSES.some((value) => value === status);
 }
 
 function normalizeConceptStatus(status: unknown): ConceptStatus {
