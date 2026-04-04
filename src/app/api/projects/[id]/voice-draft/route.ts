@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { generateVoicePreservedDraft, detectVoiceDrift } from '@/lib/openai';
 
-function getErrorMeta(error: unknown): { status?: unknown; code?: unknown } | null {
+function getErrorMeta(error: unknown): { status?: unknown; code?: unknown } {
   if (!error || typeof error !== 'object') {
-    return null;
+    return {};
   }
   const candidate = error as { status?: unknown; code?: unknown };
   return { status: candidate.status, code: candidate.code };
@@ -42,7 +42,7 @@ export async function POST(
   } catch (error) {
     console.error('Voice draft error:', error);
     const errorMeta = getErrorMeta(error);
-    const isMissingOpenAiKey = errorMeta?.status === 401 || errorMeta?.code === 'invalid_api_key';
+    const isMissingOpenAiKey = errorMeta.status === 401 || errorMeta.code === 'invalid_api_key';
 
     if (isMissingOpenAiKey) {
       return NextResponse.json(

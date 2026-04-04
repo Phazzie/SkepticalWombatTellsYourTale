@@ -135,11 +135,11 @@ export async function POST(
     }
 
     if (analysis.concepts && analysis.concepts.length > 0) {
-      const suggestedDocumentName =
-        analysis.documentSuggestion?.documentName ||
-        (analysis.documentSuggestion?.documentId
-          ? project.documents.find((d) => d.id === analysis.documentSuggestion?.documentId)?.name || null
-          : null);
+      const suggestedDocumentId = analysis.documentSuggestion?.documentId;
+      const suggestedDocumentById = suggestedDocumentId
+        ? project.documents.find((d) => d.id === suggestedDocumentId)
+        : null;
+      const suggestedDocumentName = analysis.documentSuggestion?.documentName || suggestedDocumentById?.name || null;
 
       await prisma.concept.createMany({
         data: analysis.concepts.map((c) => {
