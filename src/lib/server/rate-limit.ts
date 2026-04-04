@@ -19,9 +19,18 @@ function evictExpiredBuckets(now: number) {
 }
 
 function evictOldestBucket() {
-  const first = buckets.keys().next();
-  if (!first.done) {
-    buckets.delete(first.value);
+  let oldestKey: string | null = null;
+  let oldestResetAt = Number.POSITIVE_INFINITY;
+
+  for (const [key, bucket] of buckets) {
+    if (bucket.resetAt < oldestResetAt) {
+      oldestResetAt = bucket.resetAt;
+      oldestKey = key;
+    }
+  }
+
+  if (oldestKey) {
+    buckets.delete(oldestKey);
   }
 }
 
