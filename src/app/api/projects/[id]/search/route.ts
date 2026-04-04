@@ -19,7 +19,7 @@ export async function GET(
       orderBy: { updatedAt: 'desc' },
       take: 30,
     }),
-    prisma.session.findMany({
+    prisma.voiceSession.findMany({
       where: { projectId: id, transcript: contains },
       orderBy: { createdAt: 'desc' },
       take: 30,
@@ -66,4 +66,3 @@ export async function GET(
 
   return NextResponse.json({ query: q, results });
 }
-

@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     validatedQuestionId = question?.id ?? null;
   }
 
-  const session = await prisma.session.create({
+  const session = await prisma.voiceSession.create({
     data: {
       projectId,
       questionId: validatedQuestionId,

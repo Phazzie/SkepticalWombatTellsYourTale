@@ -18,7 +18,7 @@ export async function POST(
   const { documentId, prompt } = await request.json();
 
   const [sessions, document] = await Promise.all([
-    prisma.session.findMany({
+    prisma.voiceSession.findMany({
       where: { projectId: id },
       orderBy: { createdAt: 'desc' },
       take: 10,

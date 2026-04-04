@@ -1,43 +1,41 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-
-function safeParseJson<T>(value: string, fallback: T): T {
-  try {
-    return JSON.parse(value);
-  } catch {
-    return fallback;
-  }
-}
+import { handleRoute } from '@/lib/server/http';
+import { requireUser } from '@/lib/server/auth';
+import { requireProjectAccess } from '@/lib/server/services/project-access';
+import { safeParseJson } from '@/lib/server/json';
+import { sessionsRepository } from '@/lib/server/repositories/sessions';
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const sessions = await prisma.session.findMany({
-    where: { projectId: id },
-    orderBy: { createdAt: 'desc' },
-    include: { tangents: true, promptedBy: true },
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id } = await params;
+
+    await requireProjectAccess(id, userId);
+
+    const sessions = await sessionsRepository.listByProject(id);
+    return sessions.map((s) => ({
+      ...s,
+      aiAnnotations: safeParseJson(s.aiAnnotations, []),
+    }));
   });
-  const parsed = sessions.map((s) => ({
-    ...s,
-    aiAnnotations: safeParseJson(s.aiAnnotations, []),
-  }));
-  return NextResponse.json(parsed);
 }
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const data = await request.json();
-  const session = await prisma.session.create({
-    data: {
-      projectId: id,
-      transcript: data.transcript || '',
-      aiAnnotations: JSON.stringify(data.aiAnnotations || []),
-    },
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id } = await params;
+
+    await requireProjectAccess(id, userId);
+
+    const data = (await request.json()) as { transcript?: unknown; aiAnnotations?: unknown };
+    const transcript = typeof data.transcript === 'string' ? data.transcript : '';
+    const aiAnnotations = Array.isArray(data.aiAnnotations) ? data.aiAnnotations : [];
+
+    return sessionsRepository.create(id, transcript, JSON.stringify(aiAnnotations));
   });
-  return NextResponse.json(session);
 }

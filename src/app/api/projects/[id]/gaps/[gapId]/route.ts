@@ -1,26 +1,27 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { handleRoute } from '@/lib/server/http';
+import { requireUser } from '@/lib/server/auth';
+import { requireProjectAccess } from '@/lib/server/services/project-access';
+import { assertBoolean } from '@/lib/server/validation';
+import { notFound } from '@/lib/server/errors';
+import { analysisRepository } from '@/lib/server/repositories/analysis';
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string; gapId: string }> }
 ) {
-  const { id, gapId } = await params;
-  const body = await request.json();
-  const { resolved } = body as { resolved?: unknown };
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id, gapId } = await params;
+    await requireProjectAccess(id, userId);
 
-  if (typeof resolved !== 'boolean') {
-    return NextResponse.json(
-      { error: 'Invalid payload. Only `resolved` boolean is allowed.' },
-      { status: 400 }
-    );
-  }
+    const body = (await request.json()) as { resolved?: unknown };
+    const resolved = assertBoolean(body.resolved, 'resolved');
 
-  const existing = await prisma.gap.findFirst({ where: { id: gapId, projectId: id } });
-  if (!existing) {
-    return NextResponse.json({ error: 'Gap not found' }, { status: 404 });
-  }
+    const result = await analysisRepository.updateGapResolved(id, gapId, resolved);
+    if (result.count === 0) {
+      throw notFound('Gap not found');
+    }
 
-  const gap = await prisma.gap.update({ where: { id: gapId }, data: { resolved } });
-  return NextResponse.json(gap);
+    return { success: true };
+  });
 }

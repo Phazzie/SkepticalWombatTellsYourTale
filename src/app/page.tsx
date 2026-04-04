@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { signOut } from 'next-auth/react';
 import { Project } from '@/lib/types';
+import { AppHeader } from '@/components/layout/app-header';
+import { Card, Container, PrimaryButton, SecondaryButton, Shell, StatusMessage, TextArea, TextInput } from '@/components/ui/primitives';
 
 export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -11,123 +14,139 @@ export default function HomePage() {
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/projects')
-      .then((r) => r.json())
+      .then(async (r) => {
+        if (!r.ok) throw new Error('Failed to load projects');
+        return r.json();
+      })
       .then((data) => {
         setProjects(data);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : 'Failed to load projects');
+        setLoading(false);
+      });
   }, []);
 
   const createProject = async () => {
     if (!newName.trim()) return;
     setCreating(true);
-    const res = await fetch('/api/projects', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newName, description: newDesc }),
-    });
-    const project = await res.json();
-    setProjects((prev) => [project, ...prev]);
-    setNewName('');
-    setNewDesc('');
-    setShowNew(false);
-    setCreating(false);
+    setError(null);
+    try {
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName, description: newDesc }),
+      });
+
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        throw new Error(data.error || 'Could not create project');
+      }
+
+      const project = await res.json();
+      setProjects((prev) => [project, ...prev]);
+      setNewName('');
+      setNewDesc('');
+      setShowNew(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not create project');
+    } finally {
+      setCreating(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
-      <div className="max-w-4xl mx-auto px-6 py-12">
-        <div className="mb-10">
-          <h1 className="text-4xl font-bold text-white mb-2">SkepticalWombat</h1>
-          <p className="text-gray-400 text-lg">Tell Your Tale. The AI that makes your thinking harder.</p>
-        </div>
+    <Shell>
+      <Container>
+        <AppHeader
+          title="SkepticalWombat"
+          subtitle="Tell Your Tale. The AI that makes your thinking harder."
+          actions={
+            <div className="flex items-center gap-2">
+              <SecondaryButton onClick={() => signOut({ callbackUrl: '/sign-in' })}>
+                Sign out
+              </SecondaryButton>
+            </div>
+          }
+        />
 
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-200">Your Projects</h2>
-          <button
-            onClick={() => setShowNew(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            + New Project
-          </button>
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-white">Your Projects</h2>
+          <PrimaryButton onClick={() => setShowNew(true)}>+ New Project</PrimaryButton>
         </div>
 
         {showNew && (
-          <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 mb-6">
+          <Card className="mb-6">
             <h3 className="text-lg font-semibold mb-4">New Project</h3>
-            <input
+            <TextInput
               type="text"
               placeholder="Project name..."
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 mb-3 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+              className="mb-3"
               onKeyDown={(e) => e.key === 'Enter' && createProject()}
               autoFocus
             />
-            <textarea
+            <TextArea
               placeholder="What is this project? (optional)"
               value={newDesc}
               onChange={(e) => setNewDesc(e.target.value)}
               rows={3}
-              className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 mb-4 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 resize-none"
+              className="mb-4 resize-none"
             />
             <div className="flex gap-3">
-              <button
-                onClick={createProject}
-                disabled={creating || !newName.trim()}
-                className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-6 py-2 rounded-lg font-medium transition-colors"
-              >
+              <PrimaryButton onClick={createProject} disabled={creating || !newName.trim()}>
                 {creating ? 'Creating...' : 'Create'}
-              </button>
-              <button
-                onClick={() => setShowNew(false)}
-                className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
-              >
+              </PrimaryButton>
+              <SecondaryButton onClick={() => setShowNew(false)}>
                 Cancel
-              </button>
+              </SecondaryButton>
             </div>
-          </div>
+          </Card>
         )}
 
+        {error && <StatusMessage state="error" title="Something went wrong" description={error} />}
+
         {loading ? (
-          <div className="text-gray-500 text-center py-12">Loading projects...</div>
+          <StatusMessage state="loading" title="Loading projects..." />
         ) : projects.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
+          <Card className="text-center py-16">
             <div className="text-6xl mb-4">🎙️</div>
-            <p className="text-xl mb-2">No projects yet</p>
-            <p className="text-gray-600">Create your first project to start talking.</p>
-          </div>
+            <p className="text-xl mb-2 text-white">No projects yet</p>
+            <p className="text-app-fg-muted">Create your first project to start talking.</p>
+          </Card>
         ) : (
           <div className="grid gap-4">
             {projects.map((project) => (
               <Link
                 key={project.id}
                 href={`/project/${project.id}`}
-                className="block bg-gray-900 border border-gray-700 hover:border-indigo-500 rounded-xl p-6 transition-colors group"
+                className="group block rounded-2xl border border-app-border bg-app-surface p-6 shadow-app transition duration-200 hover:border-app-border-strong hover:-translate-y-0.5"
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-white group-hover:text-indigo-400 transition-colors">
+                    <h3 className="text-lg font-semibold text-white transition-colors group-hover:text-indigo-300">
                       {project.name}
                     </h3>
                     {project.description && (
-                      <p className="text-gray-400 mt-1 text-sm">{project.description}</p>
+                      <p className="mt-1 text-sm text-app-fg-muted">{project.description}</p>
                     )}
-                    <p className="text-gray-600 text-xs mt-2">
+                    <p className="mt-2 text-xs text-app-fg-muted">
                       Created {new Date(project.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <span className="text-gray-600 group-hover:text-indigo-400 transition-colors">→</span>
+                  <span className="text-app-fg-muted transition-colors group-hover:text-indigo-300">→</span>
                 </div>
               </Link>
             ))}
           </div>
         )}
-      </div>
-    </div>
+      </Container>
+    </Shell>
   );
 }
