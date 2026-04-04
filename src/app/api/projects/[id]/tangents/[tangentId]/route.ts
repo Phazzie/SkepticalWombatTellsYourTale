@@ -1,32 +1,33 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { handleRoute } from '@/lib/server/http';
+import { requireUser } from '@/lib/server/auth';
+import { requireProjectAccess } from '@/lib/server/services/project-access';
+import { badRequest, notFound } from '@/lib/server/errors';
+import { analysisRepository } from '@/lib/server/repositories/analysis';
 
 const VALID_STATUSES = ['pending', 'resolved', 'dismissed'] as const;
-type TangentStatus = typeof VALID_STATUSES[number];
+type TangentStatus = (typeof VALID_STATUSES)[number];
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string; tangentId: string }> }
 ) {
-  const { id, tangentId } = await params;
-  const body = await request.json();
-  const { status } = body as { status?: unknown };
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id, tangentId } = await params;
+    await requireProjectAccess(id, userId);
 
-  if (!status || !VALID_STATUSES.includes(status as TangentStatus)) {
-    return NextResponse.json(
-      { error: `Invalid payload. \`status\` must be one of: ${VALID_STATUSES.join(', ')}` },
-      { status: 400 }
-    );
-  }
+    const body = (await request.json()) as { status?: unknown };
+    const status = body.status;
 
-  const existing = await prisma.tangent.findFirst({ where: { id: tangentId, projectId: id } });
-  if (!existing) {
-    return NextResponse.json({ error: 'Tangent not found' }, { status: 404 });
-  }
+    if (!status || !VALID_STATUSES.includes(status as TangentStatus)) {
+      throw badRequest(`Invalid payload. \`status\` must be one of: ${VALID_STATUSES.join(', ')}`);
+    }
 
-  const tangent = await prisma.tangent.update({
-    where: { id: tangentId },
-    data: { status: status as TangentStatus },
+    const result = await analysisRepository.updateTangentStatus(id, tangentId, status as TangentStatus);
+    if (result.count === 0) {
+      throw notFound('Tangent not found');
+    }
+
+    return { success: true };
   });
-  return NextResponse.json(tangent);
 }

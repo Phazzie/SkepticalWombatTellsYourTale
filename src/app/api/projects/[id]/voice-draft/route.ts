@@ -1,37 +1,47 @@
-import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { generateVoicePreservedDraft } from '@/lib/openai';
+import { handleRoute } from '@/lib/server/http';
+import { requireUser } from '@/lib/server/auth';
+import { requireProjectAccess } from '@/lib/server/services/project-access';
+import { assertString } from '@/lib/server/validation';
+import { notFound } from '@/lib/server/errors';
+import { sessionsRepository } from '@/lib/server/repositories/sessions';
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const { documentId, prompt } = await request.json();
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id } = await params;
+    await requireProjectAccess(id, userId);
 
-  const [sessions, document] = await Promise.all([
-    prisma.session.findMany({
-      where: { projectId: id },
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-    }),
-    documentId
-      ? prisma.document.findFirst({ where: { id: documentId, projectId: id } })
-      : Promise.resolve(null),
-  ]);
+    const body = (await request.json()) as { documentId?: unknown; prompt?: unknown };
+    const prompt = assertString(body.prompt, 'prompt', { min: 1, max: 2000 });
+    const documentId = typeof body.documentId === 'string' && body.documentId.trim() ? body.documentId : null;
 
-  if (documentId && !document) {
-    return NextResponse.json({ error: 'Document not found' }, { status: 404 });
-  }
+    const [sessions, document] = await Promise.all([
+      sessionsRepository.listRecentByProject(id, 10),
+      documentId
+        ? prisma.document.findFirst({ where: { id: documentId, projectId: id } })
+        : Promise.resolve(null),
+    ]);
 
-  const transcripts = sessions.map((s) => s.transcript);
-  const docContext = document ? document.content : '';
+    if (documentId && !document) {
+      throw notFound('Document not found');
+    }
 
-  try {
-    const draft = await generateVoicePreservedDraft(prompt, transcripts, docContext);
-    return NextResponse.json({ draft });
-  } catch (error) {
-    console.error('Voice draft error:', error);
-    return NextResponse.json({ draft: 'Voice draft generation requires OpenAI API key.' });
-  }
+    try {
+      const draft = await generateVoicePreservedDraft(
+        prompt,
+        sessions.map((s) => s.transcript),
+        document ? document.content : ''
+      );
+
+      return { draft };
+    } catch (error) {
+      console.error('Voice draft error:', error);
+      return { draft: 'Voice draft generation requires OpenAI API key.' };
+    }
+  });
 }
