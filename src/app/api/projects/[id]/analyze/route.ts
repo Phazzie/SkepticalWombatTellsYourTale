@@ -122,15 +122,21 @@ export async function POST(
 
     if (analysis.concepts && analysis.concepts.length > 0) {
       await prisma.concept.createMany({
-        data: analysis.concepts.map((c) => ({
+        data: analysis.concepts.map((c) => {
+          const linkedDocumentId = c.linkedDocument
+            ? project.documents.find((d) => d.id === c.linkedDocument || d.name === c.linkedDocument)?.id
+            : analysis.documentSuggestion?.documentId || null;
+
+          return {
           projectId: id,
           name: c.name,
           definition: c.definition,
           sourceSession: c.sourceSession || sessionId,
-          linkedDocument: c.linkedDocument || analysis.documentSuggestion?.documentName || null,
-          status: c.status || 'developing',
+          linkedDocument: linkedDocumentId,
+          status: c.status,
           approved: false,
-        })),
+          };
+        }),
       });
     }
 

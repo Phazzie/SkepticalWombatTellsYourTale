@@ -60,17 +60,19 @@ export default function ProjectPage() {
   };
 
   const updateConcept = async (conceptId: string, approved: boolean) => {
+    const current = project?.concepts?.find((c) => c.id === conceptId);
+    const nextStatus = approved ? 'complete' : (current?.status === 'complete' ? 'developing' : current?.status || 'developing');
     await fetch(`/api/projects/${id}/concepts`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ conceptId, approved, status: approved ? 'complete' : 'developing' }),
+      body: JSON.stringify({ conceptId, approved, status: nextStatus }),
     });
     setProject((prev) =>
       prev
         ? {
             ...prev,
             concepts: prev.concepts?.map((c) =>
-              c.id === conceptId ? { ...c, approved, status: approved ? 'complete' : c.status } : c
+              c.id === conceptId ? { ...c, approved, status: nextStatus } : c
             ),
           }
         : prev

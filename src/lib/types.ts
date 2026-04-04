@@ -102,7 +102,7 @@ export interface AnalysisResult {
     definition: string;
     sourceSession?: string;
     linkedDocument?: string;
-    status?: 'developing' | 'complete' | 'contradicted';
+    status: 'developing' | 'complete' | 'contradicted';
   }>;
   annotations: AIAnnotation[];
   significance?: string;
