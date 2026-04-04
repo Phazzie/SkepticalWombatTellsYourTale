@@ -112,10 +112,18 @@ export default function ProjectPage() {
       return;
     }
     setSearching(true);
-    const res = await fetch(`/api/projects/${id}/search?q=${encodeURIComponent(searchTerm)}`);
-    const data = await res.json();
-    setSearchResults(data.results || []);
-    setSearching(false);
+    try {
+      const res = await fetch(`/api/projects/${id}/search?q=${encodeURIComponent(searchTerm)}`);
+      if (!res.ok) {
+        throw new Error(`Search request failed with status ${res.status}`);
+      }
+      const data = await res.json();
+      setSearchResults(data.results || []);
+    } catch {
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
   };
 
   if (loading) {

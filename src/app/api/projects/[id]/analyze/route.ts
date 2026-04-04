@@ -2,6 +2,15 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { analyzeTranscript } from '@/lib/openai';
 
+const VALID_CONCEPT_STATUSES = new Set(['developing', 'complete', 'contradicted'] as const);
+
+function normalizeConceptStatus(status: unknown): 'developing' | 'complete' | 'contradicted' {
+  if (typeof status === 'string' && VALID_CONCEPT_STATUSES.has(status as never)) {
+    return status as 'developing' | 'complete' | 'contradicted';
+  }
+  return 'developing';
+}
+
 function buildAugmentedProjectContext(input: {
   projectName: string;
   projectDescription?: string | null;
@@ -123,7 +132,7 @@ export async function POST(
     if (analysis.concepts && analysis.concepts.length > 0) {
       await prisma.concept.createMany({
         data: analysis.concepts.map((c) => {
-          const linkedDocumentRef = c.linkedDocument || analysis.documentSuggestion?.documentId || null;
+          const linkedDocumentRef = c.linkedDocument || analysis.documentSuggestion?.documentName || null;
 
           return {
             projectId: id,
@@ -131,7 +140,7 @@ export async function POST(
             definition: c.definition,
             sourceSession: c.sourceSession || sessionId,
             linkedDocument: linkedDocumentRef,
-            status: c.status,
+            status: normalizeConceptStatus(c.status),
             approved: false,
           };
         }),

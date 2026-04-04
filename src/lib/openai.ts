@@ -99,7 +99,7 @@ Return a JSON object with this exact structure:
       "definition": "one-line definition",
       "sourceSession": "session id",
       "linkedDocument": "document name if relevant",
-      "status": "developing|complete|contradicted"
+      "status": "must be one of: developing, complete, contradicted"
     }
   ],
   "annotations": [
@@ -193,11 +193,19 @@ Return JSON:
     temperature: 0.3,
   });
 
-  const result = JSON.parse(response.choices[0].message.content || '{}');
+  let result: unknown = {};
+  try {
+    result = JSON.parse(response.choices[0].message.content || '{}');
+  } catch {
+    result = {};
+  }
+
+  const parsed = (result && typeof result === 'object' ? result : {}) as Record<string, unknown>;
   return {
-    hasDrift: Boolean(result.hasDrift),
-    details: typeof result.details === 'string' ? result.details : '',
-    rewriteSuggestion: typeof result.rewriteSuggestion === 'string' ? result.rewriteSuggestion : undefined,
+    hasDrift: Boolean(parsed.hasDrift),
+    details: typeof parsed.details === 'string' ? parsed.details : '',
+    rewriteSuggestion:
+      typeof parsed.rewriteSuggestion === 'string' ? parsed.rewriteSuggestion : undefined,
   };
 }
 

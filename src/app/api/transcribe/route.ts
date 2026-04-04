@@ -22,18 +22,27 @@ export async function POST(request: Request) {
     transcript = '[Transcription requires OpenAI API key — raw audio saved]';
   }
 
+  let validatedQuestionId: string | null = null;
+  if (typeof questionId === 'string' && questionId) {
+    const question = await prisma.question.findFirst({
+      where: { id: questionId, projectId },
+      select: { id: true },
+    });
+    validatedQuestionId = question?.id ?? null;
+  }
+
   const session = await prisma.session.create({
     data: {
       projectId,
-      questionId: typeof questionId === 'string' && questionId ? questionId : null,
+      questionId: validatedQuestionId,
       transcript,
       aiAnnotations: '[]',
     },
   });
 
-  if (typeof questionId === 'string' && questionId) {
+  if (validatedQuestionId) {
     await prisma.question.updateMany({
-      where: { id: questionId, projectId },
+      where: { id: validatedQuestionId, projectId },
       data: { status: 'answered' },
     });
   }

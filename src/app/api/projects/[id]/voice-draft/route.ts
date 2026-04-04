@@ -33,6 +33,21 @@ export async function POST(
     return NextResponse.json({ draft, drift });
   } catch (error) {
     console.error('Voice draft error:', error);
-    return NextResponse.json({ draft: 'Voice draft generation requires OpenAI API key.', drift: null });
+    const errorMessage =
+      error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+    const isMissingOpenAiKey =
+      errorMessage.includes('openai api key') ||
+      errorMessage.includes('api key') ||
+      errorMessage.includes('missing openai') ||
+      errorMessage.includes('openai_key');
+
+    if (isMissingOpenAiKey) {
+      return NextResponse.json(
+        { draft: 'Voice draft generation requires OpenAI API key.', drift: null },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ draft: 'Voice draft generation failed.', drift: null }, { status: 500 });
   }
 }
