@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { stringifySessionRefs } from '@/lib/server/mappers/session-refs';
 
 export const analysisRepository = {
   async createTangents(projectId: string, sessionId: string, tangents: Array<{ thread: string; context: string }>) {
@@ -20,7 +21,7 @@ export const analysisRepository = {
       data: patterns.map((p) => ({
         projectId,
         description: p.description,
-        sessionRefs: JSON.stringify(p.sessionRefs),
+        sessionRefs: stringifySessionRefs(p.sessionRefs),
         acknowledged: false,
       })),
     });

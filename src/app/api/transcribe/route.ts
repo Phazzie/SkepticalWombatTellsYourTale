@@ -1,51 +1,34 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { transcribeAudio } from '@/lib/openai';
+import { handleRoute } from '@/lib/server/http';
+import { requireUser } from '@/lib/server/auth';
+import { requireProjectAccess } from '@/lib/server/services/project-access';
+import { badRequest } from '@/lib/server/errors';
+import { transcribeAndCreateSession } from '@/lib/server/services/transcription.service';
+import { enforceRateLimit } from '@/lib/server/rate-limit';
 
 export async function POST(request: Request) {
-  const formData = await request.formData();
-  const audioFile = formData.get('audio');
-  const projectId = formData.get('projectId');
-  const questionId = formData.get('questionId');
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
 
-  if (!(audioFile instanceof File) || typeof projectId !== 'string' || !projectId) {
-    return NextResponse.json({ error: 'Missing or invalid audio or projectId' }, { status: 400 });
-  }
+    const formData = await request.formData();
+    const audioFile = formData.get('audio');
+    const projectId = formData.get('projectId');
+    const questionId = formData.get('questionId');
 
-  const audioBuffer = Buffer.from(await audioFile.arrayBuffer());
+    if (!(audioFile instanceof File) || typeof projectId !== 'string' || !projectId) {
+      throw badRequest('Missing or invalid audio or projectId');
+    }
 
-  let transcript = '';
-  try {
-    transcript = await transcribeAudio(audioBuffer, audioFile.name);
-  } catch (error) {
-    console.error('Transcription error:', error);
-    transcript = '[Transcription requires OpenAI API key — raw audio saved]';
-  }
+    await requireProjectAccess(projectId, userId);
 
-  let validatedQuestionId: string | null = null;
-  if (typeof questionId === 'string' && questionId) {
-    const question = await prisma.question.findFirst({
-      where: { id: questionId, projectId },
-      select: { id: true },
-    });
-    validatedQuestionId = question?.id ?? null;
-  }
+    enforceRateLimit(`transcribe:${userId}:${projectId}`, 10, 60 * 60_000);
 
-  const session = await prisma.voiceSession.create({
-    data: {
+    const audioBuffer = Buffer.from(await audioFile.arrayBuffer());
+
+    return transcribeAndCreateSession({
       projectId,
-      questionId: validatedQuestionId,
-      transcript,
-      aiAnnotations: '[]',
-    },
-  });
-
-  if (validatedQuestionId) {
-    await prisma.question.updateMany({
-      where: { id: validatedQuestionId, projectId },
-      data: { status: 'answered' },
+      audioBuffer,
+      filename: audioFile.name,
+      questionId: typeof questionId === 'string' && questionId ? questionId : undefined,
     });
-  }
-
-  return NextResponse.json({ transcript, sessionId: session.id });
+  }, { request, operation: 'transcribe' });
 }

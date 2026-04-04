@@ -61,32 +61,42 @@ function normalizeAnalysis(value: unknown): AnalysisResult {
   const concepts = Array.isArray(parsed.concepts)
     ? parsed.concepts
         .map((entry) => asObject(entry))
-        .map((entry) => ({
-          name: safeString(entry.name),
-          definition: safeString(entry.definition),
-          sourceSession: safeString(entry.sourceSession) || undefined,
-          linkedDocument: safeString(entry.linkedDocument) || undefined,
-          status:
-            entry.status === 'complete' || entry.status === 'contradicted' ? entry.status : 'developing',
-        }))
+        .map((entry) => {
+          const status: 'developing' | 'complete' | 'contradicted' =
+            entry.status === 'complete' || entry.status === 'contradicted'
+              ? entry.status
+              : 'developing';
+
+          return {
+            name: safeString(entry.name),
+            definition: safeString(entry.definition),
+            sourceSession: safeString(entry.sourceSession) || undefined,
+            linkedDocument: safeString(entry.linkedDocument) || undefined,
+            status,
+          };
+        })
         .filter((entry) => entry.name.length > 0 && entry.definition.length > 0)
     : [];
 
   const annotations = Array.isArray(parsed.annotations)
     ? parsed.annotations
         .map((entry) => asObject(entry))
-        .map((entry) => ({
-          text: safeString(entry.text),
-          type:
+        .map((entry) => {
+          const type: 'important' | 'connection' | 'unfinished' | 'tangent' | 'pattern' =
             entry.type === 'important' ||
             entry.type === 'connection' ||
             entry.type === 'unfinished' ||
             entry.type === 'tangent' ||
             entry.type === 'pattern'
               ? entry.type
-              : 'important',
-          reference: safeString(entry.reference) || undefined,
-        }))
+              : 'important';
+
+          return {
+            text: safeString(entry.text),
+            type,
+            reference: safeString(entry.reference) || undefined,
+          };
+        })
         .filter((entry) => entry.text.length > 0)
     : [];
 

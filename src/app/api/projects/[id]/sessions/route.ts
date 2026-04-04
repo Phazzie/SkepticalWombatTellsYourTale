@@ -1,11 +1,11 @@
 import { handleRoute } from '@/lib/server/http';
 import { requireUser } from '@/lib/server/auth';
 import { requireProjectAccess } from '@/lib/server/services/project-access';
-import { safeParseJson } from '@/lib/server/json';
+import { parseAiAnnotations } from '@/lib/server/mappers/ai-annotations';
 import { sessionsRepository } from '@/lib/server/repositories/sessions';
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   return handleRoute(async () => {
@@ -17,9 +17,9 @@ export async function GET(
     const sessions = await sessionsRepository.listByProject(id);
     return sessions.map((s) => ({
       ...s,
-      aiAnnotations: safeParseJson(s.aiAnnotations, []),
+      aiAnnotations: parseAiAnnotations(s.aiAnnotations),
     }));
-  });
+  }, { request, operation: 'projects.sessions.list' });
 }
 
 export async function POST(
@@ -36,6 +36,6 @@ export async function POST(
     const transcript = typeof data.transcript === 'string' ? data.transcript : '';
     const aiAnnotations = Array.isArray(data.aiAnnotations) ? data.aiAnnotations : [];
 
-    return sessionsRepository.create(id, transcript, JSON.stringify(aiAnnotations));
-  });
+    return sessionsRepository.create(id, transcript, aiAnnotations);
+  }, { request, operation: 'projects.sessions.create' });
 }

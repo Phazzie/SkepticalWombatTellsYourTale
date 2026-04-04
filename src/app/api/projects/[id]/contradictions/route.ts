@@ -1,49 +1,62 @@
-import { NextResponse } from 'next/server';
+import { handleRoute } from '@/lib/server/http';
+import { requireUser } from '@/lib/server/auth';
+import { requireProjectAccess } from '@/lib/server/services/project-access';
+import { notFound } from '@/lib/server/errors';
 import { prisma } from '@/lib/db';
-
-const VALID_STATUSES = ['open', 'explored', 'dismissed'] as const;
-type ContradictionStatus = typeof VALID_STATUSES[number];
+import {
+  contradictionsPatchSchema,
+  contradictionsQuerySchema,
+} from '@/lib/server/schemas/api/contradictions';
+import { validateSchema } from '@/lib/server/schema';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const url = new URL(request.url);
-  const status = url.searchParams.get('status');
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id } = await params;
+    await requireProjectAccess(id, userId);
 
-  const contradictions = await prisma.contradiction.findMany({
-    where: {
-      projectId: id,
-      ...(status && VALID_STATUSES.includes(status as ContradictionStatus)
-        ? { status: status as ContradictionStatus }
-        : {}),
-    },
-    orderBy: { createdAt: 'desc' },
-  });
+    const url = new URL(request.url);
+    const query = validateSchema(
+      { status: url.searchParams.get('status') || undefined },
+      contradictionsQuerySchema,
+      'query'
+    );
 
-  return NextResponse.json(contradictions);
+    return prisma.contradiction.findMany({
+      where: {
+        projectId: id,
+        ...(query.status ? { status: query.status } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }, { request, operation: 'projects.contradictions.list' });
 }
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const body = await request.json();
-  const { contradictionId, status } = body as { contradictionId?: string; status?: string };
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id } = await params;
+    await requireProjectAccess(id, userId);
 
-  if (!contradictionId || !status || !VALID_STATUSES.includes(status as ContradictionStatus)) {
-    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
-  }
+    const body = validateSchema(await request.json(), contradictionsPatchSchema);
 
-  const existing = await prisma.contradiction.findFirst({ where: { id: contradictionId, projectId: id } });
-  if (!existing) return NextResponse.json({ error: 'Contradiction not found' }, { status: 404 });
+    const existing = await prisma.contradiction.findFirst({
+      where: { id: body.contradictionId, projectId: id },
+    });
 
-  const updated = await prisma.contradiction.update({
-    where: { id: contradictionId },
-    data: { status: status as ContradictionStatus },
-  });
-  return NextResponse.json(updated);
+    if (!existing) {
+      throw notFound('Contradiction not found');
+    }
+
+    return prisma.contradiction.update({
+      where: { id: body.contradictionId },
+      data: { status: body.status },
+    });
+  }, { request, operation: 'projects.contradictions.patch' });
 }
-

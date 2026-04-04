@@ -1,68 +1,78 @@
-import { NextResponse } from 'next/server';
+import { handleRoute } from '@/lib/server/http';
+import { requireUser } from '@/lib/server/auth';
+import { requireProjectAccess } from '@/lib/server/services/project-access';
 import { prisma } from '@/lib/db';
+import { validateSchema } from '@/lib/server/schema';
+import { searchQuerySchema } from '@/lib/server/schemas/api/search';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const url = new URL(request.url);
-  const q = url.searchParams.get('q')?.trim();
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id } = await params;
+    await requireProjectAccess(id, userId);
 
-  if (!q) return NextResponse.json({ query: '', results: [] });
+    const url = new URL(request.url);
+    const query = validateSchema({ q: url.searchParams.get('q') || undefined }, searchQuerySchema, 'query');
+    const q = query.q?.trim() || '';
 
-  const contains = { contains: q, mode: 'insensitive' as const };
+    if (!q) return { query: '', results: [] };
 
-  const [documents, sessions, questions, concepts, gaps, tangents, contradictions] = await Promise.all([
-    prisma.document.findMany({
-      where: { projectId: id, OR: [{ name: contains }, { content: contains }, { type: contains }] },
-      orderBy: { updatedAt: 'desc' },
-      take: 30,
-    }),
-    prisma.voiceSession.findMany({
-      where: { projectId: id, transcript: contains },
-      orderBy: { createdAt: 'desc' },
-      take: 30,
-    }),
-    prisma.question.findMany({
-      where: { projectId: id, text: contains },
-      orderBy: { createdAt: 'desc' },
-      take: 30,
-    }),
-    prisma.concept.findMany({
-      where: { projectId: id, OR: [{ name: contains }, { definition: contains }] },
-      orderBy: { updatedAt: 'desc' },
-      take: 30,
-    }),
-    prisma.gap.findMany({
-      where: { projectId: id, OR: [{ description: contains }, { documentRef: contains }] },
-      orderBy: { createdAt: 'desc' },
-      take: 30,
-    }),
-    prisma.tangent.findMany({
-      where: { projectId: id, OR: [{ thread: contains }, { context: contains }] },
-      orderBy: { createdAt: 'desc' },
-      take: 30,
-    }),
-    prisma.contradiction.findMany({
-      where: {
-        projectId: id,
-        OR: [{ description: contains }, { existing: contains }, { new: contains }],
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 30,
-    }),
-  ]);
+    const contains = { contains: q, mode: 'insensitive' as const };
 
-  const results = [
-    ...documents.map((d) => ({ kind: 'document', id: d.id, title: d.name, snippet: d.content.slice(0, 180), createdAt: d.createdAt })),
-    ...sessions.map((s) => ({ kind: 'session', id: s.id, title: `Session ${s.id.slice(0, 8)}`, snippet: s.transcript.slice(0, 180), createdAt: s.createdAt })),
-    ...questions.map((qRow) => ({ kind: 'question', id: qRow.id, title: qRow.text, snippet: qRow.status, createdAt: qRow.createdAt })),
-    ...concepts.map((c) => ({ kind: 'concept', id: c.id, title: c.name, snippet: c.definition, createdAt: c.createdAt })),
-    ...gaps.map((g) => ({ kind: 'gap', id: g.id, title: g.description, snippet: g.documentRef || '', createdAt: g.createdAt })),
-    ...tangents.map((t) => ({ kind: 'tangent', id: t.id, title: t.thread, snippet: t.context, createdAt: t.createdAt })),
-    ...contradictions.map((c) => ({ kind: 'contradiction', id: c.id, title: c.description, snippet: `${c.existing} ⇄ ${c.new}`.slice(0, 180), createdAt: c.createdAt })),
-  ].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+    const [documents, sessions, questions, concepts, gaps, tangents, contradictions] = await Promise.all([
+      prisma.document.findMany({
+        where: { projectId: id, OR: [{ name: contains }, { content: contains }, { type: contains }] },
+        orderBy: { updatedAt: 'desc' },
+        take: 30,
+      }),
+      prisma.voiceSession.findMany({
+        where: { projectId: id, transcript: contains },
+        orderBy: { createdAt: 'desc' },
+        take: 30,
+      }),
+      prisma.question.findMany({
+        where: { projectId: id, text: contains },
+        orderBy: { createdAt: 'desc' },
+        take: 30,
+      }),
+      prisma.concept.findMany({
+        where: { projectId: id, OR: [{ name: contains }, { definition: contains }] },
+        orderBy: { updatedAt: 'desc' },
+        take: 30,
+      }),
+      prisma.gap.findMany({
+        where: { projectId: id, OR: [{ description: contains }, { documentRef: contains }] },
+        orderBy: { createdAt: 'desc' },
+        take: 30,
+      }),
+      prisma.tangent.findMany({
+        where: { projectId: id, OR: [{ thread: contains }, { context: contains }] },
+        orderBy: { createdAt: 'desc' },
+        take: 30,
+      }),
+      prisma.contradiction.findMany({
+        where: {
+          projectId: id,
+          OR: [{ description: contains }, { existing: contains }, { new: contains }],
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 30,
+      }),
+    ]);
 
-  return NextResponse.json({ query: q, results });
+    const results = [
+      ...documents.map((d) => ({ kind: 'document', id: d.id, title: d.name, snippet: d.content.slice(0, 180), createdAt: d.createdAt })),
+      ...sessions.map((s) => ({ kind: 'session', id: s.id, title: `Session ${s.id.slice(0, 8)}`, snippet: s.transcript.slice(0, 180), createdAt: s.createdAt })),
+      ...questions.map((qRow) => ({ kind: 'question', id: qRow.id, title: qRow.text, snippet: qRow.status, createdAt: qRow.createdAt })),
+      ...concepts.map((c) => ({ kind: 'concept', id: c.id, title: c.name, snippet: c.definition, createdAt: c.createdAt })),
+      ...gaps.map((g) => ({ kind: 'gap', id: g.id, title: g.description, snippet: g.documentRef || '', createdAt: g.createdAt })),
+      ...tangents.map((t) => ({ kind: 'tangent', id: t.id, title: t.thread, snippet: t.context, createdAt: t.createdAt })),
+      ...contradictions.map((c) => ({ kind: 'contradiction', id: c.id, title: c.description, snippet: `${c.existing} ⇄ ${c.new}`.slice(0, 180), createdAt: c.createdAt })),
+    ].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+
+    return { query: q, results };
+  }, { request, operation: 'projects.search' });
 }

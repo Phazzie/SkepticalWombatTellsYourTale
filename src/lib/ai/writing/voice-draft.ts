@@ -57,7 +57,7 @@ export async function detectVoiceDrift(
 
   return parseAiJsonObject({
     content: response.choices[0].message.content,
-    fallback: { hasDrift: false, details: '' },
+    fallback: { hasDrift: false, details: '', rewriteSuggestion: undefined },
     label: 'detectVoiceDrift',
     normalize: normalizeDriftResponse,
   });
