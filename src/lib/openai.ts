@@ -99,7 +99,7 @@ Return a JSON object with this exact structure:
       "definition": "one-line definition",
       "sourceSession": "session id",
       "linkedDocument": "document name if relevant",
-      "status": "developing|complete|contradicted (enum)"
+      "status": "developing|complete|contradicted (must be one of these exact values)"
     }
   ],
   "annotations": [
