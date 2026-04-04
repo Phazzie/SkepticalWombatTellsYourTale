@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Session, AIAnnotation } from '@/lib/types';
+import { AnnotationList } from '@/components/annotations/annotation-list';
 import { AppHeader } from '@/components/layout/app-header';
 import { AppBackLink, Card, Container, Shell, StatusMessage } from '@/components/ui/primitives';
 
@@ -31,22 +32,6 @@ export default function SessionsPage() {
         setLoading(false);
       });
   }, [id]);
-
-  const annotationColors: Record<string, string> = {
-    important: 'bg-amber-500/20 border-amber-500/50 text-amber-300',
-    connection: 'bg-blue-500/20 border-blue-500/50 text-blue-300',
-    unfinished: 'bg-orange-500/20 border-orange-500/50 text-orange-300',
-    tangent: 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300',
-    pattern: 'bg-purple-500/20 border-purple-500/50 text-purple-300',
-  };
-
-  const annotationIcons: Record<string, string> = {
-    important: '⚡',
-    connection: '🔗',
-    unfinished: '🧵',
-    tangent: '↪️',
-    pattern: '🔁',
-  };
 
   if (loading) {
     return <Shell><Container><StatusMessage state="loading" title="Loading sessions..." /></Container></Shell>;
@@ -93,19 +78,7 @@ export default function SessionsPage() {
                       {annotations.length > 0 && (
                         <div className="mt-4 border-t border-app-border pt-4">
                           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-app-fg-muted">🤖 AI Coach Notes</h3>
-                          <div className="space-y-2">
-                            {annotations.map((ann, i) => (
-                              <div
-                                key={i}
-                                className={`rounded-lg border px-3 py-2 text-sm ${
-                                  annotationColors[ann.type] || 'bg-app-surface-muted border-app-border text-app-fg'
-                                }`}
-                              >
-                                <span className="mr-2">{annotationIcons[ann.type] || '💡'}</span>
-                                {ann.text}
-                              </div>
-                            ))}
-                          </div>
+                          <AnnotationList annotations={annotations} />
                         </div>
                       )}
                     </div>
