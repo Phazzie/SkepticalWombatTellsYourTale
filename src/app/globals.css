@@ -3,14 +3,38 @@
 @tailwind utilities;
 
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: #08090d;
+  --foreground: #ebedf2;
+  --surface: #12141c;
+  --surface-muted: #171a24;
+  --surface-strong: #1d2130;
+  --border: #262d42;
+  --border-strong: #3a4563;
+  --accent: #6366f1;
+  --accent-soft: rgba(99, 102, 241, 0.2);
+  --shadow: 0 16px 40px rgba(3, 7, 18, 0.45);
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.bg-app-bg { background: var(--background); }
+.bg-app-surface { background: var(--surface); }
+.bg-app-surface-muted { background: var(--surface-muted); }
+.bg-app-surface-strong { background: var(--surface-strong); }
+.text-app-fg { color: var(--foreground); }
+.text-app-fg-muted { color: #9ca6c4; }
+.border-app-border { border-color: var(--border); }
+.border-app-border-strong { border-color: var(--border-strong); }
+.bg-app-accent { background: var(--accent); }
+.ring-app-accent { --tw-ring-color: var(--accent); }
+.shadow-app { box-shadow: var(--shadow); }
+.glass-soft {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+  backdrop-filter: blur(4px);
 }
 
 .recording-pulse {
@@ -29,4 +53,15 @@ body {
 @keyframes waveform {
   0%, 100% { height: 8px; }
   50% { height: 32px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -1,41 +1,36 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import {
-  asOptionalString,
-  asRequiredString,
-  readJsonObjectBody,
-  RequestValidationError,
-} from '@/lib/api-contract';
+import { handleRoute } from '@/lib/server/http';
+import { requireUser } from '@/lib/server/auth';
+import { requireProjectAccess } from '@/lib/server/services/project-access';
+import { assertString } from '@/lib/server/validation';
+import { documentsRepository } from '@/lib/server/repositories/documents';
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const documents = await prisma.document.findMany({
-    where: { projectId: id },
-    orderBy: { createdAt: 'asc' },
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id } = await params;
+
+    await requireProjectAccess(id, userId);
+    return documentsRepository.listByProject(id);
   });
-  return NextResponse.json(documents);
 }
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  try {
-    const body = await readJsonObjectBody(request);
-    const name = asRequiredString(body.name, 'name');
-    const type = asOptionalString(body.type, 'type') ?? 'general';
-    const document = await prisma.document.create({
-      data: { projectId: id, name, type },
-    });
-    return NextResponse.json(document);
-  } catch (error) {
-    if (error instanceof RequestValidationError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
-    }
-    throw error;
-  }
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id } = await params;
+
+    await requireProjectAccess(id, userId);
+
+    const body = (await request.json()) as { name?: unknown; type?: unknown };
+    const name = assertString(body.name, 'name', { min: 1, max: 120 });
+    const type = typeof body.type === 'string' && body.type.trim().length > 0 ? body.type.trim() : 'general';
+
+    return documentsRepository.create(id, name, type);
+  });
 }

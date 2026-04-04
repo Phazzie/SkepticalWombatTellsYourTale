@@ -9,15 +9,21 @@ datasource db {
 
 model Project {
   id          String     @id @default(uuid())
+  userId      String?
   name        String
   description String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+  owner       User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  members     ProjectMember[]
   documents   Document[]
-  sessions    Session[]
+  sessions    VoiceSession[]
   tangents    Tangent[]
   patterns    Pattern[]
   gaps        Gap[]
+  questions   Question[]
+  concepts    Concept[]
+  contradictions Contradiction[]
 }
 
 model Document {
@@ -31,16 +37,20 @@ model Document {
   project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
-model Session {
+model VoiceSession {
   id            String      @id @default(uuid())
   projectId     String
+  questionId    String?
   audioUrl      String?
   transcript    String      @default("")
   aiAnnotations String      @default("[]")
   tangents      Tangent[]
+  promptedBy    Question?   @relation(fields: [questionId], references: [id], onDelete: SetNull)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("Session")
 }
 
 model Tangent {
@@ -53,7 +63,7 @@ model Tangent {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  session     Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  session     VoiceSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
 
 model Pattern {
@@ -74,4 +84,107 @@ model Gap {
   resolved    Boolean   @default(false)
   createdAt   DateTime  @default(now())
   project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+
+model Question {
+  id          String        @id @default(uuid())
+  projectId   String
+  text        String
+  sessionRef  String?
+  status      String        @default("pending")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  responses   VoiceSession[]
+}
+
+model Concept {
+  id             String   @id @default(uuid())
+  projectId      String
+  name           String
+  definition     String
+  sourceSession  String?
+  linkedDocument String?
+  status         String   @default("developing")
+  approved       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Contradiction {
+  id          String   @id @default(uuid())
+  projectId   String
+  description String
+  existing    String
+  new         String
+  status      String   @default("open")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String          @id @default(cuid())
+  name          String?
+  email         String          @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  accounts      Account[]
+  sessions      Session[]
+  projects      Project[]
+  memberships   ProjectMember[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  role      String   @default("editor")
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("AuthSession")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }

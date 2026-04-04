@@ -1,52 +1,59 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import {
-  asOptionalString,
-  readJsonObjectBody,
-  RequestValidationError,
-} from '@/lib/api-contract';
+import { handleRoute } from '@/lib/server/http';
+import { requireUser } from '@/lib/server/auth';
+import { requireProjectAccess } from '@/lib/server/services/project-access';
+import { assertRawString, assertString } from '@/lib/server/validation';
+import { notFound } from '@/lib/server/errors';
+import { documentsRepository } from '@/lib/server/repositories/documents';
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string; docId: string }> }
 ) {
-  const { id, docId } = await params;
-  try {
-    const body = await readJsonObjectBody(request);
-    const name = asOptionalString(body.name, 'name');
-    const content = asOptionalString(body.content, 'content');
-    const type = asOptionalString(body.type, 'type');
-    const existing = await prisma.document.findFirst({ where: { id: docId, projectId: id } });
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id, docId } = await params;
+
+    await requireProjectAccess(id, userId);
+
+    const existing = await documentsRepository.findByIdInProject(docId, id);
     if (!existing) {
-      return NextResponse.json({ error: 'Document not found' }, { status: 404 });
+      throw notFound('Document not found');
     }
-    const document = await prisma.document.update({
-      where: { id: docId },
-      data: {
-        ...(name !== undefined && { name }),
-        ...(content !== undefined && { content }),
-        ...(type !== undefined && { type }),
-      },
-    });
-    return NextResponse.json(document);
-  } catch (error) {
-    if (error instanceof RequestValidationError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+
+    const body = (await request.json()) as { name?: unknown; content?: unknown; type?: unknown };
+    const data: { name?: string; content?: string; type?: string } = {};
+
+    if (body.name !== undefined) {
+      data.name = assertString(body.name, 'name', { min: 1, max: 120 });
     }
-    throw error;
-  }
+
+    if (body.content !== undefined) {
+      data.content = assertRawString(body.content, 'content', { min: 0, max: 200000 });
+    }
+
+    if (body.type !== undefined) {
+      data.type = assertString(body.type, 'type', { min: 1, max: 60 });
+    }
+
+    return documentsRepository.update(docId, data);
+  });
 }
 
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string; docId: string }> }
 ) {
-  const { id, docId } = await params;
-  const result = await prisma.document.deleteMany({
-    where: { id: docId, projectId: id },
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id, docId } = await params;
+
+    await requireProjectAccess(id, userId);
+
+    const result = await documentsRepository.delete(docId, id);
+    if (result.count === 0) {
+      throw notFound('Document not found');
+    }
+
+    return { success: true };
   });
-  if (result.count === 0) {
-    return NextResponse.json({ error: 'Document not found' }, { status: 404 });
-  }
-  return NextResponse.json({ success: true });
 }

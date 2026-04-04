@@ -1,55 +1,41 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import {
-  asOptionalString,
-  readJsonObjectBody,
-  RequestValidationError,
-  safeParseJson,
-} from '@/lib/api-contract';
+import { handleRoute } from '@/lib/server/http';
+import { requireUser } from '@/lib/server/auth';
+import { requireProjectAccess } from '@/lib/server/services/project-access';
+import { safeParseJson } from '@/lib/server/json';
+import { sessionsRepository } from '@/lib/server/repositories/sessions';
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const sessions = await prisma.session.findMany({
-    where: { projectId: id },
-    orderBy: { createdAt: 'desc' },
-    include: { tangents: true },
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id } = await params;
+
+    await requireProjectAccess(id, userId);
+
+    const sessions = await sessionsRepository.listByProject(id);
+    return sessions.map((s) => ({
+      ...s,
+      aiAnnotations: safeParseJson(s.aiAnnotations, []),
+    }));
   });
-  const parsed = sessions.map((s) => ({
-    ...s,
-    aiAnnotations: safeParseJson(s.aiAnnotations, []),
-  }));
-  return NextResponse.json(parsed);
 }
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  try {
-    const data = await readJsonObjectBody(request);
-    const transcript = asOptionalString(data.transcript, 'transcript') ?? '';
-    const aiAnnotationsRaw = data.aiAnnotations;
-    const aiAnnotations =
-      Array.isArray(aiAnnotationsRaw) && aiAnnotationsRaw.every((a) => !!a && typeof a === 'object')
-        ? aiAnnotationsRaw
-        : [];
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id } = await params;
 
-    const session = await prisma.session.create({
-      data: {
-        projectId: id,
-        transcript,
-        aiAnnotations: JSON.stringify(aiAnnotations),
-      },
-    });
-    return NextResponse.json(session);
-  } catch (error) {
-    if (error instanceof RequestValidationError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
-    }
-    throw error;
-  }
+    await requireProjectAccess(id, userId);
+
+    const data = (await request.json()) as { transcript?: unknown; aiAnnotations?: unknown };
+    const transcript = typeof data.transcript === 'string' ? data.transcript : '';
+    const aiAnnotations = Array.isArray(data.aiAnnotations) ? data.aiAnnotations : [];
+
+    return sessionsRepository.create(id, transcript, JSON.stringify(aiAnnotations));
+  });
 }

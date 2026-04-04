@@ -1,81 +1,64 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import {
-  asOptionalNullableString,
-  asOptionalString,
-  readJsonObjectBody,
-  RequestValidationError,
-  safeParseJson,
-} from '@/lib/api-contract';
+import { handleRoute } from '@/lib/server/http';
+import { requireUser, ensureProjectAccess } from '@/lib/server/auth';
+import { forbidden } from '@/lib/server/errors';
+import { asOptionalString, assertString } from '@/lib/server/validation';
+import { projectsRepository } from '@/lib/server/repositories/projects';
+import { projectsService } from '@/lib/server/services/projects';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const url = new URL(request.url);
-  const includeAll = url.searchParams.get('include') === 'all';
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id } = await params;
+    await ensureProjectAccess(id, userId);
 
-  if (includeAll) {
-    const project = await prisma.project.findUnique({
-      where: { id },
-      include: {
-        documents: true,
-        sessions: { orderBy: { createdAt: 'desc' } },
-        tangents: { orderBy: { createdAt: 'desc' } },
-        patterns: { orderBy: { createdAt: 'desc' } },
-        gaps: { orderBy: { createdAt: 'desc' } },
-      },
-    });
-    if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    return NextResponse.json({
-      ...project,
-      sessions: project.sessions.map((s) => ({
-        ...s,
-        aiAnnotations: safeParseJson(s.aiAnnotations, []),
-      })),
-      patterns: project.patterns.map((p) => ({
-        ...p,
-        sessionRefs: safeParseJson(p.sessionRefs, []),
-      })),
-    });
-  }
+    const url = new URL(request.url);
+    const includeAll = url.searchParams.get('include') === 'all';
 
-  const project = await prisma.project.findUnique({ where: { id } });
-  if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json(project);
+    return projectsService.getProject(userId, id, includeAll);
+  });
 }
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  try {
-    const body = await readJsonObjectBody(request);
-    const name = asOptionalString(body.name, 'name');
-    const description = asOptionalNullableString(body.description, 'description');
-    const project = await prisma.project.update({
-      where: { id },
-      data: {
-        ...(name !== undefined && { name }),
-        ...(description !== undefined && { description }),
-      },
-    });
-    return NextResponse.json(project);
-  } catch (error) {
-    if (error instanceof RequestValidationError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id } = await params;
+    await ensureProjectAccess(id, userId);
+
+    const body = (await request.json()) as { name?: unknown; description?: unknown };
+    const data: { name?: string; description?: string | null } = {};
+
+    if (body.name !== undefined) {
+      data.name = assertString(body.name, 'name', { min: 1, max: 120 });
     }
-    throw error;
-  }
+
+    if (body.description !== undefined) {
+      data.description = asOptionalString(body.description, 'description', { max: 1000 });
+    }
+
+    return projectsRepository.updateProject(id, data);
+  });
 }
 
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  await prisma.project.delete({ where: { id } });
-  return NextResponse.json({ success: true });
+  return handleRoute(async () => {
+    const { userId } = await requireUser();
+    const { id } = await params;
+    const project = await ensureProjectAccess(id, userId);
+
+    if (project.userId !== userId) {
+      throw forbidden('Only project owner can delete project');
+    }
+
+    await projectsRepository.deleteProject(id);
+    return { success: true };
+  });
 }

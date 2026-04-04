@@ -9,6 +9,9 @@ export interface Project {
   tangents?: Tangent[];
   patterns?: Pattern[];
   gaps?: Gap[];
+  questions?: Question[];
+  concepts?: Concept[];
+  contradictions?: Contradiction[];
 }
 
 export interface Document {
@@ -24,12 +27,14 @@ export interface Document {
 export interface Session {
   id: string;
   projectId: string;
+  questionId?: string | null;
   audioUrl?: string | null;
   transcript: string;
   aiAnnotations: AIAnnotation[];
   createdAt: string;
   updatedAt: string;
   tangents?: Tangent[];
+  promptedBy?: Question | null;
 }
 
 export interface AIAnnotation {
@@ -92,7 +97,48 @@ export interface AnalysisResult {
     new: string;
   }>;
   questions: string[];
+  concepts?: Array<{
+    name: string;
+    definition: string;
+    sourceSession?: string;
+    linkedDocument?: string;
+    status: 'developing' | 'complete' | 'contradicted';
+  }>;
   annotations: AIAnnotation[];
   significance?: string;
   voicePreservedDraft?: string;
+}
+
+export interface Question {
+  id: string;
+  projectId: string;
+  text: string;
+  sessionRef?: string | null;
+  status: 'pending' | 'answered' | 'dismissed';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Concept {
+  id: string;
+  projectId: string;
+  name: string;
+  definition: string;
+  sourceSession?: string | null;
+  linkedDocument?: string | null;
+  status: 'developing' | 'complete' | 'contradicted';
+  approved: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Contradiction {
+  id: string;
+  projectId: string;
+  description: string;
+  existing: string;
+  new: string;
+  status: 'open' | 'explored' | 'dismissed';
+  createdAt: string;
+  updatedAt: string;
 }

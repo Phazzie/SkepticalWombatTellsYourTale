@@ -2,34 +2,32 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
 import { Session, AIAnnotation } from '@/lib/types';
+import { AppHeader } from '@/components/layout/app-header';
+import { AppBackLink, Card, Container, Shell, StatusMessage } from '@/components/ui/primitives';
 
 export default function SessionsPage() {
   const { id } = useParams<{ id: string }>();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/projects/${id}/sessions`)
       .then(async (r) => {
         if (!r.ok) {
-          const body = await r.json().catch(() => null);
-          throw new Error(
-            typeof body?.error === 'string' ? body.error : 'Failed to load sessions.'
-          );
+          const data = (await r.json()) as { error?: string };
+          throw new Error(data.error || 'Failed to load sessions');
         }
         return r.json();
       })
       .then((data) => {
         setSessions(data);
-        setError(null);
         setLoading(false);
       })
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : 'Failed to load sessions.');
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : 'Failed to load sessions');
         setLoading(false);
       });
   }, [id]);
@@ -51,33 +49,20 @@ export default function SessionsPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-gray-500">Loading sessions...</div>
-      </div>
-    );
+    return <Shell><Container><StatusMessage state="loading" title="Loading sessions..." /></Container></Shell>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="flex items-center gap-4 mb-6">
-          <Link href={`/project/${id}`} className="text-gray-500 hover:text-gray-300 text-sm">
-            ← Back
-          </Link>
-          <h1 className="text-2xl font-bold">Sessions</h1>
-        </div>
+    <Shell>
+      <Container>
+        <AppBackLink href={`/project/${id}`} />
+        <div className="mt-4" />
+        <AppHeader title="Sessions" />
 
-        {error ? (
-          <div className="text-center py-16 text-red-400">{error}</div>
-        ) : sessions.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
-            <div className="text-5xl mb-4">📼</div>
-            <p>No sessions yet.</p>
-            <Link href={`/project/${id}/record`} className="text-indigo-400 hover:text-indigo-300 mt-2 inline-block">
-              Record your first session →
-            </Link>
-          </div>
+        {error && <StatusMessage state="error" title="Something went wrong" description={error} />}
+
+        {sessions.length === 0 ? (
+          <StatusMessage state="empty" title="No sessions yet" description="Record your first session to get started." />
         ) : (
           <div className="space-y-4">
             {sessions.map((session) => {
@@ -86,58 +71,38 @@ export default function SessionsPage() {
                 : [];
 
               return (
-                <div key={session.id} className="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden">
+                <Card key={session.id} className="overflow-hidden p-0">
                   <button
                     onClick={() => setExpandedId(expandedId === session.id ? null : session.id)}
-                    className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-800 transition-colors"
+                    className="w-full px-5 py-4 text-left transition hover:bg-app-surface-muted"
                   >
-                    <div className="text-left">
-                      <p className="font-medium text-white">
-                        Session — {new Date(session.createdAt).toLocaleString()}
-                      </p>
-                      <p className="text-gray-500 text-sm mt-0.5">
-                        {session.transcript.slice(0, 100)}...
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3 ml-4">
-                      {annotations.length > 0 && (
-                        <span className="text-xs text-purple-400 bg-purple-900/30 px-2 py-1 rounded">
-                          {annotations.length} annotations
-                        </span>
-                      )}
-                      <span className="text-gray-500">{expandedId === session.id ? '▲' : '▼'}</span>
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-white">Session — {new Date(session.createdAt).toLocaleString()}</p>
+                        <p className="mt-0.5 text-sm text-app-fg-muted">{session.transcript.slice(0, 100)}...</p>
+                      </div>
+                      <span className="text-app-fg-muted">{expandedId === session.id ? '▲' : '▼'}</span>
                     </div>
                   </button>
 
                   {expandedId === session.id && (
-                    <div className="border-t border-gray-700">
-                      <div className="px-5 py-4">
-                        <h3 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wide">
-                          Raw Transcript
-                        </h3>
-                        <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
-                          {session.transcript}
-                        </p>
-                      </div>
+                    <div className="border-t border-app-border px-5 py-4">
+                      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-app-fg-muted">Raw Transcript</h3>
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-app-fg">{session.transcript}</p>
 
                       {annotations.length > 0 && (
-                        <div className="border-t border-gray-700 px-5 py-4">
-                          <h3 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wide flex items-center gap-2">
-                            <span>🤖</span> AI Coach Notes
-                          </h3>
+                        <div className="mt-4 border-t border-app-border pt-4">
+                          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-app-fg-muted">🤖 AI Coach Notes</h3>
                           <div className="space-y-2">
                             {annotations.map((ann, i) => (
                               <div
                                 key={i}
-                                className={`border rounded-lg px-3 py-2 text-sm ${
-                                  annotationColors[ann.type] || 'bg-gray-800 border-gray-600 text-gray-300'
+                                className={`rounded-lg border px-3 py-2 text-sm ${
+                                  annotationColors[ann.type] || 'bg-app-surface-muted border-app-border text-app-fg'
                                 }`}
                               >
                                 <span className="mr-2">{annotationIcons[ann.type] || '💡'}</span>
                                 {ann.text}
-                                {ann.reference && (
-                                  <span className="ml-2 text-xs opacity-70">({ann.reference})</span>
-                                )}
                               </div>
                             ))}
                           </div>
@@ -145,12 +110,12 @@ export default function SessionsPage() {
                       )}
                     </div>
                   )}
-                </div>
+                </Card>
               );
             })}
           </div>
         )}
-      </div>
-    </div>
+      </Container>
+    </Shell>
   );
 }

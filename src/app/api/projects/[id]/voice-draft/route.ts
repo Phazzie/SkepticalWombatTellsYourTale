@@ -1,34 +1,24 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { generateVoicePreservedDraft } from '@/lib/openai';
-import {
-  asOptionalString,
-  asRequiredString,
-  readJsonObjectBody,
-  RequestValidationError,
-} from '@/lib/api-contract';
+import { generateVoicePreservedDraft, detectVoiceDrift } from '@/lib/openai';
+
+function getErrorMeta(error: unknown): { status?: unknown; code?: unknown } {
+  if (!error || typeof error !== 'object') {
+    return {};
+  }
+  const candidate = error as { status?: unknown; code?: unknown };
+  return { status: candidate.status, code: candidate.code };
+}
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  let documentId: string | undefined;
-  let prompt = '';
-
-  try {
-    const body = await readJsonObjectBody(request);
-    documentId = asOptionalString(body.documentId, 'documentId');
-    prompt = asRequiredString(body.prompt, 'prompt');
-  } catch (error) {
-    if (error instanceof RequestValidationError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
-    }
-    throw error;
-  }
+  const { documentId, prompt } = await request.json();
 
   const [sessions, document] = await Promise.all([
-    prisma.session.findMany({
+    prisma.voiceSession.findMany({
       where: { projectId: id },
       orderBy: { createdAt: 'desc' },
       take: 10,
@@ -47,11 +37,23 @@ export async function POST(
 
   try {
     const draft = await generateVoicePreservedDraft(prompt, transcripts, docContext);
-    return NextResponse.json({ draft });
+    const drift = await detectVoiceDrift(draft, transcripts);
+    return NextResponse.json({ draft, drift });
   } catch (error) {
     console.error('Voice draft error:', error);
+    const errorMeta = getErrorMeta(error);
+    const isMissingOpenAiKey = errorMeta.status === 401 || errorMeta.code === 'invalid_api_key';
+
+    if (isMissingOpenAiKey) {
+      return NextResponse.json(
+        { draft: 'Voice draft generation requires OpenAI API key.', drift: null },
+        { status: 503 }
+      );
+    }
+
+    const failureReason = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Voice draft generation requires OpenAI API key.' },
+      { draft: `Voice draft generation failed: ${failureReason}`, drift: null },
       { status: 500 }
     );
   }

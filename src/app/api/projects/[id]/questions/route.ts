@@ -1,19 +1,68 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { openai } from '@/lib/openai';
-import { normalizeQuestionsFromContent } from '@/lib/ai-contract';
 
-export async function GET() {
-  // Questions are generated on demand via POST and not persisted.
-  // The UI calls POST to generate fresh AI questions each time.
-  return NextResponse.json([]);
+const VALID_STATUSES = ['pending', 'answered', 'dismissed'] as const;
+type QuestionStatus = typeof VALID_STATUSES[number];
+
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const url = new URL(request.url);
+  const mode = url.searchParams.get('mode');
+  if (mode === 'legacy') {
+    return NextResponse.json(
+      { error: 'Persisted question listing is not available in this mode.' },
+      { status: 501 }
+    );
+  }
+
+  const { id } = await params;
+  const status = url.searchParams.get('status');
+
+  const questions = await prisma.question.findMany({
+    where: {
+      projectId: id,
+      ...(status && VALID_STATUSES.includes(status as QuestionStatus)
+        ? { status: status as QuestionStatus }
+        : {}),
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return NextResponse.json(questions);
 }
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const body = await request.json().catch(() => ({} as Record<string, unknown>));
+  const action = typeof body.action === 'string' ? body.action : 'generate';
+
+  if (action === 'update') {
+    const questionId = typeof body.questionId === 'string' ? body.questionId : '';
+    const status = typeof body.status === 'string' ? body.status : '';
+
+    if (!questionId || !VALID_STATUSES.includes(status as QuestionStatus)) {
+      return NextResponse.json({ error: 'Invalid question update payload' }, { status: 400 });
+    }
+
+    const existing = await prisma.question.findFirst({ where: { id: questionId, projectId: id } });
+    if (!existing) {
+      return NextResponse.json({ error: 'Question not found' }, { status: 404 });
+    }
+
+    const updated = await prisma.question.update({
+      where: { id: questionId },
+      data: { status: status as QuestionStatus },
+    });
+
+    return NextResponse.json(updated);
+  }
+
   const project = await prisma.project.findUnique({
     where: { id },
     include: {
@@ -57,8 +106,23 @@ Return JSON: { "questions": [{ "text": "question text", "sessionRef": null }] }`
       temperature: 0.8,
     });
 
-    const questions = normalizeQuestionsFromContent(response.choices[0].message.content);
-    return NextResponse.json(questions);
+    const result = JSON.parse(response.choices[0].message.content || '{"questions":[]}');
+    const candidates: Array<{ text: string; sessionRef?: string }> = result.questions || [];
+    if (candidates.length === 0) return NextResponse.json([]);
+
+    const created = await prisma.$transaction(
+      candidates.map((q) =>
+        prisma.question.create({
+          data: {
+            projectId: id,
+            text: q.text,
+            sessionRef: q.sessionRef || null,
+            status: 'pending',
+          },
+        })
+      )
+    );
+    return NextResponse.json(created);
   } catch (error) {
     console.error('Question generation error:', error);
     return NextResponse.json([]);
