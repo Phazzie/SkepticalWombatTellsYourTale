@@ -67,6 +67,37 @@ If dependencies are missing, run `npm ci` first.
 - Do not add or upgrade dependencies unless necessary for the task.
 - If dependency changes are required, keep them minimal and justify in your handoff note.
 
+### 8) Coding standards and formatting
+
+- TypeScript is `strict`; avoid `any` unless there is no safer alternative.
+- Follow existing naming:
+  - `PascalCase` for React components and TypeScript interfaces/types.
+  - `camelCase` for variables, functions, and request/response fields.
+  - Keep dynamic route param names aligned with file names (`id`, `docId`, `gapId`, `tangentId`).
+- Reuse shared types from `src/lib/types.ts` for frontend/backend contract consistency.
+- Keep import style consistent (`@/` alias for app imports).
+- Preserve nullable semantics (`null` vs `undefined`) used by Prisma models and API responses.
+
+### 9) API contract and payload format rules
+
+- Keep existing route paths and methods stable (`GET/POST/PATCH/DELETE`) unless explicitly requested.
+- Maintain current response conventions:
+  - Success returns entity/array payloads currently consumed by UI.
+  - Errors return `{ error: string }` with explicit HTTP status.
+- Keep query/body field names backward-compatible; if changed, update all callers in the same PR.
+- For JSON-like Prisma string fields (`aiAnnotations`, `sessionRefs`), keep safe parse/stringify behavior consistent with existing routes.
+- Match current transport patterns:
+  - JSON request bodies for most `POST/PATCH` endpoints.
+  - `FormData` only where already used (for example transcription upload).
+
+### 10) Integration pitfalls to check preemptively
+
+- Did I change any field name used by both API routes and pages/components?
+- Did I change any value type that affects UI rendering (string vs array vs boolean)?
+- Did I preserve all required fields used by pages under `src/app/project/[id]/*`?
+- Did I keep error response shape compatible with existing client handling?
+- Did I keep Prisma model changes synchronized with API read/write logic?
+
 ## Preemptive Integration Checklist (Answer Before Finalizing)
 
 - What files/interfaces did I change?
