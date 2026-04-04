@@ -2,12 +2,15 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { generateVoicePreservedDraft, detectVoiceDrift } from '@/lib/openai';
 
-function getErrorMeta(error: unknown): { status?: unknown; code?: unknown } {
+function getErrorMeta(error: unknown): { status?: number; code?: string } {
   if (!error || typeof error !== 'object') {
     return {};
   }
   const candidate = error as { status?: unknown; code?: unknown };
-  return { status: candidate.status, code: candidate.code };
+  return {
+    status: typeof candidate.status === 'number' ? candidate.status : undefined,
+    code: typeof candidate.code === 'string' ? candidate.code : undefined,
+  };
 }
 
 export async function POST(
@@ -47,7 +50,7 @@ export async function POST(
     if (isMissingOpenAiKey) {
       return NextResponse.json(
         { draft: 'Voice draft generation requires OpenAI API key.', drift: null },
-        { status: 500 }
+        { status: 503 }
       );
     }
 

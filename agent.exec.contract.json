@@ -1,0 +1,132 @@
+{
+  "version": "1.0.0",
+  "name": "autonomous-coding-agent-contract",
+  "repository": "current",
+  "objective": "Safely implement requested changes end-to-end with deterministic validation and auditable outputs.",
+  "allowedTasks": [
+    "analysis",
+    "planning",
+    "code-change",
+    "validation",
+    "documentation",
+    "pull-request-prep"
+  ],
+  "constraints": {
+    "minimalChange": true,
+    "noUnrelatedRefactors": true,
+    "noSecretCommits": true,
+    "preserveApiCompatibility": true,
+    "requireAbsolutePathsInReports": true
+  },
+  "stages": [
+    {
+      "id": "ingest",
+      "required": true,
+      "checks": [
+        "parse-request",
+        "collect-repo-rules",
+        "define-acceptance-criteria"
+      ]
+    },
+    {
+      "id": "discover",
+      "required": true,
+      "checks": [
+        "detect-scripts",
+        "detect-stack-and-db",
+        "locate-touched-routes-and-libs"
+      ]
+    },
+    {
+      "id": "preflight",
+      "required": true,
+      "commands": [
+        "npm ci",
+        "npm run db:bootstrap",
+        "npm run lint",
+        "npm run build"
+      ],
+      "mustPass": true
+    },
+    {
+      "id": "implement",
+      "required": true,
+      "rules": [
+        "small-coherent-edits",
+        "validate-input-output-contracts",
+        "update-related-docs-when-needed"
+      ]
+    },
+    {
+      "id": "postchange",
+      "required": true,
+      "commands": [
+        "npm run lint",
+        "npm run build",
+        "npm run test",
+        "npm run security:audit"
+      ],
+      "mustPass": true
+    },
+    {
+      "id": "quality-safety",
+      "required": true,
+      "checks": [
+        "no-contract-drift",
+        "no-secrets-in-diff",
+        "no-unrelated-file-churn"
+      ]
+    },
+    {
+      "id": "handoff",
+      "required": true,
+      "outputs": [
+        "change-summary",
+        "validation-evidence",
+        "risk-notes",
+        "next-actions"
+      ]
+    }
+  ],
+  "stopConditions": [
+    "conflicting-requirements",
+    "repeated-validation-failure",
+    "ambiguous-architecture-impact",
+    "missing-required-secrets-or-env"
+  ],
+  "askForHumanWhen": [
+    "breaking-api-contract-change",
+    "dependency-major-upgrade",
+    "security-risk-without-clear-fix",
+    "cannot-validate-core-behavior-locally"
+  ],
+  "commitPolicy": {
+    "checkpointOn": [
+      "completed-logical-unit",
+      "all-gates-green-for-unit"
+    ],
+    "rollbackOn": [
+      "regression-introduced",
+      "unrecoverable-validation-failure"
+    ],
+    "commitMessageStyle": "conventional-short",
+    "splitLargeChanges": true
+  },
+  "runLog": {
+    "enabled": true,
+    "path": "artifacts/agent-runs",
+    "requiredArtifacts": [
+      "plan.json",
+      "commands.log",
+      "validation-summary.json",
+      "diff-summary.md"
+    ]
+  },
+  "definitionOfDone": [
+    "requested-behavior-implemented",
+    "lint-build-test-pass",
+    "security-audit-reviewed",
+    "api-contracts-preserved-or-explicitly-approved",
+    "final-summary-produced"
+  ]
+}

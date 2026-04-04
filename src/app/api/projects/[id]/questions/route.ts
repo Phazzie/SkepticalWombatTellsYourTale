@@ -9,8 +9,16 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
   const url = new URL(request.url);
+  const mode = url.searchParams.get('mode');
+  if (mode === 'legacy') {
+    return NextResponse.json(
+      { error: 'Persisted question listing is not available in this mode.' },
+      { status: 501 }
+    );
+  }
+
+  const { id } = await params;
   const status = url.searchParams.get('status');
 
   const questions = await prisma.question.findMany({
