@@ -1,26 +1,40 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import {
+  asOptionalString,
+  readJsonObjectBody,
+  RequestValidationError,
+} from '@/lib/api-contract';
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string; docId: string }> }
 ) {
   const { id, docId } = await params;
-  const body = await request.json();
-  const { name, content, type } = body as { name?: string; content?: string; type?: string };
-  const existing = await prisma.document.findFirst({ where: { id: docId, projectId: id } });
-  if (!existing) {
-    return NextResponse.json({ error: 'Document not found' }, { status: 404 });
+  try {
+    const body = await readJsonObjectBody(request);
+    const name = asOptionalString(body.name, 'name');
+    const content = asOptionalString(body.content, 'content');
+    const type = asOptionalString(body.type, 'type');
+    const existing = await prisma.document.findFirst({ where: { id: docId, projectId: id } });
+    if (!existing) {
+      return NextResponse.json({ error: 'Document not found' }, { status: 404 });
+    }
+    const document = await prisma.document.update({
+      where: { id: docId },
+      data: {
+        ...(name !== undefined && { name }),
+        ...(content !== undefined && { content }),
+        ...(type !== undefined && { type }),
+      },
+    });
+    return NextResponse.json(document);
+  } catch (error) {
+    if (error instanceof RequestValidationError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    throw error;
   }
-  const document = await prisma.document.update({
-    where: { id: docId },
-    data: {
-      ...(typeof name === 'string' && { name }),
-      ...(typeof content === 'string' && { content }),
-      ...(typeof type === 'string' && { type }),
-    },
-  });
-  return NextResponse.json(document);
 }
 
 export async function DELETE(

@@ -1,12 +1,47 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import {
+  asBoolean,
+  asRequiredString,
+  readJsonObjectBody,
+  RequestValidationError,
+  safeParseJson,
+} from '@/lib/api-contract';
+
+const VALID_EXPORT_LEVELS = ['raw', 'structured', 'polished', 'full'] as const;
+type ExportLevel = (typeof VALID_EXPORT_LEVELS)[number];
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const { level, includeTranscripts, includeAnnotations, includeGaps } = await request.json();
+  let level: ExportLevel;
+  let includeTranscripts = false;
+  let includeAnnotations = false;
+  let includeGaps = false;
+
+  try {
+    const body = await readJsonObjectBody(request);
+    const levelRaw = asRequiredString(body.level, 'level');
+    if (!VALID_EXPORT_LEVELS.includes(levelRaw as ExportLevel)) {
+      return NextResponse.json(
+        { error: `\`level\` must be one of: ${VALID_EXPORT_LEVELS.join(', ')}` },
+        { status: 400 }
+      );
+    }
+    level = levelRaw as ExportLevel;
+    includeTranscripts =
+      body.includeTranscripts === undefined ? false : asBoolean(body.includeTranscripts, 'includeTranscripts');
+    includeAnnotations =
+      body.includeAnnotations === undefined ? false : asBoolean(body.includeAnnotations, 'includeAnnotations');
+    includeGaps = body.includeGaps === undefined ? false : asBoolean(body.includeGaps, 'includeGaps');
+  } catch (error) {
+    if (error instanceof RequestValidationError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    throw error;
+  }
 
   const project = await prisma.project.findUnique({
     where: { id },
@@ -45,12 +80,10 @@ export async function POST(
       content += `${session.transcript}\n\n`;
 
       if (includeAnnotations) {
-        let annotations: Array<{ type: string; text: string }> = [];
-        try {
-          annotations = JSON.parse(session.aiAnnotations || '[]');
-        } catch {
-          annotations = [];
-        }
+        const annotations = safeParseJson<Array<{ type: string; text: string }>>(
+          session.aiAnnotations || '[]',
+          []
+        );
         if (annotations.length > 0) {
           content += `### AI Notes\n\n`;
           for (const ann of annotations) {

@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import {
+  asOptionalString,
+  asRequiredString,
+  readJsonObjectBody,
+  RequestValidationError,
+} from '@/lib/api-contract';
 
 export async function GET(
   _request: Request,
@@ -18,9 +24,18 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const { name, type } = await request.json();
-  const document = await prisma.document.create({
-    data: { projectId: id, name, type: type || 'general' },
-  });
-  return NextResponse.json(document);
+  try {
+    const body = await readJsonObjectBody(request);
+    const name = asRequiredString(body.name, 'name');
+    const type = asOptionalString(body.type, 'type') ?? 'general';
+    const document = await prisma.document.create({
+      data: { projectId: id, name, type },
+    });
+    return NextResponse.json(document);
+  } catch (error) {
+    if (error instanceof RequestValidationError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    throw error;
+  }
 }

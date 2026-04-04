@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { normalizeAnalysisFromContent, parseAiJsonObject } from '@/lib/ai-contract';
 
 export const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || '',
@@ -114,7 +115,7 @@ Return a JSON object with this exact structure:
   });
 
   const content = response.choices[0].message.content || '{}';
-  return JSON.parse(content);
+  return normalizeAnalysisFromContent(content);
 }
 
 export async function generateVoicePreservedDraft(
@@ -186,8 +187,21 @@ Return JSON: { "gaps": [{ "description": "specific gap", "documentRef": "documen
     temperature: 0.6,
   });
 
-  const result = JSON.parse(response.choices[0].message.content || '{"gaps": []}');
-  return result.gaps || [];
+  const result = parseAiJsonObject(response.choices[0].message.content);
+  const gaps = Array.isArray(result.gaps) ? result.gaps : [];
+  return gaps
+    .map((g) => {
+      if (!g || typeof g !== 'object' || Array.isArray(g)) return null;
+      const description =
+        typeof (g as { description?: unknown }).description === 'string'
+          ? (g as { description: string }).description.trim()
+          : '';
+      const documentRefRaw = (g as { documentRef?: unknown }).documentRef;
+      const documentRef = typeof documentRefRaw === 'string' ? documentRefRaw : undefined;
+      if (!description) return null;
+      return documentRef ? { description, documentRef } : { description };
+    })
+    .filter((g): g is { description: string; documentRef?: string } => g !== null);
 }
 
 export async function recognizePatternsAcrossProject(
@@ -217,6 +231,21 @@ Return JSON: { "patterns": [{ "description": "pattern description", "sessionRefs
     temperature: 0.7,
   });
 
-  const result = JSON.parse(response.choices[0].message.content || '{"patterns": []}');
-  return result.patterns || [];
+  const result = parseAiJsonObject(response.choices[0].message.content);
+  const patterns = Array.isArray(result.patterns) ? result.patterns : [];
+  return patterns
+    .map((p) => {
+      if (!p || typeof p !== 'object' || Array.isArray(p)) return null;
+      const description =
+        typeof (p as { description?: unknown }).description === 'string'
+          ? (p as { description: string }).description.trim()
+          : '';
+      const sessionRefsRaw = (p as { sessionRefs?: unknown }).sessionRefs;
+      const sessionRefs = Array.isArray(sessionRefsRaw)
+        ? sessionRefsRaw.filter((s): s is string => typeof s === 'string')
+        : [];
+      if (!description) return null;
+      return { description, sessionRefs };
+    })
+    .filter((p): p is { description: string; sessionRefs: string[] } => p !== null);
 }

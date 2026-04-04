@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-
-function safeParseJson<T>(value: string, fallback: T): T {
-  try {
-    return JSON.parse(value);
-  } catch {
-    return fallback;
-  }
-}
+import {
+  asOptionalNullableString,
+  asOptionalString,
+  readJsonObjectBody,
+  RequestValidationError,
+  safeParseJson,
+} from '@/lib/api-contract';
 
 export async function GET(
   request: Request,
@@ -52,16 +51,24 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const body = await request.json();
-  const { name, description } = body as { name?: string; description?: string };
-  const project = await prisma.project.update({
-    where: { id },
-    data: {
-      ...(typeof name === 'string' && { name }),
-      ...(description !== undefined && { description }),
-    },
-  });
-  return NextResponse.json(project);
+  try {
+    const body = await readJsonObjectBody(request);
+    const name = asOptionalString(body.name, 'name');
+    const description = asOptionalNullableString(body.description, 'description');
+    const project = await prisma.project.update({
+      where: { id },
+      data: {
+        ...(name !== undefined && { name }),
+        ...(description !== undefined && { description }),
+      },
+    });
+    return NextResponse.json(project);
+  } catch (error) {
+    if (error instanceof RequestValidationError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    throw error;
+  }
 }
 
 export async function DELETE(

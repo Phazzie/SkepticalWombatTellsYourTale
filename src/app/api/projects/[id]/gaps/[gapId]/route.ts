@@ -1,19 +1,25 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import {
+  asBoolean,
+  readJsonObjectBody,
+  RequestValidationError,
+} from '@/lib/api-contract';
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string; gapId: string }> }
 ) {
   const { id, gapId } = await params;
-  const body = await request.json();
-  const { resolved } = body as { resolved?: unknown };
-
-  if (typeof resolved !== 'boolean') {
-    return NextResponse.json(
-      { error: 'Invalid payload. Only `resolved` boolean is allowed.' },
-      { status: 400 }
-    );
+  let resolved = false;
+  try {
+    const body = await readJsonObjectBody(request);
+    resolved = asBoolean(body.resolved, 'resolved');
+  } catch (error) {
+    if (error instanceof RequestValidationError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    throw error;
   }
 
   const existing = await prisma.gap.findFirst({ where: { id: gapId, projectId: id } });

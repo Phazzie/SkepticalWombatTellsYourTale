@@ -1,13 +1,30 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { analyzeTranscript } from '@/lib/openai';
+import {
+  asRequiredString,
+  readJsonObjectBody,
+  RequestValidationError,
+} from '@/lib/api-contract';
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const { sessionId, transcript } = await request.json();
+  let sessionId = '';
+  let transcript = '';
+
+  try {
+    const body = await readJsonObjectBody(request);
+    sessionId = asRequiredString(body.sessionId, 'sessionId');
+    transcript = asRequiredString(body.transcript, 'transcript');
+  } catch (error) {
+    if (error instanceof RequestValidationError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    throw error;
+  }
 
   const project = await prisma.project.findUnique({
     where: { id },

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { openai } from '@/lib/openai';
+import { normalizeQuestionsFromContent } from '@/lib/ai-contract';
 
 export async function GET() {
   // Questions are generated on demand via POST and not persisted.
@@ -56,11 +57,7 @@ Return JSON: { "questions": [{ "text": "question text", "sessionRef": null }] }`
       temperature: 0.8,
     });
 
-    const result = JSON.parse(response.choices[0].message.content || '{"questions":[]}');
-    const questions = (result.questions || []).map((q: { text: string; sessionRef?: string }) => ({
-      ...q,
-      createdAt: new Date().toISOString(),
-    }));
+    const questions = normalizeQuestionsFromContent(response.choices[0].message.content);
     return NextResponse.json(questions);
   } catch (error) {
     console.error('Question generation error:', error);

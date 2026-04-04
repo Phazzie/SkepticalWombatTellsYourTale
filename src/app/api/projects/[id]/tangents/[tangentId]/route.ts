@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import {
+  asRequiredString,
+  readJsonObjectBody,
+  RequestValidationError,
+} from '@/lib/api-contract';
 
 const VALID_STATUSES = ['pending', 'resolved', 'dismissed'] as const;
 type TangentStatus = typeof VALID_STATUSES[number];
@@ -9,8 +14,16 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string; tangentId: string }> }
 ) {
   const { id, tangentId } = await params;
-  const body = await request.json();
-  const { status } = body as { status?: unknown };
+  let status = '';
+  try {
+    const body = await readJsonObjectBody(request);
+    status = asRequiredString(body.status, 'status');
+  } catch (error) {
+    if (error instanceof RequestValidationError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    throw error;
+  }
 
   if (!status || !VALID_STATUSES.includes(status as TangentStatus)) {
     return NextResponse.json(

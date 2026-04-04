@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-
-function safeParseJson<T>(value: string, fallback: T): T {
-  try {
-    return JSON.parse(value);
-  } catch {
-    return fallback;
-  }
-}
+import {
+  asOptionalString,
+  readJsonObjectBody,
+  RequestValidationError,
+  safeParseJson,
+} from '@/lib/api-contract';
 
 export async function GET(
   _request: Request,
@@ -31,13 +29,27 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const data = await request.json();
-  const session = await prisma.session.create({
-    data: {
-      projectId: id,
-      transcript: data.transcript || '',
-      aiAnnotations: JSON.stringify(data.aiAnnotations || []),
-    },
-  });
-  return NextResponse.json(session);
+  try {
+    const data = await readJsonObjectBody(request);
+    const transcript = asOptionalString(data.transcript, 'transcript') ?? '';
+    const aiAnnotationsRaw = data.aiAnnotations;
+    const aiAnnotations =
+      Array.isArray(aiAnnotationsRaw) && aiAnnotationsRaw.every((a) => !!a && typeof a === 'object')
+        ? aiAnnotationsRaw
+        : [];
+
+    const session = await prisma.session.create({
+      data: {
+        projectId: id,
+        transcript,
+        aiAnnotations: JSON.stringify(aiAnnotations),
+      },
+    });
+    return NextResponse.json(session);
+  } catch (error) {
+    if (error instanceof RequestValidationError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    throw error;
+  }
 }
