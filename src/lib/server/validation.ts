@@ -22,6 +22,26 @@ export function assertString(value: unknown, field: string, opts?: { min?: numbe
 }
 
 /**
+ * Validates raw text without trimming.
+ * Throws AppError(400) when validation fails.
+ */
+export function assertRawString(value: unknown, field: string, opts?: { min?: number; max?: number }) {
+  if (typeof value !== 'string') {
+    throw badRequest(`${field} must be a string`);
+  }
+
+  if (opts?.min !== undefined && value.length < opts.min) {
+    throw badRequest(`${field} must be at least ${opts.min} characters`);
+  }
+
+  if (opts?.max !== undefined && value.length > opts.max) {
+    throw badRequest(`${field} must be at most ${opts.max} characters`);
+  }
+
+  return value;
+}
+
+/**
  * Validates that a value is a boolean.
  * Throws AppError(400) when validation fails.
  */

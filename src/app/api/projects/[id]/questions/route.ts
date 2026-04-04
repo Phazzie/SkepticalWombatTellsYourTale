@@ -3,6 +3,7 @@ import { openai } from '@/lib/openai';
 import { handleRoute } from '@/lib/server/http';
 import { requireUser } from '@/lib/server/auth';
 import { requireProjectAccess } from '@/lib/server/services/project-access';
+import { notFound } from '@/lib/server/errors';
 
 export async function GET(
   _request: Request,
@@ -35,7 +36,7 @@ export async function POST(
     });
 
     if (!project) {
-      return [];
+      throw notFound('Project not found');
     }
 
     const context = project.sessions

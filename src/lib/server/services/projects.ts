@@ -4,7 +4,6 @@ import { notFound } from '@/lib/server/errors';
 
 export const projectsService = {
   async listForUser(userId: string) {
-    await projectsRepository.claimUnownedProjects(userId);
     return projectsRepository.listForUser(userId);
   },
 

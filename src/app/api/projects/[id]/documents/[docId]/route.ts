@@ -1,7 +1,7 @@
 import { handleRoute } from '@/lib/server/http';
 import { requireUser } from '@/lib/server/auth';
 import { requireProjectAccess } from '@/lib/server/services/project-access';
-import { assertString } from '@/lib/server/validation';
+import { assertRawString, assertString } from '@/lib/server/validation';
 import { notFound } from '@/lib/server/errors';
 import { documentsRepository } from '@/lib/server/repositories/documents';
 
@@ -28,7 +28,7 @@ export async function PATCH(
     }
 
     if (body.content !== undefined) {
-      data.content = assertString(body.content, 'content', { min: 0, max: 200000 });
+      data.content = assertRawString(body.content, 'content', { min: 0, max: 200000 });
     }
 
     if (body.type !== undefined) {

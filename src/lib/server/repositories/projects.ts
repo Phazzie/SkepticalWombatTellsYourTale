@@ -1,16 +1,6 @@
 import { prisma } from '@/lib/db';
 
 export const projectsRepository = {
-  async claimUnownedProjects(userId: string) {
-    const ownerCount = await prisma.project.count({ where: { userId } });
-    if (ownerCount > 0) return;
-
-    await prisma.project.updateMany({
-      where: { userId: null },
-      data: { userId },
-    });
-  },
-
   listForUser(userId: string) {
     return prisma.project.findMany({
       where: {

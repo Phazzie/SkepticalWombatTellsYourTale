@@ -23,6 +23,9 @@ export function fail(error: unknown) {
 export async function handleRoute<T>(fn: () => Promise<T>) {
   try {
     const data = await fn();
+    if (data instanceof Response) {
+      return data;
+    }
     return ok(data);
   } catch (error) {
     return fail(error);
