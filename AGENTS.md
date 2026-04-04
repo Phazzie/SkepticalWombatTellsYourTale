@@ -88,7 +88,7 @@ If dependencies are missing, run `npm ci` first.
 - For JSON-like Prisma string fields (`aiAnnotations`, `sessionRefs`), keep safe parse/stringify behavior consistent with existing routes.
 - Match current transport patterns:
   - JSON request bodies for most `POST/PATCH` endpoints.
-  - `FormData` only where already used (for example transcription upload).
+  - `FormData` only where already used (for example, for transcription upload).
 
 ### 10) Integration pitfalls to check preemptively
 
