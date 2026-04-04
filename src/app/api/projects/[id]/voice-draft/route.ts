@@ -48,6 +48,10 @@ export async function POST(
       );
     }
 
-    return NextResponse.json({ draft: 'Voice draft generation failed.', drift: null }, { status: 500 });
+    const failureReason = error instanceof Error && error.message ? error.message : 'Unknown error';
+    return NextResponse.json(
+      { draft: `Voice draft generation failed: ${failureReason}`, drift: null },
+      { status: 500 }
+    );
   }
 }

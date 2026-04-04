@@ -119,7 +119,8 @@ export default function ProjectPage() {
       }
       const data = await res.json();
       setSearchResults(data.results || []);
-    } catch {
+    } catch (error) {
+      console.error('Project search failed:', error);
       setSearchResults([]);
     } finally {
       setSearching(false);
