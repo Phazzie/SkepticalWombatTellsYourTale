@@ -25,10 +25,26 @@ interface AnalysisResult {
   questions?: string[];
   significance?: string;
   contradictions?: Array<{ description: string }>;
-  annotations?: Array<{ text: string; type: string }>;
+  annotations?: Array<{ text: string; type: string; reference?: string }>;
   gaps?: Array<{ description: string }>;
   voicePreservedDraft?: string;
 }
+
+const annotationColors: Record<string, string> = {
+  important: 'bg-amber-500/20 border-amber-500/50 text-amber-300',
+  connection: 'bg-blue-500/20 border-blue-500/50 text-blue-300',
+  unfinished: 'bg-orange-500/20 border-orange-500/50 text-orange-300',
+  tangent: 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300',
+  pattern: 'bg-purple-500/20 border-purple-500/50 text-purple-300',
+};
+
+const annotationIcons: Record<string, string> = {
+  important: '⚡',
+  connection: '🔗',
+  unfinished: '🧵',
+  tangent: '↪️',
+  pattern: '🔁',
+};
 
 export default function RecordPage() {
   const { id } = useParams<{ id: string }>();
@@ -303,6 +319,28 @@ export default function RecordPage() {
                     <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
                       {analysis.voicePreservedDraft}
                     </p>
+                  </div>
+                )}
+
+                {analysis.annotations && analysis.annotations.length > 0 && (
+                  <div className="bg-gray-900 border border-purple-700/50 rounded-xl p-5">
+                    <h2 className="font-semibold text-purple-400 mb-3">🤖 AI Coach Notes</h2>
+                    <div className="space-y-2">
+                      {analysis.annotations.map((ann) => (
+                        <div
+                          key={`${ann.type}:${ann.reference ?? ''}:${ann.text}`}
+                          className={`border rounded-lg px-3 py-2 text-sm ${
+                            annotationColors[ann.type] || 'bg-gray-800 border-gray-600 text-gray-300'
+                          }`}
+                        >
+                          <span className="mr-2">{annotationIcons[ann.type] || '💡'}</span>
+                          {ann.text}
+                          {ann.reference && (
+                            <span className="ml-2 text-xs opacity-70">({ann.reference})</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </>
