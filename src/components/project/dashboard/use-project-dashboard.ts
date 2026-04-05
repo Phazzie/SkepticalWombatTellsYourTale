@@ -15,6 +15,12 @@ function getNextConceptStatus(
   return currentStatus || 'developing';
 }
 
+function captureClientRequestError(error: unknown) {
+  if (process.env.NODE_ENV !== 'production') {
+    console.error(error);
+  }
+}
+
 export function useProjectDashboard(projectId: string) {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +45,7 @@ export function useProjectDashboard(projectId: string) {
         setLoadError('Failed to load project.');
       })
       .catch((error) => {
-        void error;
+        captureClientRequestError(error);
         setLoadError('Failed to load project.');
       })
       .finally(() => setLoading(false));
@@ -106,7 +112,7 @@ export function useProjectDashboard(projectId: string) {
       }
       setActionError(`Failed to resolve thread (${status})`);
     } catch (error) {
-      void error;
+      captureClientRequestError(error);
       if (previousStatus) {
         setProject((prev) =>
           prev
@@ -159,7 +165,7 @@ export function useProjectDashboard(projectId: string) {
       }
       setActionError(`Failed to resolve gap (${status})`);
     } catch (error) {
-      void error;
+      captureClientRequestError(error);
       if (typeof previousResolved === 'boolean') {
         setProject((prev) =>
           prev
@@ -219,7 +225,7 @@ export function useProjectDashboard(projectId: string) {
       }
       setActionError(`Failed to update concept (${status})`);
     } catch (error) {
-      void error;
+      captureClientRequestError(error);
       if (previousConcept) {
         setProject((prev) =>
           prev
@@ -275,7 +281,7 @@ export function useProjectDashboard(projectId: string) {
       }
       setActionError(`Failed to update contradiction (${response.status})`);
     } catch (error) {
-      void error;
+      captureClientRequestError(error);
       if (previousStatus) {
         setProject((prev) =>
           prev
@@ -314,7 +320,7 @@ export function useProjectDashboard(projectId: string) {
       setSearchResults([]);
       setActionError(`Failed to search project (${status})`);
     } catch (error) {
-      void error;
+      captureClientRequestError(error);
       setSearchResults([]);
       setActionError('Failed to search project');
     } finally {
