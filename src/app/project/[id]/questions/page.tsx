@@ -3,23 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { Question, QuestionGenerationPayload } from '@/lib/types';
 import { toneCopy } from '@/lib/copy/tone';
-
-interface Question {
-  id: string;
-  text: string;
-  sessionRef?: string;
-  status: 'pending' | 'answered' | 'dismissed';
-  createdAt: string;
-}
-
-interface QuestionGenerationResponse {
-  questions: Question[];
-  contractValidation?: {
-    isValid: boolean;
-    issues: string[];
-  };
-}
 
 export default function QuestionsPage() {
   const { id } = useParams<{ id: string }>();
@@ -47,7 +32,7 @@ export default function QuestionsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'generate' }),
     });
-    const data = (await res.json()) as QuestionGenerationResponse;
+    const data = (await res.json()) as QuestionGenerationPayload;
     setQuestions((prev) => [...data.questions, ...prev]);
     if (data.contractValidation && !data.contractValidation.isValid) {
       const issueCount = data.contractValidation.issues.length;

@@ -29,10 +29,11 @@ function normalizeGeneratedQuestions(value: unknown): { value: GeneratedQuestion
 
     if (text.length === 0) {
       contractIssues.push(`questions[${index}].text must be a non-empty string`);
-      return;
     }
     if (contextAnchor.length === 0) {
       contractIssues.push(`questions[${index}].contextAnchor must be a non-empty string`);
+    }
+    if (text.length === 0 || contextAnchor.length === 0) {
       return;
     }
 

@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { AnalysisResult } from '@/lib/types';
 import { AppHeader } from '@/components/layout/app-header';
 import { AppBackLink, Card, Container, PrimaryButton, SecondaryButton, Shell, StatusMessage } from '@/components/ui/primitives';
 import { toneCopy } from '@/lib/copy/tone';
@@ -21,21 +22,6 @@ interface BrowserSpeechRecognition {
 }
 
 type RecordingState = 'idle' | 'recording' | 'processing' | 'analyzing' | 'done';
-
-interface AnalysisResult {
-  contractValidation?: { isValid: boolean; issues: string[]; parseError?: string };
-  documentSuggestion?: { documentName: string; reason: string };
-  tangents?: Array<{ thread: string; context: string; evidence: string }>;
-  questions?: string[];
-  questionDetails?: Array<{ text: string; contextAnchor: string }>;
-  significance?: string;
-  significanceDetails?: { text: string; justification: string; confidence: number };
-  contradictions?: Array<{ description: string }>;
-  annotations?: Array<{ text: string; type: string; reference?: string }>;
-  gaps?: Array<{ description: string; whyItMatters: string }>;
-  voicePreservedDraft?: string;
-  voicePreservedDraftDetails?: { draft: string; justification: string; confidence: number };
-}
 
 const annotationColors: Record<string, string> = {
   important: 'bg-amber-500/20 border-amber-500/50 text-amber-300',

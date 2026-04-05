@@ -142,6 +142,17 @@ export interface Question {
   updatedAt: string;
 }
 
+export interface ContractValidationSummary {
+  isValid: boolean;
+  issues: string[];
+  parseError?: string;
+}
+
+export interface QuestionGenerationPayload {
+  questions: Question[];
+  contractValidation?: ContractValidationSummary;
+}
+
 export interface Concept {
   id: string;
   projectId: string;
