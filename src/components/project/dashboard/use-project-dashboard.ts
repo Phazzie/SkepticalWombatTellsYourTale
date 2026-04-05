@@ -22,11 +22,24 @@ export function useProjectDashboard(projectId: string) {
   const [searchResults, setSearchResults] = useState<ProjectSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
+    setLoading(true);
+    setLoadError(null);
+    setProject(null);
+
     requestJson<Project>(`/api/projects/${projectId}?include=all`)
       .then(({ ok, data }) => {
-        if (ok) setProject(data);
+        if (ok) {
+          setProject(data);
+          return;
+        }
+
+        setLoadError('Failed to load project.');
+      })
+      .catch(() => {
+        setLoadError('Failed to load project.');
       })
       .finally(() => setLoading(false));
   }, [projectId]);
@@ -70,26 +83,42 @@ export function useProjectDashboard(projectId: string) {
         : prev
     );
 
-    const { ok, status } = await requestJson<{ success: boolean }>(`/api/projects/${projectId}/tangents/${tangentId}`, {
-      method: 'PATCH',
-      body: { status: 'resolved' },
-    });
+    try {
+      const { ok, status } = await requestJson<{ success: boolean }>(`/api/projects/${projectId}/tangents/${tangentId}`, {
+        method: 'PATCH',
+        body: { status: 'resolved' },
+      });
 
-    if (ok) return;
+      if (ok) return;
 
-    if (previousStatus) {
-      setProject((prev) =>
-        prev
-          ? {
-              ...prev,
-              tangents: prev.tangents?.map((t) =>
-                t.id === tangentId ? { ...t, status: previousStatus } : t
-              ),
-            }
-          : prev
-      );
+      if (previousStatus) {
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                tangents: prev.tangents?.map((t) =>
+                  t.id === tangentId ? { ...t, status: previousStatus } : t
+                ),
+              }
+            : prev
+        );
+      }
+      setActionError(`Failed to resolve thread (${status})`);
+    } catch {
+      if (previousStatus) {
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                tangents: prev.tangents?.map((t) =>
+                  t.id === tangentId ? { ...t, status: previousStatus } : t
+                ),
+              }
+            : prev
+        );
+      }
+      setActionError('Failed to resolve thread');
     }
-    setActionError(`Failed to resolve thread (${status})`);
   };
 
   const resolveGap = async (gapId: string) => {
@@ -106,26 +135,42 @@ export function useProjectDashboard(projectId: string) {
         : prev
     );
 
-    const { ok, status } = await requestJson<{ success: boolean }>(`/api/projects/${projectId}/gaps/${gapId}`, {
-      method: 'PATCH',
-      body: { resolved: true },
-    });
+    try {
+      const { ok, status } = await requestJson<{ success: boolean }>(`/api/projects/${projectId}/gaps/${gapId}`, {
+        method: 'PATCH',
+        body: { resolved: true },
+      });
 
-    if (ok) return;
+      if (ok) return;
 
-    if (typeof previousResolved === 'boolean') {
-      setProject((prev) =>
-        prev
-          ? {
-              ...prev,
-              gaps: prev.gaps?.map((g) =>
-                g.id === gapId ? { ...g, resolved: previousResolved } : g
-              ),
-            }
-          : prev
-      );
+      if (typeof previousResolved === 'boolean') {
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                gaps: prev.gaps?.map((g) =>
+                  g.id === gapId ? { ...g, resolved: previousResolved } : g
+                ),
+              }
+            : prev
+        );
+      }
+      setActionError(`Failed to resolve gap (${status})`);
+    } catch {
+      if (typeof previousResolved === 'boolean') {
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                gaps: prev.gaps?.map((g) =>
+                  g.id === gapId ? { ...g, resolved: previousResolved } : g
+                ),
+              }
+            : prev
+        );
+      }
+      setActionError('Failed to resolve gap');
     }
-    setActionError(`Failed to resolve gap (${status})`);
   };
 
   const updateConcept = async (conceptId: string, approved: boolean) => {
@@ -147,28 +192,46 @@ export function useProjectDashboard(projectId: string) {
         : prev
     );
 
-    const { ok, status } = await requestJson(`/api/projects/${projectId}/concepts`, {
-      method: 'PATCH',
-      body: { conceptId, approved, status: nextStatus },
-    });
+    try {
+      const { ok, status } = await requestJson(`/api/projects/${projectId}/concepts`, {
+        method: 'PATCH',
+        body: { conceptId, approved, status: nextStatus },
+      });
 
-    if (ok) return;
+      if (ok) return;
 
-    if (previousConcept) {
-      setProject((prev) =>
-        prev
-          ? {
-              ...prev,
-              concepts: prev.concepts?.map((c) =>
-                c.id === conceptId
-                  ? { ...c, approved: previousConcept.approved, status: previousConcept.status }
-                  : c
-              ),
-            }
-          : prev
-      );
+      if (previousConcept) {
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                concepts: prev.concepts?.map((c) =>
+                  c.id === conceptId
+                    ? { ...c, approved: previousConcept.approved, status: previousConcept.status }
+                    : c
+                ),
+              }
+            : prev
+        );
+      }
+      setActionError(`Failed to update concept (${status})`);
+    } catch {
+      if (previousConcept) {
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                concepts: prev.concepts?.map((c) =>
+                  c.id === conceptId
+                    ? { ...c, approved: previousConcept.approved, status: previousConcept.status }
+                    : c
+                ),
+              }
+            : prev
+        );
+      }
+      setActionError('Failed to update concept');
     }
-    setActionError(`Failed to update concept (${status})`);
   };
 
   const updateContradiction = async (contradictionId: string, status: 'open' | 'explored' | 'dismissed') => {
@@ -186,26 +249,42 @@ export function useProjectDashboard(projectId: string) {
         : prev
     );
 
-    const response = await requestJson(`/api/projects/${projectId}/contradictions`, {
-      method: 'PATCH',
-      body: { contradictionId, status },
-    });
+    try {
+      const response = await requestJson(`/api/projects/${projectId}/contradictions`, {
+        method: 'PATCH',
+        body: { contradictionId, status },
+      });
 
-    if (response.ok) return;
+      if (response.ok) return;
 
-    if (previousStatus) {
-      setProject((prev) =>
-        prev
-          ? {
-              ...prev,
-              contradictions: prev.contradictions?.map((c) =>
-                c.id === contradictionId ? { ...c, status: previousStatus } : c
-              ),
-            }
-          : prev
-      );
+      if (previousStatus) {
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                contradictions: prev.contradictions?.map((c) =>
+                  c.id === contradictionId ? { ...c, status: previousStatus } : c
+                ),
+              }
+            : prev
+        );
+      }
+      setActionError(`Failed to update contradiction (${response.status})`);
+    } catch {
+      if (previousStatus) {
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                contradictions: prev.contradictions?.map((c) =>
+                  c.id === contradictionId ? { ...c, status: previousStatus } : c
+                ),
+              }
+            : prev
+        );
+      }
+      setActionError('Failed to update contradiction');
     }
-    setActionError(`Failed to update contradiction (${response.status})`);
   };
 
   const searchProject = async () => {
@@ -214,20 +293,34 @@ export function useProjectDashboard(projectId: string) {
       setSearchResults([]);
       return;
     }
+    setActionError(null);
     setSearching(true);
 
-    const { ok, data } = await requestJson<{ query: string; results: ProjectSearchResult[] }>(
-      `/api/projects/${projectId}/search?q=${encodeURIComponent(trimmed)}`
-    );
+    try {
+      const { ok, data, status } = await requestJson<{ query: string; results: ProjectSearchResult[] }>(
+        `/api/projects/${projectId}/search?q=${encodeURIComponent(trimmed)}`
+      );
 
-    setSearchResults(ok ? data.results || [] : []);
-    setSearching(false);
+      if (ok) {
+        setSearchResults(data.results || []);
+        return;
+      }
+
+      setSearchResults([]);
+      setActionError(`Failed to search project (${status})`);
+    } catch {
+      setSearchResults([]);
+      setActionError('Failed to search project');
+    } finally {
+      setSearching(false);
+    }
   };
 
   return {
     project,
     loading,
     actionError,
+    loadError,
     pendingTangents,
     openGaps,
     newPatterns,

@@ -17,6 +17,7 @@ export default function ProjectPage() {
     project,
     loading,
     actionError,
+    loadError,
     pendingTangents,
     openGaps,
     newPatterns,
@@ -39,7 +40,13 @@ export default function ProjectPage() {
   }
 
   if (!project) {
-    return <Shell><Container><StatusMessage state="error" title="Project not found" /></Container></Shell>;
+    return (
+      <Shell>
+        <Container>
+          <StatusMessage state="error" title={loadError || 'Project not found'} />
+        </Container>
+      </Shell>
+    );
   }
 
   return (
