@@ -34,7 +34,8 @@ jobs:
               : context.payload.review;
 
             const actor = source?.user?.login || context.actor;
-            const allowedBotLogins = (process.env.REVIEW_AUTOMATION_ALLOWED_BOTS || 'copilot-pull-request-reviewer[bot],copilot-swe-agent[bot]')
+            const defaultAllowedBots = 'copilot-pull-request-reviewer[bot],copilot-swe-agent[bot]';
+            const allowedBotLogins = (process.env.REVIEW_AUTOMATION_ALLOWED_BOTS || defaultAllowedBots)
               .split(',')
               .map((value) => value.trim().toLowerCase())
               .filter(Boolean);
@@ -158,7 +159,6 @@ jobs:
             }
         env:
           COPILOT_CODING_WORKFLOW_ID: ${{ vars.COPILOT_CODING_WORKFLOW_ID }}
-          REVIEW_AUTOMATION_ALLOWED_BOTS: ${{ vars.REVIEW_AUTOMATION_ALLOWED_BOTS }}
 
       - name: Emit repository dispatch for external agent integrations
         if: steps.create_issue.outputs.issue_number != '' && steps.create_issue.outputs.agent != 'copilot'
@@ -182,5 +182,3 @@ jobs:
             });
 
             core.info(`Dispatched ${eventType} for issue #${issueNumber}.`);
-        env:
-          REVIEW_AUTOMATION_ALLOWED_BOTS: ${{ vars.REVIEW_AUTOMATION_ALLOWED_BOTS }}
