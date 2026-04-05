@@ -5,7 +5,7 @@ import { assertString } from '@/lib/server/validation';
 import { documentsRepository } from '@/lib/server/repositories/documents';
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   return handleRoute(async () => {
@@ -14,7 +14,7 @@ export async function GET(
 
     await requireProjectAccess(id, userId);
     return documentsRepository.listByProject(id);
-  });
+  }, { request, operation: 'projects.documents.list' });
 }
 
 export async function POST(
@@ -32,5 +32,5 @@ export async function POST(
     const type = typeof body.type === 'string' && body.type.trim().length > 0 ? body.type.trim() : 'general';
 
     return documentsRepository.create(id, name, type);
-  });
+  }, { request, operation: 'projects.documents.create' });
 }

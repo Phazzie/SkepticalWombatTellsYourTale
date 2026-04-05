@@ -4,6 +4,36 @@ import { generateVoiceDraft } from '@/lib/server/services/voice-draft.service';
 import { AiPort } from '@/lib/server/ports/ai';
 import { VoiceDraftPersistencePort } from '@/lib/server/ports/voice-draft';
 
+test(
+  'generateVoiceDraft fails fast without OPENAI_API_KEY when using default ai port',
+  { concurrency: false },
+  async () => {
+    const original = process.env.OPENAI_API_KEY;
+
+    try {
+      delete process.env.OPENAI_API_KEY;
+
+      const persistence: VoiceDraftPersistencePort = {
+        async getDraftContext() {
+          return {
+            transcripts: ['line one'],
+            documentContent: 'doc',
+            documentExists: true,
+          };
+        },
+      };
+
+      await assert.rejects(() => generateVoiceDraft({ projectId: 'p1', prompt: 'write' }, { persistence }), /OPENAI_API_KEY/);
+    } finally {
+      if (original === undefined) {
+        delete process.env.OPENAI_API_KEY;
+      } else {
+        process.env.OPENAI_API_KEY = original;
+      }
+    }
+  }
+);
+
 test('generateVoiceDraft returns draft and drift info', async () => {
   const persistence: VoiceDraftPersistencePort = {
     async getDraftContext() {
