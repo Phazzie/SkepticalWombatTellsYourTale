@@ -74,11 +74,7 @@ export interface Gap {
 }
 
 export interface AnalysisResult {
-  contractValidation?: {
-    isValid: boolean;
-    issues: string[];
-    parseError?: string;
-  };
+  contractValidation?: ContractValidationSummary;
   documentSuggestion?: {
     documentId?: string;
     documentName: string;

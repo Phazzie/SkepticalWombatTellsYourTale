@@ -252,6 +252,9 @@ function normalizeAnalysis(value: unknown): { value: AnalysisResult; contractIss
   }
 
   const significanceDetailsRaw = asObject(parsed.significance);
+  if (parsed.significance !== undefined && parsed.significance !== null && typeof parsed.significance !== 'object') {
+    contractIssues.push('significance must be an object');
+  }
   const significanceDetails = Object.keys(significanceDetailsRaw).length
     ? {
         text: safeString(significanceDetailsRaw.text).trim(),
@@ -272,6 +275,13 @@ function normalizeAnalysis(value: unknown): { value: AnalysisResult; contractIss
   }
 
   const voicePreservedDraftDetailsRaw = asObject(parsed.voicePreservedDraft);
+  if (
+    parsed.voicePreservedDraft !== undefined &&
+    parsed.voicePreservedDraft !== null &&
+    typeof parsed.voicePreservedDraft !== 'object'
+  ) {
+    contractIssues.push('voicePreservedDraft must be an object');
+  }
   const voicePreservedDraftDetails = Object.keys(voicePreservedDraftDetailsRaw).length
     ? {
         draft: safeString(voicePreservedDraftDetailsRaw.draft).trim(),
@@ -297,10 +307,6 @@ function normalizeAnalysis(value: unknown): { value: AnalysisResult; contractIss
 
   return {
     value: {
-      contractValidation: {
-        isValid: contractIssues.length === 0,
-        issues: contractIssues,
-      },
       documentSuggestion:
         documentSuggestion && documentSuggestion.documentName.length > 0 && documentSuggestion.reason.length > 0
           ? documentSuggestion

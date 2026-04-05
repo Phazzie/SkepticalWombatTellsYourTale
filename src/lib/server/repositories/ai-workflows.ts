@@ -5,8 +5,7 @@ import { stringifySessionRefs } from '@/lib/server/mappers/session-refs';
 
 function toConceptStatus(status: unknown): 'developing' | 'complete' | 'contradicted' {
   if (status === 'complete' || status === 'contradicted' || status === 'developing') {
-    const normalized: 'developing' | 'complete' | 'contradicted' = status;
-    return normalized;
+    return status;
   }
   return 'developing';
 }
