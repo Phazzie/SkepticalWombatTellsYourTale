@@ -2,13 +2,14 @@
 
 import { Project, Tangent } from '@/lib/types';
 import { ProjectInsightsPage } from '@/components/project/insights-page';
+import { isPendingTangent } from '@/components/project/dashboard/selectors';
 
 export default function TangentsPage() {
   return (
     <ProjectInsightsPage<Tangent>
       title="Dropped Threads"
       icon="🧵"
-      pickItems={(project: Project) => (project.tangents || []).filter((tangent) => tangent.status === 'pending')}
+      pickItems={(project: Project) => (project.tangents || []).filter(isPendingTangent)}
       emptyTitle="No dropped threads"
       emptyDescription="Dropped threads will appear here as sessions accumulate."
       renderItem={(tangent) => (

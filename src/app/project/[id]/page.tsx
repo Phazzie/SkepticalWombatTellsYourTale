@@ -83,7 +83,6 @@ export default function ProjectPage() {
         />
 
         <DashboardSearchCard
-          id={id}
           searchTerm={searchTerm}
           searching={searching}
           searchResults={searchResults}

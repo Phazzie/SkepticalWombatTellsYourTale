@@ -2,13 +2,14 @@
 
 import { Gap, Project } from '@/lib/types';
 import { ProjectInsightsPage } from '@/components/project/insights-page';
+import { isOpenGap } from '@/components/project/dashboard/selectors';
 
 export default function GapsPage() {
   return (
     <ProjectInsightsPage<Gap>
       title="Gaps"
       icon="🔍"
-      pickItems={(project: Project) => (project.gaps || []).filter((gap) => !gap.resolved)}
+      pickItems={(project: Project) => (project.gaps || []).filter(isOpenGap)}
       emptyTitle="No open gaps detected"
       emptyDescription="Keep recording sessions and the system will flag specific missing pieces."
       renderItem={(gap) => (

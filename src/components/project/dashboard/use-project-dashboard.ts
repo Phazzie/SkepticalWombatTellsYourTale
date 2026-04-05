@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Project } from '@/lib/types';
 import { requestJson } from '@/lib/client/request';
 import { ProjectSearchResult } from '@/components/project/dashboard/types';
+import { isOpenGap, isPendingTangent } from '@/components/project/dashboard/selectors';
 
 function getNextConceptStatus(
   currentStatus: 'developing' | 'complete' | 'contradicted' | undefined,
@@ -31,11 +32,11 @@ export function useProjectDashboard(projectId: string) {
   }, [projectId]);
 
   const pendingTangents = useMemo(
-    () => project?.tangents?.filter((t) => t.status === 'pending') || [],
+    () => project?.tangents?.filter(isPendingTangent) || [],
     [project]
   );
   const openGaps = useMemo(
-    () => project?.gaps?.filter((g) => !g.resolved) || [],
+    () => project?.gaps?.filter(isOpenGap) || [],
     [project]
   );
   const newPatterns = useMemo(

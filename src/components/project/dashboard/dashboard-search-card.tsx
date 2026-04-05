@@ -1,21 +1,18 @@
 import { ProjectSearchResult } from '@/components/project/dashboard/types';
 
 export function DashboardSearchCard({
-  id,
   searchTerm,
   searching,
   searchResults,
   onSearchTermChange,
   onSearch,
 }: {
-  id: string;
   searchTerm: string;
   searching: boolean;
   searchResults: ProjectSearchResult[];
   onSearchTermChange: (value: string) => void;
   onSearch: () => Promise<void>;
 }) {
-  void id;
   return (
     <div className="mt-6 bg-gray-900 border border-gray-700 rounded-xl p-5">
       <div className="flex items-center gap-2 mb-3">
