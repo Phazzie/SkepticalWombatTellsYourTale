@@ -44,3 +44,11 @@ export async function ensureProjectAccess(projectId: string, userId: string) {
 
   return project;
 }
+
+export async function ensureProjectOwnership(projectId: string, userId: string) {
+  const project = await ensureProjectAccess(projectId, userId);
+  if (project.userId !== userId) {
+    throw forbidden('Only project owner can delete project');
+  }
+  return project;
+}

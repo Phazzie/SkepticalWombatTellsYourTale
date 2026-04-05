@@ -29,7 +29,7 @@ export async function PATCH(
     const { id } = await params;
 
     const body = (await request.json().catch(() => {
-      throw badRequest('Request body must be valid JSON');
+      throw badRequest('Invalid or missing JSON request body');
     })) as { name?: unknown; description?: unknown };
     const data: { name?: string; description?: string | null } = {};
 

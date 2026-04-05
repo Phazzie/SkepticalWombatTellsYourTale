@@ -66,10 +66,12 @@ test('deleteProject forbids non-owner users', async () => {
     },
   };
 
-  const ensureAccess = async () => ({ userId: 'owner' });
+  const ensureOwnership = async () => {
+    throw new AppError(403, 'Only project owner can delete project');
+  };
 
   await assert.rejects(
-    () => projectsService.deleteProject('member', 'p1', { repository, ensureAccess }),
+    () => projectsService.deleteProject('member', 'p1', { repository, ensureOwnership }),
     (error) => error instanceof AppError && error.status === 403 && error.message === 'Only project owner can delete project'
   );
   assert.equal(deleted, false);
@@ -89,9 +91,9 @@ test('deleteProject allows owner users', async () => {
     },
   };
 
-  const ensureAccess = async () => ({ userId: 'owner' });
+  const ensureOwnership = async () => ({ userId: 'owner' });
 
-  const result = await projectsService.deleteProject('owner', 'p1', { repository, ensureAccess });
+  const result = await projectsService.deleteProject('owner', 'p1', { repository, ensureOwnership });
   assert.deepEqual(result, { success: true });
   assert.equal(deletedId, 'p1');
 });

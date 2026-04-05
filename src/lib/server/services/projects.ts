@@ -1,8 +1,8 @@
 import { projectsRepository } from '@/lib/server/repositories/projects';
 import { parseAiAnnotations } from '@/lib/server/mappers/ai-annotations';
 import { parseSessionRefs } from '@/lib/server/mappers/session-refs';
-import { forbidden, notFound } from '@/lib/server/errors';
-import { ensureProjectAccess } from '@/lib/server/auth';
+import { notFound } from '@/lib/server/errors';
+import { ensureProjectAccess, ensureProjectOwnership } from '@/lib/server/auth';
 import type { Project } from '@prisma/client';
 
 interface ProjectsMutationRepository {
@@ -13,10 +13,12 @@ interface ProjectsMutationRepository {
 
 type AccessCheckedProject = { userId: string };
 type ProjectAccessChecker = (projectId: string, userId: string) => Promise<AccessCheckedProject>;
+type ProjectOwnershipChecker = (projectId: string, userId: string) => Promise<AccessCheckedProject>;
 
 type ProjectsServiceMutationDeps = {
   repository?: ProjectsMutationRepository;
   ensureAccess?: ProjectAccessChecker;
+  ensureOwnership?: ProjectOwnershipChecker;
 };
 
 export const projectsService = {
@@ -44,12 +46,8 @@ export const projectsService = {
 
   async deleteProject(userId: string, projectId: string, deps: ProjectsServiceMutationDeps = {}) {
     const repository = deps.repository || projectsRepository;
-    const ensureAccess = deps.ensureAccess || ensureProjectAccess;
-
-    const project = await ensureAccess(projectId, userId);
-    if (project.userId !== userId) {
-      throw forbidden('Only project owner can delete project');
-    }
+    const ensureOwnership = deps.ensureOwnership || ensureProjectOwnership;
+    await ensureOwnership(projectId, userId);
 
     await repository.deleteProject(projectId);
     return { success: true };

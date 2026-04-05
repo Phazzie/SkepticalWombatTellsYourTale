@@ -77,7 +77,10 @@ test('generateQuestions persists AI-generated questions', async () => {
       return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
     },
     async generateQuestionsFromProjectContext() {
-      return [{ text: 'what happened next?' }];
+      return {
+        questions: [{ text: 'what happened next?', contextAnchor: 'recent transcript mention' }],
+        contractValidation: { isValid: true, issues: [] },
+      };
     },
     async generateVoicePreservedDraft() {
       return '';
@@ -91,8 +94,9 @@ test('generateQuestions persists AI-generated questions', async () => {
   };
 
   const result = await generateQuestions('p1', { ai, persistence });
-  assert.equal(result.length, 1);
+  assert.equal(result.questions.length, 1);
   assert.equal(created.length, 1);
+  assert.equal(result.contractValidation.isValid, true);
 });
 
 test('updateQuestionStatus throws when record missing', async () => {
@@ -159,7 +163,7 @@ test('generateQuestions throws notFound when project context is missing', async 
       return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
     },
     async generateQuestionsFromProjectContext() {
-      return [];
+      return { questions: [], contractValidation: { isValid: true, issues: [] } };
     },
     async generateVoicePreservedDraft() {
       return '';
@@ -201,7 +205,7 @@ test('generateQuestions returns empty list when ai returns no candidates', async
       return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
     },
     async generateQuestionsFromProjectContext() {
-      return [];
+      return { questions: [], contractValidation: { isValid: true, issues: [] } };
     },
     async generateVoicePreservedDraft() {
       return '';
@@ -215,7 +219,56 @@ test('generateQuestions returns empty list when ai returns no candidates', async
   };
 
   const result = await generateQuestions('p1', { ai, persistence });
-  assert.deepEqual(result, []);
+  assert.deepEqual(result.questions, []);
+  assert.equal(createdCalled, false);
+  assert.equal(result.contractValidation.isValid, true);
+});
+
+test('generateQuestions returns validation metadata and avoids persistence when AI contract is invalid', async () => {
+  let createdCalled = false;
+  const persistence: QuestionsPersistencePort = {
+    async list() {
+      return [];
+    },
+    async updateStatus() {
+      return null;
+    },
+    async getGenerationContext() {
+      return {
+        recentTranscriptContext: 'recent',
+        documentContext: 'docs',
+      };
+    },
+    async createGenerated() {
+      createdCalled = true;
+      return [];
+    },
+  };
+
+  const ai: AiPort = {
+    async analyzeTranscript() {
+      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
+    },
+    async generateQuestionsFromProjectContext() {
+      return {
+        questions: [],
+        contractValidation: { isValid: false, issues: ['questions[0].contextAnchor must be a non-empty string'] },
+      };
+    },
+    async generateVoicePreservedDraft() {
+      return '';
+    },
+    async detectVoiceDrift() {
+      return { hasDrift: false, details: '' };
+    },
+    async transcribeAudio() {
+      return '';
+    },
+  };
+
+  const result = await generateQuestions('p1', { ai, persistence });
+  assert.equal(result.contractValidation.isValid, false);
+  assert.equal(result.questions.length, 0);
   assert.equal(createdCalled, false);
 });
 

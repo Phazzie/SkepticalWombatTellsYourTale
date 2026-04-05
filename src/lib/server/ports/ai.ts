@@ -1,5 +1,5 @@
 import { AnalysisResult } from '@/lib/types';
-import { GeneratedQuestion } from '@/lib/ai/questions/generator';
+import { QuestionGenerationResult } from '@/lib/ai/questions/generator';
 
 export interface AiPort {
   analyzeTranscript(
@@ -12,7 +12,7 @@ export interface AiPort {
   generateQuestionsFromProjectContext(
     recentTranscriptContext: string,
     documentContext: string
-  ): Promise<GeneratedQuestion[]>;
+  ): Promise<QuestionGenerationResult>;
   generateVoicePreservedDraft(prompt: string, transcripts: string[], documentContext: string): Promise<string>;
   detectVoiceDrift(
     draft: string,
