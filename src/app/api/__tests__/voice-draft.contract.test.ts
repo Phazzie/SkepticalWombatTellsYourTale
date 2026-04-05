@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { AppError } from '@/lib/server/errors';
 import { validateSchema } from '@/lib/server/schema';
 import { voiceDraftRequestSchema } from '@/lib/server/schemas/api/voice-draft';
 
@@ -21,6 +22,10 @@ test('voice draft contract accepts prompt with optional nullable documentId', ()
 test('voice draft contract rejects empty prompt', () => {
   assert.throws(
     () => validateSchema({ prompt: '' }, voiceDraftRequestSchema),
-    /payload\.prompt must be at least 1 characters/
+    (error: unknown) =>
+      error instanceof AppError &&
+      error.status === 400 &&
+      /payload\.prompt/i.test(error.message) &&
+      /(at least|min length|min-length|minimum).*\b1\b/i.test(error.message)
   );
 });
