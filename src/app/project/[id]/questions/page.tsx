@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { requestJson } from '@/lib/client/request';
 
 interface Question {
   id: string;
@@ -20,8 +21,8 @@ export default function QuestionsPage() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'answered' | 'dismissed'>('pending');
 
   useEffect(() => {
-    fetch(`/api/projects/${id}/questions?status=${activeFilter === 'all' ? '' : activeFilter}`)
-      .then((r) => r.json())
+    requestJson<Question[]>(`/api/projects/${id}/questions?status=${activeFilter === 'all' ? '' : activeFilter}`)
+      .then(({ data }) => data)
       .then((data) => {
         setQuestions(data);
         setLoading(false);
@@ -31,25 +32,21 @@ export default function QuestionsPage() {
 
   const generateQuestions = async () => {
     setGenerating(true);
-    const res = await fetch(`/api/projects/${id}/questions`, {
+    const { data } = await requestJson<Question[]>(`/api/projects/${id}/questions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'generate' }),
+      body: { action: 'generate' },
     });
-    const data = await res.json();
     setQuestions((prev) => [...data, ...prev]);
     setGenerating(false);
   };
 
   const setQuestionStatus = async (questionId: string, status: 'pending' | 'answered' | 'dismissed') => {
-    const res = await fetch(`/api/projects/${id}/questions`, {
+    const { ok, data } = await requestJson<Question>(`/api/projects/${id}/questions`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'update', questionId, status }),
+      body: { action: 'update', questionId, status },
     });
-    if (!res.ok) return;
-    const updated = await res.json();
-    setQuestions((prev) => prev.map((q) => (q.id === updated.id ? updated : q)));
+    if (!ok) return;
+    setQuestions((prev) => prev.map((q) => (q.id === data.id ? data : q)));
   };
 
   if (loading) {
