@@ -8,7 +8,7 @@ import { AppBackLink, Card, Container, Shell, StatusMessage } from '@/components
 import { requestJson } from '@/lib/client/request';
 import { Project } from '@/lib/types';
 
-export function ProjectInsightsPage<T>({
+export function ProjectInsightsPage<TItem>({
   title,
   icon,
   pickItems,
@@ -18,10 +18,10 @@ export function ProjectInsightsPage<T>({
 }: {
   title: string;
   icon: string;
-  pickItems: (project: Project) => T[];
+  pickItems: (project: Project) => TItem[];
   emptyTitle: string;
   emptyDescription: string;
-  renderItem: (item: T) => React.ReactNode;
+  renderItem: (item: TItem) => React.ReactNode;
 }) {
   const { id } = useParams<{ id: string }>();
   const [project, setProject] = useState<Project | null>(null);

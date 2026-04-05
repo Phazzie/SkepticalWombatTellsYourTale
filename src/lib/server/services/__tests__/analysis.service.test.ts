@@ -8,9 +8,9 @@ test(
   'analyzeProjectSession fails fast without OPENAI_API_KEY when using default ai port',
   { concurrency: false },
   async () => {
-  const original = process.env.OPENAI_API_KEY;
-  try {
-    delete process.env.OPENAI_API_KEY;
+    const original = process.env.OPENAI_API_KEY;
+    try {
+      delete process.env.OPENAI_API_KEY;
 
     const persistence: AnalysisPersistencePort = {
       async getProjectAnalysisContext() {
@@ -26,18 +26,19 @@ test(
       async persistAnalysisResult() {},
     };
 
-    await assert.rejects(
-      () => analyzeProjectSession({ projectId: 'p1', sessionId: 's1', transcript: 'hello' }, { persistence }),
-      /OPENAI_API_KEY/
-    );
-  } finally {
-    if (original === undefined) {
-      delete process.env.OPENAI_API_KEY;
-    } else {
-      process.env.OPENAI_API_KEY = original;
+      await assert.rejects(
+        () => analyzeProjectSession({ projectId: 'p1', sessionId: 's1', transcript: 'hello' }, { persistence }),
+        /OPENAI_API_KEY/
+      );
+    } finally {
+      if (original === undefined) {
+        delete process.env.OPENAI_API_KEY;
+      } else {
+        process.env.OPENAI_API_KEY = original;
+      }
     }
   }
-});
+);
 
 test('analyzeProjectSession orchestrates AI and persistence', async () => {
   const writes: Array<{ projectId: string; sessionId: string }> = [];
