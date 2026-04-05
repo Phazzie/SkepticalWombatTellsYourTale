@@ -29,5 +29,5 @@ export async function PATCH(
     }
 
     return { success: true };
-  });
+  }, { request, operation: 'projects.tangents.patch' });
 }

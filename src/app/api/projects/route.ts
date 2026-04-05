@@ -3,11 +3,11 @@ import { requireUser } from '@/lib/server/auth';
 import { asOptionalString, assertString } from '@/lib/server/validation';
 import { projectsService } from '@/lib/server/services/projects';
 
-export async function GET() {
+export async function GET(request: Request) {
   return handleRoute(async () => {
     const { userId } = await requireUser();
     return projectsService.listForUser(userId);
-  });
+  }, { request, operation: 'projects.list' });
 }
 
 export async function POST(request: Request) {
@@ -19,5 +19,5 @@ export async function POST(request: Request) {
     const description = asOptionalString(body.description, 'description', { max: 1000 });
 
     return projectsService.createProject(userId, name, description);
-  });
+  }, { request, operation: 'projects.create' });
 }
