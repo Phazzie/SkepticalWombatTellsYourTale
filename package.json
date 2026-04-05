@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:unit": "npx tsx --test \"src/lib/server/**/*.test.ts\" \"src/app/api/__tests__/*.test.ts\"",
+    "test:unit": "npx tsx --test src/lib/server/__tests__/*.test.ts src/lib/server/*/__tests__/*.test.ts src/app/api/__tests__/*.test.ts",
     "verify": "npm run lint && npm run build",
     "test": "npm run verify",
     "db:bootstrap": "DATABASE_URL='file:./dev.db' npx prisma db push && npx prisma generate",
