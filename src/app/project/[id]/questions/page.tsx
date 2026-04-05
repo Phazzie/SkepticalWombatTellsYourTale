@@ -50,9 +50,12 @@ export default function QuestionsPage() {
     const data = (await res.json()) as QuestionGenerationResponse;
     setQuestions((prev) => [...data.questions, ...prev]);
     if (data.contractValidation && !data.contractValidation.isValid) {
-      setGenerationIssue(
-        data.contractValidation.issues[0] || 'AI response contract was invalid for question generation.'
-      );
+      const issueCount = data.contractValidation.issues.length;
+      const issueSummary =
+        issueCount > 1
+          ? `${data.contractValidation.issues[0]} (+${issueCount - 1} more)`
+          : data.contractValidation.issues[0];
+      setGenerationIssue(issueSummary || 'AI response contract was invalid for question generation.');
     }
     setGenerating(false);
   };

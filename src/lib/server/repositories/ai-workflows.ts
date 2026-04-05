@@ -3,6 +3,13 @@ import { AnalysisResult } from '@/lib/types';
 import { stringifyAiAnnotations } from '@/lib/server/mappers/ai-annotations';
 import { stringifySessionRefs } from '@/lib/server/mappers/session-refs';
 
+function toConceptStatus(status: unknown): 'developing' | 'complete' | 'contradicted' {
+  if (status === 'complete' || status === 'contradicted' || status === 'developing') {
+    return status;
+  }
+  return 'developing';
+}
+
 export const aiWorkflowsRepository = {
   async persistAnalysisWrites(projectId: string, sessionId: string, analysis: AnalysisResult, documents: Array<{ id: string; name: string }>) {
     await prisma.$transaction(async (tx) => {
@@ -66,7 +73,7 @@ export const aiWorkflowsRepository = {
             definition: c.definition,
             sourceSession: c.sourceSession || sessionId,
             linkedDocument: c.linkedDocument || suggestedDocumentName || null,
-            status: c.status,
+            status: toConceptStatus(c.status),
             approved: false,
           })),
         });

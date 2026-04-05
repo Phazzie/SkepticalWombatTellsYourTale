@@ -29,8 +29,16 @@ function normalizeAnalysis(value: unknown): { value: AnalysisResult; contractIss
           const thread = safeString(entry.thread).trim();
           const context = safeString(entry.context).trim();
           const evidence = safeString(entry.evidence).trim();
+          if (!thread) {
+            contractIssues.push(`tangents[${index}].thread must be non-empty`);
+          }
+          if (!context) {
+            contractIssues.push(`tangents[${index}].context must be non-empty`);
+          }
+          if (!evidence) {
+            contractIssues.push(`tangents[${index}].evidence must be non-empty`);
+          }
           if (!thread || !context || !evidence) {
-            contractIssues.push(`tangents[${index}] must include thread, context, and evidence`);
             return null;
           }
           return { thread, context, evidence };
@@ -48,8 +56,16 @@ function normalizeAnalysis(value: unknown): { value: AnalysisResult; contractIss
           const description = safeString(entry.description).trim();
           const sessionRefs = asStringArray(entry.sessionRefs).map((s) => s.trim()).filter(Boolean);
           const evidence = safeString(entry.evidence).trim();
+          if (!description) {
+            contractIssues.push(`patterns[${index}].description must be non-empty`);
+          }
+          if (sessionRefs.length === 0) {
+            contractIssues.push(`patterns[${index}].sessionRefs must include at least one value`);
+          }
+          if (!evidence) {
+            contractIssues.push(`patterns[${index}].evidence must be non-empty`);
+          }
           if (!description || !evidence || sessionRefs.length === 0) {
-            contractIssues.push(`patterns[${index}] must include description, evidence, and non-empty sessionRefs`);
             return null;
           }
           return {
@@ -71,8 +87,13 @@ function normalizeAnalysis(value: unknown): { value: AnalysisResult; contractIss
           const description = safeString(entry.description).trim();
           const documentRef = safeString(entry.documentRef).trim() || undefined;
           const whyItMatters = safeString(entry.whyItMatters).trim();
+          if (!description) {
+            contractIssues.push(`gaps[${index}].description must be non-empty`);
+          }
+          if (!whyItMatters) {
+            contractIssues.push(`gaps[${index}].whyItMatters must be non-empty`);
+          }
           if (!description || !whyItMatters) {
-            contractIssues.push(`gaps[${index}] must include description and whyItMatters`);
             return null;
           }
           return {
@@ -98,8 +119,19 @@ function normalizeAnalysis(value: unknown): { value: AnalysisResult; contractIss
           const existing = safeString(entry.existing).trim();
           const next = safeString(entry.new).trim();
           const reason = safeString(entry.reason).trim();
+          if (!description) {
+            contractIssues.push(`contradictions[${index}].description must be non-empty`);
+          }
+          if (!existing) {
+            contractIssues.push(`contradictions[${index}].existing must be non-empty`);
+          }
+          if (!next) {
+            contractIssues.push(`contradictions[${index}].new must be non-empty`);
+          }
+          if (!reason) {
+            contractIssues.push(`contradictions[${index}].reason must be non-empty`);
+          }
           if (!description || !existing || !next || !reason) {
-            contractIssues.push(`contradictions[${index}] must include description, existing, new, and reason`);
             return null;
           }
           return {
@@ -123,8 +155,13 @@ function normalizeAnalysis(value: unknown): { value: AnalysisResult; contractIss
         .map((entry, index) => {
           const text = safeString(entry.text).trim();
           const contextAnchor = safeString(entry.contextAnchor).trim();
+          if (!text) {
+            contractIssues.push(`questions[${index}].text must be non-empty`);
+          }
+          if (!contextAnchor) {
+            contractIssues.push(`questions[${index}].contextAnchor must be non-empty`);
+          }
           if (!text || !contextAnchor) {
-            contractIssues.push(`questions[${index}] must include text and contextAnchor`);
             return null;
           }
           return { text, contextAnchor };
