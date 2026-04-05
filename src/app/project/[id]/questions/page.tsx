@@ -17,8 +17,7 @@ export default function QuestionsPage() {
 
   useEffect(() => {
     requestJson<Question[]>(`/api/projects/${id}/questions?status=${activeFilter === 'all' ? '' : activeFilter}`)
-      .then(({ data }) => data)
-      .then((data) => {
+      .then(({ data }) => {
         setQuestions(data);
         setLoading(false);
       })
