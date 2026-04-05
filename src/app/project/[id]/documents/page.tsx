@@ -36,8 +36,9 @@ export default function DocumentsPage() {
       method: 'POST',
       body: { name: newName, type: newType },
     });
-    if (!res.ok || !res.data) return;
-    setDocuments((prev) => [...prev, res.data]);
+    const createdDocument = res.data;
+    if (!res.ok || !createdDocument) return;
+    setDocuments((prev) => [...prev, createdDocument]);
     setNewName('');
     setShowNew(false);
   };

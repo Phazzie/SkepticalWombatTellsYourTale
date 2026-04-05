@@ -35,6 +35,6 @@ export async function requestJson<TResponse>(input: RequestInfo | URL, init: Jso
     body: hasBody ? JSON.stringify(body) : undefined,
   });
 
-  const data = await parseJsonBody<TResponse>(response);
+  const data = (await parseJsonBody<TResponse>(response)) as TResponse;
   return { ok: response.ok, status: response.status, data };
 }
