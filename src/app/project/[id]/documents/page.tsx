@@ -19,11 +19,11 @@ export default function DocumentsPage() {
   const [voicePrompt, setVoicePrompt] = useState('');
   const [generatingDraft, setGeneratingDraft] = useState(false);
   const [driftFeedback, setDriftFeedback] = useState<{ hasDrift: boolean; details: string; rewriteSuggestion?: string } | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     requestJson<Document[]>(`/api/projects/${id}/documents`)
-      .then(({ data }) => data)
-      .then((data) => {
+      .then(({ data }) => {
         setDocuments(data || []);
         setLoading(false);
       })
@@ -32,12 +32,16 @@ export default function DocumentsPage() {
 
   const createDocument = async () => {
     if (!newName.trim()) return;
+    setActionError(null);
     const res = await requestJson<Document>(`/api/projects/${id}/documents`, {
       method: 'POST',
       body: { name: newName, type: newType },
     });
     const createdDocument = res.data;
-    if (!res.ok || !createdDocument) return;
+    if (!res.ok || !createdDocument) {
+      setActionError(`Failed to create document (${res.status})`);
+      return;
+    }
     setDocuments((prev) => [...prev, createdDocument]);
     setNewName('');
     setShowNew(false);
@@ -45,12 +49,14 @@ export default function DocumentsPage() {
 
   const saveDocument = async (docId: string) => {
     setSaving(true);
+    setActionError(null);
     const response = await requestJson(`/api/projects/${id}/documents/${docId}`, {
       method: 'PATCH',
       body: { content: editContent },
     });
     if (!response.ok) {
       setSaving(false);
+      setActionError(`Failed to save document (${response.status})`);
       return;
     }
     setDocuments((prev) =>
@@ -64,6 +70,7 @@ export default function DocumentsPage() {
     if (!voicePrompt.trim()) return;
     setGeneratingDraft(true);
     setDriftFeedback(null);
+    setActionError(null);
     const res = await requestJson<{ draft?: string; drift?: { hasDrift: boolean; details: string; rewriteSuggestion?: string } }>(
       `/api/projects/${id}/voice-draft`,
       {
@@ -71,8 +78,14 @@ export default function DocumentsPage() {
         body: { documentId: docId, prompt: voicePrompt },
       }
     );
-    if (!res.ok || !res.data?.draft) {
+    if (!res.ok) {
       setGeneratingDraft(false);
+      setActionError(`Failed to generate draft (${res.status})`);
+      return;
+    }
+    if (!res.data || !res.data.draft) {
+      setGeneratingDraft(false);
+      setActionError('Failed to generate draft content');
       return;
     }
     const { draft, drift } = res.data;
@@ -111,6 +124,15 @@ export default function DocumentsPage() {
             + New Document
           </button>
         </div>
+        {actionError && (
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="mb-6 rounded-xl border border-red-700 bg-red-900/20 p-4 text-sm text-red-300"
+          >
+            {actionError}
+          </div>
+        )}
 
         {showNew && (
           <div className="bg-gray-900 border border-gray-700 rounded-xl p-5 mb-6">

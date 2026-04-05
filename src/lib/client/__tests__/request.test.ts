@@ -22,7 +22,7 @@ test('requestJson sets JSON content type and stringifies body', async () => {
     assert.equal(result.ok, true);
     assert.equal(result.status, 200);
     assert.deepEqual(result.data, { ok: true });
-    assert.equal((capturedInit?.headers as Headers).get('Content-Type'), 'application/json');
+    assert.equal(new Headers(capturedInit?.headers).get('Content-Type'), 'application/json');
     assert.equal(capturedInit?.body, JSON.stringify({ hello: 'world' }));
   } finally {
     globalThis.fetch = originalFetch;

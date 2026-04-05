@@ -22,9 +22,8 @@ export default function QuestionsPage() {
 
   useEffect(() => {
     requestJson<Question[]>(`/api/projects/${id}/questions?status=${activeFilter === 'all' ? '' : activeFilter}`)
-      .then(({ data }) => data)
-      .then((data) => {
-        setQuestions(data);
+      .then(({ data }) => {
+        setQuestions(data || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -36,6 +35,10 @@ export default function QuestionsPage() {
       method: 'POST',
       body: { action: 'generate' },
     });
+    if (!data) {
+      setGenerating(false);
+      return;
+    }
     setQuestions((prev) => [...data, ...prev]);
     setGenerating(false);
   };
@@ -45,7 +48,7 @@ export default function QuestionsPage() {
       method: 'POST',
       body: { action: 'update', questionId, status },
     });
-    if (!ok) return;
+    if (!ok || !data) return;
     setQuestions((prev) => prev.map((q) => (q.id === data.id ? data : q)));
   };
 

@@ -17,8 +17,12 @@ export default function ProjectPage() {
 
   useEffect(() => {
     requestJson<Project>(`/api/projects/${id}?include=all`)
-      .then(({ data }) => data)
-      .then((data) => {
+      .then(({ data }) => {
+        if (!data) {
+          setProject(null);
+          setLoading(false);
+          return;
+        }
         setProject(data);
         setLoading(false);
       })
