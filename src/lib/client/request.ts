@@ -10,13 +10,15 @@ type JsonRequestOptions = Omit<RequestInit, 'body'> & {
 export async function requestJson<TResponse>(input: RequestInfo | URL, init: JsonRequestOptions = {}) {
   const { body, headers, ...rest } = init;
   const hasBody = body !== undefined;
+  const normalizedHeaders = new Headers(headers);
+
+  if (hasBody && !normalizedHeaders.has('Content-Type')) {
+    normalizedHeaders.set('Content-Type', 'application/json');
+  }
 
   const response = await fetch(input, {
     ...rest,
-    headers: {
-      ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
-      ...(headers || {}),
-    },
+    headers: normalizedHeaders,
     body: hasBody ? JSON.stringify(body) : undefined,
   });
 
