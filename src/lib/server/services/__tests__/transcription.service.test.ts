@@ -24,7 +24,7 @@ test('transcribeAndCreateSession stores ai transcript and passes questionId', as
       return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
     },
     async generateQuestionsFromProjectContext() {
-      return [];
+      return { questions: [], contractValidation: { isValid: true, issues: [] } };
     },
     async generateVoicePreservedDraft() {
       return '';
@@ -70,7 +70,7 @@ test('transcribeAndCreateSession falls back when ai transcription fails', async 
       return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
     },
     async generateQuestionsFromProjectContext() {
-      return [];
+      return { questions: [], contractValidation: { isValid: true, issues: [] } };
     },
     async generateVoicePreservedDraft() {
       return '';

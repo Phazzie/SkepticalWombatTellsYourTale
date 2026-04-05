@@ -35,7 +35,7 @@ test('analyzeProjectSession orchestrates AI and persistence', async () => {
       };
     },
     async generateQuestionsFromProjectContext() {
-      return [];
+      return { questions: [], contractValidation: { isValid: true, issues: [] } };
     },
     async generateVoicePreservedDraft() {
       return '';
@@ -78,7 +78,7 @@ test('analyzeProjectSession throws notFound when project context is missing', as
       };
     },
     async generateQuestionsFromProjectContext() {
-      return [];
+      return { questions: [], contractValidation: { isValid: true, issues: [] } };
     },
     async generateVoicePreservedDraft() {
       return '';
@@ -133,7 +133,7 @@ test('analyzeProjectSession passes composed context and documents to ai port', a
       };
     },
     async generateQuestionsFromProjectContext() {
-      return [];
+      return { questions: [], contractValidation: { isValid: true, issues: [] } };
     },
     async generateVoicePreservedDraft() {
       return '';

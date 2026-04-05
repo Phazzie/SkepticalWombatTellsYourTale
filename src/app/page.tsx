@@ -6,6 +6,7 @@ import { signOut } from 'next-auth/react';
 import { Project } from '@/lib/types';
 import { AppHeader } from '@/components/layout/app-header';
 import { Card, Container, PrimaryButton, SecondaryButton, Shell, StatusMessage, TextArea, TextInput } from '@/components/ui/primitives';
+import { toneCopy } from '@/lib/copy/tone';
 
 export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -65,7 +66,7 @@ export default function HomePage() {
       <Container>
         <AppHeader
           title="SkepticalWombat"
-          subtitle="Tell Your Tale. The AI that makes your thinking harder."
+          subtitle={toneCopy.homeSubtitle}
           actions={
             <div className="flex items-center gap-2">
               <SecondaryButton onClick={() => signOut({ callbackUrl: '/sign-in' })}>
@@ -113,12 +114,12 @@ export default function HomePage() {
         {error && <StatusMessage state="error" title="Something went wrong" description={error} />}
 
         {loading ? (
-          <StatusMessage state="loading" title="Loading projects..." />
+          <StatusMessage state="loading" title={toneCopy.homeLoadingProjects} />
         ) : projects.length === 0 ? (
           <Card className="text-center py-16">
             <div className="text-6xl mb-4">🎙️</div>
-            <p className="text-xl mb-2 text-white">No projects yet</p>
-            <p className="text-app-fg-muted">Create your first project to start talking.</p>
+            <p className="text-xl mb-2 text-white">{toneCopy.homeEmptyProjectsTitle}</p>
+            <p className="text-app-fg-muted">{toneCopy.homeEmptyProjectsDescription}</p>
           </Card>
         ) : (
           <div className="grid gap-4">

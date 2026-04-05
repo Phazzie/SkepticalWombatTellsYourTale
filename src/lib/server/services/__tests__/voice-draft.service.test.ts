@@ -20,7 +20,7 @@ test('generateVoiceDraft returns draft and drift info', async () => {
       return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
     },
     async generateQuestionsFromProjectContext() {
-      return [];
+      return { questions: [], contractValidation: { isValid: true, issues: [] } };
     },
     async generateVoicePreservedDraft() {
       return 'draft';
@@ -54,7 +54,7 @@ test('generateVoiceDraft throws notFound when requested document does not exist'
       return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
     },
     async generateQuestionsFromProjectContext() {
-      return [];
+      return { questions: [], contractValidation: { isValid: true, issues: [] } };
     },
     async generateVoicePreservedDraft() {
       return 'draft';
@@ -94,7 +94,7 @@ test('generateVoiceDraft passes prompt/transcripts/document to ai port', async (
       return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
     },
     async generateQuestionsFromProjectContext() {
-      return [];
+      return { questions: [], contractValidation: { isValid: true, issues: [] } };
     },
     async generateVoicePreservedDraft(prompt, transcripts, documentContext) {
       promptSeen = prompt;

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Project, Tangent, Gap, Pattern } from '@/lib/types';
+import { toneCopy } from '@/lib/copy/tone';
 
 export default function ProjectPage() {
   const { id } = useParams<{ id: string }>();
@@ -312,7 +313,7 @@ export default function ProjectPage() {
               )}
             </div>
             {pendingTangents.length === 0 ? (
-              <p className="text-gray-500 text-sm">No dropped threads yet.</p>
+              <p className="text-gray-500 text-sm">{toneCopy.dashboardDroppedThreadsEmpty}</p>
             ) : (
               <div className="space-y-3">
                 {pendingTangents.slice(0, 5).map((tangent: Tangent) => (
@@ -347,7 +348,7 @@ export default function ProjectPage() {
               )}
             </div>
             {openGaps.length === 0 ? (
-              <p className="text-gray-500 text-sm">No gaps detected yet. Add more sessions.</p>
+              <p className="text-gray-500 text-sm">{toneCopy.dashboardGapsEmpty}</p>
             ) : (
               <div className="space-y-3">
                 {openGaps.slice(0, 5).map((gap: Gap) => (
@@ -383,7 +384,7 @@ export default function ProjectPage() {
               )}
             </div>
             {newPatterns.length === 0 ? (
-              <p className="text-gray-500 text-sm">No patterns detected yet.</p>
+              <p className="text-gray-500 text-sm">{toneCopy.dashboardPatternsEmpty}</p>
             ) : (
               <div className="space-y-3">
                 {newPatterns.slice(0, 5).map((pattern: Pattern) => (

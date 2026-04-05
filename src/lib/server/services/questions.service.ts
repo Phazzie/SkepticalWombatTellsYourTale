@@ -37,13 +37,28 @@ export async function generateQuestions(
     throw notFound('Project not found');
   }
 
-  const candidates = await ai.generateQuestionsFromProjectContext(
+  const generated = await ai.generateQuestionsFromProjectContext(
     context.recentTranscriptContext,
     context.documentContext
   );
-  if (candidates.length === 0) {
-    return [];
+  if (!generated.contractValidation.isValid) {
+    return {
+      questions: [],
+      contractValidation: generated.contractValidation,
+    };
   }
 
-  return persistence.createGenerated(projectId, candidates);
+  const candidates = generated.questions;
+  if (candidates.length === 0) {
+    return {
+      questions: [],
+      contractValidation: generated.contractValidation,
+    };
+  }
+
+  const questions = await persistence.createGenerated(projectId, candidates);
+  return {
+    questions,
+    contractValidation: generated.contractValidation,
+  };
 }
