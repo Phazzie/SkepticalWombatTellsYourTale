@@ -1,5 +1,6 @@
 import { handleRoute } from '@/lib/server/http';
 import { requireUser, ensureProjectAccess } from '@/lib/server/auth';
+import { badRequest } from '@/lib/server/errors';
 import { asOptionalString, assertString } from '@/lib/server/validation';
 import { projectsService } from '@/lib/server/services/projects';
 
@@ -27,7 +28,11 @@ export async function PATCH(
     const { userId } = await requireUser();
     const { id } = await params;
 
-    const body = (await request.json()) as { name?: unknown; description?: unknown };
+    const body = (await request
+      .json()
+      .catch(() => {
+        throw badRequest('Request body must be valid JSON');
+      })) as { name?: unknown; description?: unknown };
     const data: { name?: string; description?: string | null } = {};
 
     if (body.name !== undefined) {
