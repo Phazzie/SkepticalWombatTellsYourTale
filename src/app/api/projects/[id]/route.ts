@@ -1,8 +1,7 @@
 import { handleRoute } from '@/lib/server/http';
 import { requireUser, ensureProjectAccess } from '@/lib/server/auth';
-import { forbidden } from '@/lib/server/errors';
+import { badRequest } from '@/lib/server/errors';
 import { asOptionalString, assertString } from '@/lib/server/validation';
-import { projectsRepository } from '@/lib/server/repositories/projects';
 import { projectsService } from '@/lib/server/services/projects';
 
 export async function GET(
@@ -28,9 +27,10 @@ export async function PATCH(
   return handleRoute(async () => {
     const { userId } = await requireUser();
     const { id } = await params;
-    await ensureProjectAccess(id, userId);
 
-    const body = (await request.json()) as { name?: unknown; description?: unknown };
+    const body = (await request.json().catch(() => {
+      throw badRequest('Request body must be valid JSON');
+    })) as { name?: unknown; description?: unknown };
     const data: { name?: string; description?: string | null } = {};
 
     if (body.name !== undefined) {
@@ -41,7 +41,7 @@ export async function PATCH(
       data.description = asOptionalString(body.description, 'description', { max: 1000 });
     }
 
-    return projectsRepository.updateProject(id, data);
+    return projectsService.updateProject(userId, id, data);
   });
 }
 
@@ -52,13 +52,6 @@ export async function DELETE(
   return handleRoute(async () => {
     const { userId } = await requireUser();
     const { id } = await params;
-    const project = await ensureProjectAccess(id, userId);
-
-    if (project.userId !== userId) {
-      throw forbidden('Only project owner can delete project');
-    }
-
-    await projectsRepository.deleteProject(id);
-    return { success: true };
+    return projectsService.deleteProject(userId, id);
   });
 }
