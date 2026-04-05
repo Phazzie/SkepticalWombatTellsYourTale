@@ -37,3 +37,85 @@ test('generateVoiceDraft returns draft and drift info', async () => {
   assert.equal(result.draft, 'draft');
   assert.equal(result.drift.hasDrift, false);
 });
+
+test('generateVoiceDraft throws notFound when requested document does not exist', async () => {
+  const persistence: VoiceDraftPersistencePort = {
+    async getDraftContext() {
+      return {
+        transcripts: ['hello there'],
+        documentContent: '',
+        documentExists: false,
+      };
+    },
+  };
+
+  const ai: AiPort = {
+    async analyzeTranscript() {
+      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
+    },
+    async generateQuestionsFromProjectContext() {
+      return [];
+    },
+    async generateVoicePreservedDraft() {
+      return 'draft';
+    },
+    async detectVoiceDrift() {
+      return { hasDrift: false, details: 'ok' };
+    },
+    async transcribeAudio() {
+      return '';
+    },
+  };
+
+  await assert.rejects(
+    () => generateVoiceDraft({ projectId: 'p1', documentId: 'missing', prompt: 'write' }, { ai, persistence }),
+    /Document not found/
+  );
+});
+
+test('generateVoiceDraft passes prompt/transcripts/document to ai port', async () => {
+  let promptSeen = '';
+  let transcriptsSeen: string[] = [];
+  let docSeen = '';
+  let draftSeen = '';
+
+  const persistence: VoiceDraftPersistencePort = {
+    async getDraftContext() {
+      return {
+        transcripts: ['line one', 'line two'],
+        documentContent: 'chapter',
+        documentExists: true,
+      };
+    },
+  };
+
+  const ai: AiPort = {
+    async analyzeTranscript() {
+      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
+    },
+    async generateQuestionsFromProjectContext() {
+      return [];
+    },
+    async generateVoicePreservedDraft(prompt, transcripts, documentContext) {
+      promptSeen = prompt;
+      transcriptsSeen = transcripts;
+      docSeen = documentContext;
+      return 'draft 2';
+    },
+    async detectVoiceDrift(draft) {
+      draftSeen = draft;
+      return { hasDrift: true, details: 'drift', rewriteSuggestion: 'rewrite' };
+    },
+    async transcribeAudio() {
+      return '';
+    },
+  };
+
+  const result = await generateVoiceDraft({ projectId: 'p1', documentId: 'd1', prompt: 'write it' }, { ai, persistence });
+  assert.equal(promptSeen, 'write it');
+  assert.deepEqual(transcriptsSeen, ['line one', 'line two']);
+  assert.equal(docSeen, 'chapter');
+  assert.equal(draftSeen, 'draft 2');
+  assert.equal(result.drift.hasDrift, true);
+  assert.equal(result.drift.rewriteSuggestion, 'rewrite');
+});

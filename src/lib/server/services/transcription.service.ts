@@ -10,9 +10,22 @@ export async function transcribeAndCreateSession(
     filename: string;
     questionId?: string;
   },
-  deps: { ai?: AiPort } = {}
+  /**
+   * Optional dependency overrides used primarily by tests.
+   * `createTranscribedSession` replaces the default `aiWorkflowsRepository.createTranscribedSession`
+   * call, allowing persistence writes to be injected without mutating module state.
+   */
+  deps: {
+    ai?: AiPort;
+    createTranscribedSession?: (
+      projectId: string,
+      transcript: string,
+      questionId: string | null
+    ) => Promise<{ id: string }>;
+  } = {}
 ) {
   const ai = deps.ai || openAiPort;
+  const createTranscribedSession = deps.createTranscribedSession || aiWorkflowsRepository.createTranscribedSession;
 
   let transcript = '';
   try {
@@ -22,7 +35,7 @@ export async function transcribeAndCreateSession(
     transcript = '[Transcription unavailable — configure OpenAI API key]';
   }
 
-  const session = await aiWorkflowsRepository.createTranscribedSession(
+  const session = await createTranscribedSession(
     input.projectId,
     transcript,
     input.questionId || null

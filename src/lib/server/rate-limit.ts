@@ -53,3 +53,11 @@ export function enforceRateLimit(key: string, limit: number, windowMs: number) {
 
   bucket.count += 1;
 }
+
+/**
+ * Test-only helper to reset in-memory limiter state between tests.
+ * Do not use in application runtime logic.
+ */
+export function resetRateLimitForTests() {
+  buckets.clear();
+}
