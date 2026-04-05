@@ -96,6 +96,46 @@ npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma 
    - **Dependency Audit**: upgrade vulnerable packages and regenerate lockfile.
    - **CodeQL**: review alert details, patch risky patterns, and confirm checks pass.
 
+### Review comment automation
+
+This repository includes a workflow that auto-files PR review feedback as GitHub issues:
+
+- Workflow: `.github/workflows/review-comments-automation.yml`
+- Triggers:
+  - `pull_request_review_comment` (inline comments)
+  - `pull_request_review` (top-level review body)
+- Skips:
+  - Bot-authored comments
+  - Empty comments
+  - Comments containing `[no-issue]` or `[skip-issue]`
+
+Each auto-filed issue is labeled with:
+
+- `needs-fix`
+- `from-review-comment`
+- `priority:<critical|high|medium|low>` (defaults to `medium`)
+- `agent:<copilot|claude|gemini>` (derived from priority by default)
+
+You can override routing from the review text with tokens:
+
+- `priority: critical|high|medium|low`
+- `agent: copilot|claude|gemini`
+
+Examples:
+
+- `priority: high agent: claude` → files issue for high priority and routes to Claude integration.
+- `[skip-issue]` → comment is not converted to an issue.
+
+#### Optional agent execution
+
+- For `agent: copilot`, the workflow can dispatch a workflow configured in repository variable:
+  - `COPILOT_CODING_WORKFLOW_ID`
+- For `agent: claude` or `agent: gemini`, the workflow emits repository dispatch events:
+  - `claude-review-fix-request`
+  - `gemini-review-fix-request`
+
+Connect those events to your Claude/Gemini automation workflows to perform automatic fixes.
+
 ### Rollout and hardening guidance
 
 - Start by monitoring CI signal quality (flake rate, false positives) and tune where needed.
