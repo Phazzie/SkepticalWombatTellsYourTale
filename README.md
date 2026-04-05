@@ -105,7 +105,7 @@ This repository includes a workflow that auto-files PR review feedback as GitHub
   - `pull_request_review_comment` (inline comments)
   - `pull_request_review` (top-level review body)
 - Skips:
-  - Bot-authored comments
+  - Bot-authored comments from bots that are not allowlisted via `REVIEW_AUTOMATION_ALLOWED_BOTS` (default allowlist: `copilot-pull-request-reviewer[bot],copilot-swe-agent[bot]`)
   - Empty comments
   - Comments containing `[no-issue]` or `[skip-issue]`
 

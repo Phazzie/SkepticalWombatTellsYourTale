@@ -20,7 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'pull_request_review_comment' ||
-      (github.event_name == 'pull_request_review' && github.event.review.body != '')
+      (github.event_name == 'pull_request_review' &&
+       github.event.review.body != null &&
+       trim(github.event.review.body) != '')
     steps:
       - name: Create fix issue from review feedback
         id: create_issue
@@ -70,6 +72,7 @@ jobs:
 
             const sourceUrl = source?.html_url || pr?.html_url || '';
             const sourceId = String(source?.id || source?.node_id || `${context.runId}-${context.runAttempt}`);
+            const sourceMarker = `<!-- review-source-id:${sourceId} -->`;
             const bodyPreview = text.replace(/\s+/g, ' ').slice(0, 80);
             const issueTitle = `Review fix: PR #${pr.number} - ${bodyPreview}`;
 
@@ -88,12 +91,48 @@ jobs:
                   name,
                 });
               } catch {
-                await github.rest.issues.createLabel({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  name,
-                });
+                try {
+                  await github.rest.issues.createLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name,
+                  });
+                } catch (error) {
+                  const status = error && typeof error === 'object' ? error.status : undefined;
+                  const code =
+                    error &&
+                    typeof error === 'object' &&
+                    error.response &&
+                    error.response.data &&
+                    error.response.data.errors &&
+                    error.response.data.errors[0] &&
+                    error.response.data.errors[0].code;
+
+                  if (status !== 422 && code !== 'already_exists') {
+                    throw error;
+                  }
+                }
               }
+            }
+
+            const existingIssues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'from-review-comment',
+              per_page: 100,
+            });
+            const existingIssue = existingIssues.find((item) =>
+              !item.pull_request &&
+              typeof item.body === 'string' &&
+              item.body.includes(sourceMarker),
+            );
+            if (existingIssue) {
+              core.setOutput('issue_number', String(existingIssue.number));
+              core.setOutput('priority', priority);
+              core.setOutput('agent', agent);
+              core.info(`Reusing existing issue #${existingIssue.number} for review feedback.`);
+              return;
             }
 
             const issueBody = [
@@ -112,7 +151,7 @@ jobs:
               `- Produce a code fix for this feedback.`,
               `- Open a PR (or commit to current PR branch if automation supports it).`,
               ``,
-              `<!-- review-source-id:${sourceId} -->`,
+              sourceMarker,
             ].join('\n');
 
             const issue = await github.rest.issues.create({
