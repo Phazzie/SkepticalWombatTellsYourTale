@@ -33,7 +33,9 @@ export function useProjectDashboard(projectId: string) {
   useEffect(() => {
     setLoading(true);
     setLoadError(null);
-    setProject(null);
+    setActionError(null);
+
+    setProject((prev) => (prev?.id === projectId ? prev : null));
 
     requestJson<Project>(`/api/projects/${projectId}?include=all`)
       .then(({ ok, data }) => {
@@ -299,12 +301,13 @@ export function useProjectDashboard(projectId: string) {
   };
 
   const searchProject = async () => {
+    setActionError(null);
+
     const trimmed = searchTerm.trim();
     if (!trimmed) {
       setSearchResults([]);
       return;
     }
-    setActionError(null);
     setSearching(true);
 
     try {
