@@ -10,6 +10,11 @@ export async function transcribeAndCreateSession(
     filename: string;
     questionId?: string;
   },
+  /**
+   * Optional dependency overrides used primarily by tests.
+   * `createTranscribedSession` replaces the default `aiWorkflowsRepository.createTranscribedSession`
+   * call, allowing persistence writes to be injected without mutating module state.
+   */
   deps: {
     ai?: AiPort;
     createTranscribedSession?: (

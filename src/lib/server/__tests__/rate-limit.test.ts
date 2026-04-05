@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { AppError } from '@/lib/server/errors';
-import { __resetRateLimitForTests, enforceRateLimit } from '@/lib/server/rate-limit';
+import { enforceRateLimit, resetRateLimitForTests } from '@/lib/server/rate-limit';
 
 function withFakeNow<T>(now: number, fn: () => T): T {
   const originalNow = Date.now;
@@ -14,7 +14,7 @@ function withFakeNow<T>(now: number, fn: () => T): T {
 }
 
 test.beforeEach(() => {
-  __resetRateLimitForTests();
+  resetRateLimitForTests();
 });
 
 test('enforceRateLimit allows requests up to limit and blocks over limit', () => {

@@ -16,7 +16,7 @@ test('transcribeAndCreateSession stores ai transcript and passes questionId', as
     repositoryProjectId = projectId;
     repositoryTranscript = transcript;
     repositoryQuestionId = questionId;
-    return { id: 's1' } as { id: string };
+    return { id: 's1' };
   };
 
   const ai: AiPort = {
@@ -62,7 +62,7 @@ test('transcribeAndCreateSession falls back when ai transcription fails', async 
   ): Promise<{ id: string }> => {
     repositoryTranscript = transcript;
     repositoryQuestionId = questionId;
-    return { id: 's2' } as { id: string };
+    return { id: 's2' };
   };
 
   const ai: AiPort = {
