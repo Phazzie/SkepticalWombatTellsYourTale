@@ -2,6 +2,19 @@ type JsonRequestOptions = Omit<RequestInit, 'body'> & {
   body?: unknown;
 };
 
+async function parseJsonBody<TResponse>(response: Response): Promise<TResponse | null> {
+  if (response.status === 204) {
+    return null;
+  }
+
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.toLowerCase().includes('application/json')) {
+    return null;
+  }
+
+  return (await response.json()) as TResponse;
+}
+
 /**
  * Performs a JSON request with optional JSON body and typed JSON response.
  * Returns `{ ok, status, data }` so callers can preserve existing fetch-style
@@ -22,6 +35,6 @@ export async function requestJson<TResponse>(input: RequestInfo | URL, init: Jso
     body: hasBody ? JSON.stringify(body) : undefined,
   });
 
-  const data = (await response.json()) as TResponse;
+  const data = await parseJsonBody<TResponse>(response);
   return { ok: response.ok, status: response.status, data };
 }

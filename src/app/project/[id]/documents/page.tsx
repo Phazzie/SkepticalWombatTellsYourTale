@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Document } from '@/lib/types';
+import { requestJson } from '@/lib/client/request';
 
 export default function DocumentsPage() {
   const { id } = useParams<{ id: string }>();
@@ -20,10 +21,10 @@ export default function DocumentsPage() {
   const [driftFeedback, setDriftFeedback] = useState<{ hasDrift: boolean; details: string; rewriteSuggestion?: string } | null>(null);
 
   useEffect(() => {
-    fetch(`/api/projects/${id}/documents`)
-      .then((r) => r.json())
+    requestJson<Document[]>(`/api/projects/${id}/documents`)
+      .then(({ data }) => data)
       .then((data) => {
-        setDocuments(data);
+        setDocuments(data || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -31,24 +32,26 @@ export default function DocumentsPage() {
 
   const createDocument = async () => {
     if (!newName.trim()) return;
-    const res = await fetch(`/api/projects/${id}/documents`, {
+    const res = await requestJson<Document>(`/api/projects/${id}/documents`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newName, type: newType }),
+      body: { name: newName, type: newType },
     });
-    const doc = await res.json();
-    setDocuments((prev) => [...prev, doc]);
+    if (!res.ok || !res.data) return;
+    setDocuments((prev) => [...prev, res.data]);
     setNewName('');
     setShowNew(false);
   };
 
   const saveDocument = async (docId: string) => {
     setSaving(true);
-    await fetch(`/api/projects/${id}/documents/${docId}`, {
+    const response = await requestJson(`/api/projects/${id}/documents/${docId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: editContent }),
+      body: { content: editContent },
     });
+    if (!response.ok) {
+      setSaving(false);
+      return;
+    }
     setDocuments((prev) =>
       prev.map((d) => (d.id === docId ? { ...d, content: editContent } : d))
     );
@@ -60,12 +63,18 @@ export default function DocumentsPage() {
     if (!voicePrompt.trim()) return;
     setGeneratingDraft(true);
     setDriftFeedback(null);
-    const res = await fetch(`/api/projects/${id}/voice-draft`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ documentId: docId, prompt: voicePrompt }),
-    });
-    const { draft, drift } = await res.json();
+    const res = await requestJson<{ draft?: string; drift?: { hasDrift: boolean; details: string; rewriteSuggestion?: string } }>(
+      `/api/projects/${id}/voice-draft`,
+      {
+        method: 'POST',
+        body: { documentId: docId, prompt: voicePrompt },
+      }
+    );
+    if (!res.ok || !res.data?.draft) {
+      setGeneratingDraft(false);
+      return;
+    }
+    const { draft, drift } = res.data;
     const doc = documents.find((d) => d.id === docId);
     if (doc) {
       const newContent = doc.content ? `${doc.content}\n\n---\n\n${draft}` : draft;

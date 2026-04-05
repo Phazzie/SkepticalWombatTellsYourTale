@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Project, Tangent, Gap, Pattern } from '@/lib/types';
+import { requestJson } from '@/lib/client/request';
 
 export default function ProjectPage() {
   const { id } = useParams<{ id: string }>();
@@ -15,8 +16,8 @@ export default function ProjectPage() {
   const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`/api/projects/${id}?include=all`)
-      .then((r) => r.json())
+    requestJson<Project>(`/api/projects/${id}?include=all`)
+      .then(({ data }) => data)
       .then((data) => {
         setProject(data);
         setLoading(false);
@@ -38,10 +39,9 @@ export default function ProjectPage() {
         : prev
     );
     try {
-      const response = await fetch(`/api/projects/${id}/tangents/${tangentId}`, {
+      const response = await requestJson(`/api/projects/${id}/tangents/${tangentId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'resolved' }),
+        body: { status: 'resolved' },
       });
       if (!response.ok) {
         throw new Error(`Failed to resolve thread (${response.status})`);
@@ -77,10 +77,9 @@ export default function ProjectPage() {
         : prev
     );
     try {
-      const response = await fetch(`/api/projects/${id}/gaps/${gapId}`, {
+      const response = await requestJson(`/api/projects/${id}/gaps/${gapId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resolved: true }),
+        body: { resolved: true },
       });
       if (!response.ok) {
         throw new Error(`Failed to resolve gap (${response.status})`);
@@ -129,10 +128,9 @@ export default function ProjectPage() {
         : prev
     );
     try {
-      const response = await fetch(`/api/projects/${id}/concepts`, {
+      const response = await requestJson(`/api/projects/${id}/concepts`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conceptId, approved, status: nextStatus }),
+        body: { conceptId, approved, status: nextStatus },
       });
       if (!response.ok) {
         throw new Error(`Failed to update concept (${response.status})`);
@@ -170,10 +168,9 @@ export default function ProjectPage() {
         : prev
     );
     try {
-      const response = await fetch(`/api/projects/${id}/contradictions`, {
+      const response = await requestJson(`/api/projects/${id}/contradictions`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contradictionId, status }),
+        body: { contradictionId, status },
       });
       if (!response.ok) {
         throw new Error(`Failed to update contradiction (${response.status})`);
@@ -202,12 +199,13 @@ export default function ProjectPage() {
     }
     setSearching(true);
     try {
-      const res = await fetch(`/api/projects/${id}/search?q=${encodeURIComponent(searchTerm)}`);
+      const res = await requestJson<{ results?: Array<{ kind: string; id: string; title: string; snippet: string }> }>(
+        `/api/projects/${id}/search?q=${encodeURIComponent(searchTerm)}`
+      );
       if (!res.ok) {
         throw new Error(`Search request failed with status ${res.status}`);
       }
-      const data = await res.json();
-      setSearchResults(data.results || []);
+      setSearchResults(res.data?.results || []);
     } catch (error) {
       console.error('Project search failed:', error);
       setSearchResults([]);
