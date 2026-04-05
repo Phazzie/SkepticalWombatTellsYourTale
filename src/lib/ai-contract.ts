@@ -53,9 +53,9 @@ function normalizeAnalysisResult(value: unknown): AnalysisResult {
           if (!isObject(t)) return null;
           const thread = asString(t.thread).trim();
           if (!thread) return null;
-          return { thread, context: asString(t.context) };
+          return { thread, context: asString(t.context), evidence: asString(t.evidence) };
         })
-        .filter((t): t is { thread: string; context: string } => t !== null)
+        .filter((t): t is { thread: string; context: string; evidence: string } => t !== null)
     : [];
 
   const patterns = Array.isArray(root.patterns)
@@ -67,9 +67,9 @@ function normalizeAnalysisResult(value: unknown): AnalysisResult {
           const sessionRefs = Array.isArray(p.sessionRefs)
             ? p.sessionRefs.filter((s): s is string => typeof s === 'string')
             : [];
-          return { description, sessionRefs };
+          return { description, sessionRefs, evidence: asString(p.evidence) };
         })
-        .filter((p): p is { description: string; sessionRefs: string[] } => p !== null)
+        .filter((p): p is { description: string; sessionRefs: string[]; evidence: string } => p !== null)
     : [];
 
   const gaps = Array.isArray(root.gaps)
@@ -79,9 +79,10 @@ function normalizeAnalysisResult(value: unknown): AnalysisResult {
           const description = asString(g.description).trim();
           if (!description) return null;
           const documentRef = asOptionalString(g.documentRef);
-          return documentRef ? { description, documentRef } : { description };
+          const whyItMatters = asString(g.whyItMatters);
+          return documentRef ? { description, documentRef, whyItMatters } : { description, whyItMatters };
         })
-        .filter((g): g is { description: string; documentRef?: string } => g !== null)
+        .filter((g): g is { description: string; documentRef?: string; whyItMatters: string } => g !== null)
     : [];
 
   const contradictions = Array.isArray(root.contradictions)
@@ -91,11 +92,12 @@ function normalizeAnalysisResult(value: unknown): AnalysisResult {
           const description = asString(c.description).trim();
           const existing = asString(c.existing).trim();
           const next = asString(c.new).trim();
+          const reason = asString(c.reason).trim();
           if (!description || !existing || !next) return null;
-          return { description, existing, new: next };
+          return { description, existing, new: next, reason };
         })
         .filter(
-          (c): c is { description: string; existing: string; new: string } => c !== null
+          (c): c is { description: string; existing: string; new: string; reason: string } => c !== null
         )
     : [];
 

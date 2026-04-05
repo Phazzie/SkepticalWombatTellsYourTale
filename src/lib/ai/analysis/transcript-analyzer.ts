@@ -81,7 +81,10 @@ function normalizeAnalysis(value: unknown): { value: AnalysisResult; contractIss
             whyItMatters,
           };
         })
-        .filter((entry): entry is { description: string; documentRef?: string; whyItMatters: string } => entry !== null)
+        .filter(
+          (entry): entry is { description: string; documentRef: string | undefined; whyItMatters: string } =>
+            entry !== null
+        )
     : [];
   if (!Array.isArray(parsed.gaps)) {
     contractIssues.push('gaps must be an array');
@@ -160,8 +163,8 @@ function normalizeAnalysis(value: unknown): { value: AnalysisResult; contractIss
           (entry): entry is {
             name: string;
             definition: string;
-            sourceSession?: string;
-            linkedDocument?: string;
+            sourceSession: string | undefined;
+            linkedDocument: string | undefined;
             status: 'developing' | 'complete' | 'contradicted';
           } => entry !== null
         )
@@ -203,7 +206,7 @@ function normalizeAnalysis(value: unknown): { value: AnalysisResult; contractIss
           (entry): entry is {
             text: string;
             type: 'important' | 'connection' | 'unfinished' | 'tangent' | 'pattern';
-            reference?: string;
+            reference: string | undefined;
           } => entry !== null
         )
     : [];
