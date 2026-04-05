@@ -28,11 +28,9 @@ export async function PATCH(
     const { userId } = await requireUser();
     const { id } = await params;
 
-    const body = (await request
-      .json()
-      .catch(() => {
-        throw badRequest('Request body must be valid JSON');
-      })) as { name?: unknown; description?: unknown };
+    const body = (await request.json().catch(() => {
+      throw badRequest('Request body must be valid JSON');
+    })) as { name?: unknown; description?: unknown };
     const data: { name?: string; description?: string | null } = {};
 
     if (body.name !== undefined) {

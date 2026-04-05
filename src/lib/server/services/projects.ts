@@ -3,10 +3,20 @@ import { parseAiAnnotations } from '@/lib/server/mappers/ai-annotations';
 import { parseSessionRefs } from '@/lib/server/mappers/session-refs';
 import { forbidden, notFound } from '@/lib/server/errors';
 import { ensureProjectAccess } from '@/lib/server/auth';
+import type { Project } from '@prisma/client';
+
+interface ProjectsMutationRepository {
+  createForUser(userId: string, name: string, description?: string | null): Promise<Project>;
+  updateProject(projectId: string, data: { name?: string; description?: string | null }): Promise<Project>;
+  deleteProject(projectId: string): Promise<unknown>;
+}
+
+type AccessCheckedProject = { userId: string };
+type ProjectAccessChecker = (projectId: string, userId: string) => Promise<AccessCheckedProject>;
 
 type ProjectsServiceMutationDeps = {
-  repository?: Pick<typeof projectsRepository, 'createForUser' | 'updateProject' | 'deleteProject'>;
-  ensureAccess?: typeof ensureProjectAccess;
+  repository?: ProjectsMutationRepository;
+  ensureAccess?: ProjectAccessChecker;
 };
 
 export const projectsService = {

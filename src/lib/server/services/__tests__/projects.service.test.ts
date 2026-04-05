@@ -44,7 +44,7 @@ test('updateProject requires access check before updating', async () => {
 
   const ensureAccess = async () => {
     ensureCalled = true;
-    return { id: 'p1', userId: 'owner', members: [] };
+    return { userId: 'owner' };
   };
 
   await projectsService.updateProject('u1', 'p1', { name: 'Renamed' }, { repository, ensureAccess });
@@ -66,11 +66,32 @@ test('deleteProject forbids non-owner users', async () => {
     },
   };
 
-  const ensureAccess = async () => ({ id: 'p1', userId: 'owner', members: [{ userId: 'member' }] });
+  const ensureAccess = async () => ({ userId: 'owner' });
 
   await assert.rejects(
     () => projectsService.deleteProject('member', 'p1', { repository, ensureAccess }),
     (error) => error instanceof AppError && error.status === 403 && error.message === 'Only project owner can delete project'
   );
   assert.equal(deleted, false);
+});
+
+test('deleteProject allows owner users', async () => {
+  let deletedId: string | null = null;
+  const repository = {
+    async createForUser() {
+      throw new Error('not used');
+    },
+    async updateProject() {
+      throw new Error('not used');
+    },
+    async deleteProject(projectId: string) {
+      deletedId = projectId;
+    },
+  };
+
+  const ensureAccess = async () => ({ userId: 'owner' });
+
+  const result = await projectsService.deleteProject('owner', 'p1', { repository, ensureAccess });
+  assert.deepEqual(result, { success: true });
+  assert.equal(deletedId, 'p1');
 });
