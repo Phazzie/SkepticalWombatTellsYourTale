@@ -34,8 +34,8 @@ jobs:
               : context.payload.review;
 
             const actor = source?.user?.login || context.actor;
-            const defaultAllowedBots = 'copilot-pull-request-reviewer[bot],copilot-swe-agent[bot]';
-            const allowedBotLogins = (process.env.REVIEW_AUTOMATION_ALLOWED_BOTS || defaultAllowedBots)
+            const DEFAULT_ALLOWED_BOTS = 'copilot-pull-request-reviewer[bot],copilot-swe-agent[bot]';
+            const allowedBotLogins = (process.env.REVIEW_AUTOMATION_ALLOWED_BOTS || DEFAULT_ALLOWED_BOTS)
               .split(',')
               .map((value) => value.trim().toLowerCase())
               .filter(Boolean);
@@ -135,10 +135,18 @@ jobs:
           script: |
             const issueNumber = Number('${{ steps.create_issue.outputs.issue_number }}');
             const workflowId = process.env.COPILOT_CODING_WORKFLOW_ID;
-            const ref = context.payload.pull_request?.head?.ref || context.ref.replace('refs/heads/', '');
+            const fallbackRef = typeof context.ref === 'string' && context.ref.startsWith('refs/heads/')
+              ? context.ref.replace('refs/heads/', '')
+              : '';
+            const ref = context.payload.pull_request?.head?.ref || fallbackRef;
 
             if (!workflowId) {
               core.warning('COPILOT_CODING_WORKFLOW_ID is not set; skipping workflow dispatch.');
+              return;
+            }
+
+            if (!ref) {
+              core.warning('Could not determine branch ref; skipping workflow dispatch.');
               return;
             }
 
@@ -155,7 +163,7 @@ jobs:
               });
               core.info(`Triggered Copilot workflow ${workflowId} for issue #${issueNumber}.`);
             } catch (error) {
-              core.warning(`Could not dispatch workflow ${workflowId}: ${error.message}`);
+              core.warning(`Could not dispatch workflow ${workflowId}.`);
             }
         env:
           COPILOT_CODING_WORKFLOW_ID: ${{ vars.COPILOT_CODING_WORKFLOW_ID }}
