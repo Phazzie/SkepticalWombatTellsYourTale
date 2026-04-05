@@ -4,6 +4,36 @@ import { analyzeProjectSession } from '@/lib/server/services/analysis.service';
 import { AiPort } from '@/lib/server/ports/ai';
 import { AnalysisPersistencePort } from '@/lib/server/ports/analysis';
 
+test('analyzeProjectSession fails fast without OPENAI_API_KEY when using default ai port', async () => {
+  const original = process.env.OPENAI_API_KEY;
+  delete process.env.OPENAI_API_KEY;
+
+  const persistence: AnalysisPersistencePort = {
+    async getProjectAnalysisContext() {
+      return {
+        projectName: 'Memoir',
+        projectDescription: 'A life story',
+        documents: [{ id: 'doc-1', name: 'Ch1', content: 'content' }],
+        conceptContext: '',
+        contradictionContext: '',
+        sessionHistory: '',
+      };
+    },
+    async persistAnalysisResult() {},
+  };
+
+  await assert.rejects(
+    () => analyzeProjectSession({ projectId: 'p1', sessionId: 's1', transcript: 'hello' }, { persistence }),
+    /OPENAI_API_KEY/
+  );
+
+  if (original === undefined) {
+    delete process.env.OPENAI_API_KEY;
+  } else {
+    process.env.OPENAI_API_KEY = original;
+  }
+});
+
 test('analyzeProjectSession orchestrates AI and persistence', async () => {
   const writes: Array<{ projectId: string; sessionId: string }> = [];
 

@@ -4,6 +4,37 @@ import { generateQuestions, listQuestions, updateQuestionStatus } from '@/lib/se
 import { AiPort } from '@/lib/server/ports/ai';
 import { QuestionsPersistencePort } from '@/lib/server/ports/questions';
 
+test('generateQuestions fails fast without OPENAI_API_KEY when using default ai port', async () => {
+  const original = process.env.OPENAI_API_KEY;
+  delete process.env.OPENAI_API_KEY;
+
+  const persistence: QuestionsPersistencePort = {
+    async list() {
+      return [];
+    },
+    async updateStatus() {
+      return null;
+    },
+    async getGenerationContext() {
+      return {
+        recentTranscriptContext: 'recent',
+        documentContext: 'docs',
+      };
+    },
+    async createGenerated() {
+      return [];
+    },
+  };
+
+  await assert.rejects(() => generateQuestions('p1', { persistence }), /OPENAI_API_KEY/);
+
+  if (original === undefined) {
+    delete process.env.OPENAI_API_KEY;
+  } else {
+    process.env.OPENAI_API_KEY = original;
+  }
+});
+
 test('generateQuestions persists AI-generated questions', async () => {
   const created: Array<{ text: string }> = [];
 

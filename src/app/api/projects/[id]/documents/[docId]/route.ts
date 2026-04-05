@@ -36,11 +36,11 @@ export async function PATCH(
     }
 
     return documentsRepository.update(docId, data);
-  });
+  }, { request, operation: 'projects.documents.patch' });
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string; docId: string }> }
 ) {
   return handleRoute(async () => {
@@ -55,5 +55,5 @@ export async function DELETE(
     }
 
     return { success: true };
-  });
+  }, { request, operation: 'projects.documents.delete' });
 }
