@@ -53,3 +53,7 @@ export function enforceRateLimit(key: string, limit: number, windowMs: number) {
 
   bucket.count += 1;
 }
+
+export function __resetRateLimitForTests() {
+  buckets.clear();
+}

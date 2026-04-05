@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { AppError } from '@/lib/server/errors';
+import { __resetRateLimitForTests, enforceRateLimit } from '@/lib/server/rate-limit';
 
 function withFakeNow<T>(now: number, fn: () => T): T {
   const originalNow = Date.now;
@@ -12,13 +13,11 @@ function withFakeNow<T>(now: number, fn: () => T): T {
   }
 }
 
-async function loadRateLimitModule(unique: string) {
-  return import(`@/lib/server/rate-limit?test=${unique}`);
-}
+test.beforeEach(() => {
+  __resetRateLimitForTests();
+});
 
-test('enforceRateLimit allows requests up to limit and blocks over limit', async () => {
-  const { enforceRateLimit } = await loadRateLimitModule('basic');
-
+test('enforceRateLimit allows requests up to limit and blocks over limit', () => {
   withFakeNow(1000, () => {
     enforceRateLimit('k1', 2, 1000);
     enforceRateLimit('k1', 2, 1000);
@@ -29,9 +28,7 @@ test('enforceRateLimit allows requests up to limit and blocks over limit', async
   });
 });
 
-test('enforceRateLimit resets counter after window expires', async () => {
-  const { enforceRateLimit } = await loadRateLimitModule('window-reset');
-
+test('enforceRateLimit resets counter after window expires', () => {
   withFakeNow(1000, () => {
     enforceRateLimit('k2', 1, 1000);
     assert.throws(() => enforceRateLimit('k2', 1, 1000), /Too many requests/);
@@ -42,9 +39,7 @@ test('enforceRateLimit resets counter after window expires', async () => {
   });
 });
 
-test('enforceRateLimit evicts oldest bucket when capacity reached', async () => {
-  const { enforceRateLimit } = await loadRateLimitModule('evict-oldest');
-
+test('enforceRateLimit evicts oldest bucket when capacity reached', () => {
   withFakeNow(1000, () => {
     for (let index = 0; index < 5000; index += 1) {
       enforceRateLimit(`bucket-${index}`, 1, 100000 + index);
