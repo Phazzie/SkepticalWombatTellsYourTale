@@ -35,5 +35,5 @@ export async function POST(request: Request) {
     });
 
     return user;
-  });
+  }, { request, operation: 'auth.register' });
 }

@@ -6,6 +6,7 @@ import { Session, AIAnnotation } from '@/lib/types';
 import { AnnotationList } from '@/components/annotations/annotation-list';
 import { AppHeader } from '@/components/layout/app-header';
 import { AppBackLink, Card, Container, Shell, StatusMessage } from '@/components/ui/primitives';
+import { toneCopy } from '@/lib/copy/tone';
 
 export default function SessionsPage() {
   const { id } = useParams<{ id: string }>();
@@ -34,7 +35,7 @@ export default function SessionsPage() {
   }, [id]);
 
   if (loading) {
-    return <Shell><Container><StatusMessage state="loading" title="Loading sessions..." /></Container></Shell>;
+    return <Shell><Container><StatusMessage state="loading" title={toneCopy.sessionsLoading} /></Container></Shell>;
   }
 
   return (
@@ -47,7 +48,11 @@ export default function SessionsPage() {
         {error && <StatusMessage state="error" title="Something went wrong" description={error} />}
 
         {sessions.length === 0 ? (
-          <StatusMessage state="empty" title="No sessions yet" description="Record your first session to get started." />
+          <StatusMessage
+            state="empty"
+            title={toneCopy.sessionsEmptyTitle}
+            description={toneCopy.sessionsEmptyDescription}
+          />
         ) : (
           <div className="space-y-4">
             {sessions.map((session) => {

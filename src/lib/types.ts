@@ -74,6 +74,7 @@ export interface Gap {
 }
 
 export interface AnalysisResult {
+  contractValidation?: ContractValidationSummary;
   documentSuggestion?: {
     documentId?: string;
     documentName: string;
@@ -82,21 +83,29 @@ export interface AnalysisResult {
   tangents: Array<{
     thread: string;
     context: string;
+    evidence: string;
   }>;
   patterns: Array<{
     description: string;
     sessionRefs: string[];
+    evidence: string;
   }>;
   gaps: Array<{
     description: string;
     documentRef?: string;
+    whyItMatters: string;
   }>;
   contradictions: Array<{
     description: string;
     existing: string;
     new: string;
+    reason: string;
   }>;
   questions: string[];
+  questionDetails?: Array<{
+    text: string;
+    contextAnchor: string;
+  }>;
   concepts?: Array<{
     name: string;
     definition: string;
@@ -106,7 +115,17 @@ export interface AnalysisResult {
   }>;
   annotations: AIAnnotation[];
   significance?: string;
+  significanceDetails?: {
+    text: string;
+    justification: string;
+    confidence: number;
+  };
   voicePreservedDraft?: string;
+  voicePreservedDraftDetails?: {
+    draft: string;
+    justification: string;
+    confidence: number;
+  };
 }
 
 export interface Question {
@@ -117,6 +136,17 @@ export interface Question {
   status: 'pending' | 'answered' | 'dismissed';
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ContractValidationSummary {
+  isValid: boolean;
+  issues: string[];
+  parseError?: string;
+}
+
+export interface QuestionGenerationPayload {
+  questions: Question[];
+  contractValidation?: ContractValidationSummary;
 }
 
 export interface Concept {

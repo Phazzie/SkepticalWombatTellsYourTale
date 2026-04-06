@@ -3,27 +3,26 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { Question, QuestionGenerationPayload } from '@/lib/types';
+import { toneCopy } from '@/lib/copy/tone';
 import { requestJson } from '@/lib/client/request';
-
-interface Question {
-  id: string;
-  text: string;
-  sessionRef?: string;
-  status: 'pending' | 'answered' | 'dismissed';
-  createdAt: string;
-}
 
 export default function QuestionsPage() {
   const { id } = useParams<{ id: string }>();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [generationIssue, setGenerationIssue] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'answered' | 'dismissed'>('pending');
 
   useEffect(() => {
     requestJson<Question[]>(`/api/projects/${id}/questions?status=${activeFilter === 'all' ? '' : activeFilter}`)
-      .then(({ data }) => {
-        setQuestions(data || []);
+      .then(({ ok, data }) => {
+        if (ok && Array.isArray(data)) {
+          setQuestions(data);
+        } else {
+          setQuestions([]);
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -31,15 +30,27 @@ export default function QuestionsPage() {
 
   const generateQuestions = async () => {
     setGenerating(true);
-    const { data } = await requestJson<Question[]>(`/api/projects/${id}/questions`, {
+    setGenerationIssue(null);
+    const { ok, data } = await requestJson<QuestionGenerationPayload>(`/api/projects/${id}/questions`, {
       method: 'POST',
       body: { action: 'generate' },
     });
-    if (!data) {
+
+    if (!ok || !data || !Array.isArray(data.questions)) {
+      setGenerationIssue('Failed to generate questions. Please try again.');
       setGenerating(false);
       return;
     }
-    setQuestions((prev) => [...data, ...prev]);
+
+    setQuestions((prev) => [...data.questions, ...prev]);
+    if (data.contractValidation && !data.contractValidation.isValid) {
+      const issueCount = data.contractValidation.issues.length;
+      const issueSummary =
+        issueCount > 1
+          ? `${data.contractValidation.issues[0]} (+${issueCount - 1} more)`
+          : data.contractValidation.issues[0];
+      setGenerationIssue(issueSummary || 'AI response contract was invalid for question generation.');
+    }
     setGenerating(false);
   };
 
@@ -78,10 +89,9 @@ export default function QuestionsPage() {
         </div>
 
         <div className="bg-gray-900 border border-gray-700 rounded-xl p-5 mb-6">
-          <p className="text-gray-400 text-sm">
-            These are specific questions based on what you&apos;ve said — not generic prompts. Answer any of them
-            by recording a new voice session.
-          </p>
+            <p className="text-gray-400 text-sm">
+              {toneCopy.questionsIntro}
+            </p>
           <div className="flex gap-2 mt-3">
             {(['all', 'pending', 'answered', 'dismissed'] as const).map((filter) => (
               <button
@@ -99,10 +109,16 @@ export default function QuestionsPage() {
           </div>
         </div>
 
+        {generationIssue && (
+          <div className="mb-6 rounded-xl border border-amber-700 bg-amber-900/20 p-4 text-sm text-amber-300">
+            {generationIssue}
+          </div>
+        )}
+
         {questions.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
             <div className="text-5xl mb-4">❓</div>
-            <p>No questions yet.</p>
+            <p>{toneCopy.questionsEmpty}</p>
             <button onClick={generateQuestions} className="text-indigo-400 hover:text-indigo-300 mt-2">
               Generate questions from your material →
             </button>

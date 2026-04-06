@@ -17,7 +17,7 @@ export async function GET(
     const includeAll = url.searchParams.get('include') === 'all';
 
     return projectsService.getProject(userId, id, includeAll);
-  });
+  }, { request, operation: 'projects.get' });
 }
 
 export async function PATCH(
@@ -29,7 +29,7 @@ export async function PATCH(
     const { id } = await params;
 
     const body = (await request.json().catch(() => {
-      throw badRequest('Request body must be valid JSON');
+      throw badRequest('Invalid or missing JSON request body');
     })) as { name?: unknown; description?: unknown };
     const data: { name?: string; description?: string | null } = {};
 
@@ -42,16 +42,16 @@ export async function PATCH(
     }
 
     return projectsService.updateProject(userId, id, data);
-  });
+  }, { request, operation: 'projects.patch' });
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   return handleRoute(async () => {
     const { userId } = await requireUser();
     const { id } = await params;
     return projectsService.deleteProject(userId, id);
-  });
+  }, { request, operation: 'projects.delete' });
 }

@@ -3,8 +3,10 @@
 import { useState, useRef, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { AnalysisResult } from '@/lib/types';
 import { AppHeader } from '@/components/layout/app-header';
 import { AppBackLink, Card, Container, PrimaryButton, SecondaryButton, Shell, StatusMessage } from '@/components/ui/primitives';
+import { toneCopy } from '@/lib/copy/tone';
 
 interface SpeechRecognitionResults {
   [key: number]: { [key: number]: { transcript: string } };
@@ -20,17 +22,6 @@ interface BrowserSpeechRecognition {
 }
 
 type RecordingState = 'idle' | 'recording' | 'processing' | 'analyzing' | 'done';
-
-interface AnalysisResult {
-  documentSuggestion?: { documentName: string; reason: string };
-  tangents?: Array<{ thread: string; context: string }>;
-  questions?: string[];
-  significance?: string;
-  contradictions?: Array<{ description: string }>;
-  annotations?: Array<{ text: string; type: string; reference?: string }>;
-  gaps?: Array<{ description: string }>;
-  voicePreservedDraft?: string;
-}
 
 const annotationColors: Record<string, string> = {
   important: 'bg-amber-500/20 border-amber-500/50 text-amber-300',
@@ -112,8 +103,11 @@ function AnalysisPanels({ analysis }: { analysis: AnalysisResult }) {
 
       {analysis.significance && (
         <Card className="border-amber-700 bg-amber-900/30">
-          <h2 className="mb-2 font-semibold text-amber-300">⚡ What the AI noticed</h2>
+          <h2 className="mb-2 font-semibold text-amber-300">{toneCopy.recordAnalysisSignificanceTitle}</h2>
           <p className="text-sm text-app-fg">{analysis.significance}</p>
+          {analysis.significanceDetails?.justification && (
+            <p className="mt-2 text-xs text-app-fg-muted">{analysis.significanceDetails.justification}</p>
+          )}
         </Card>
       )}
 
@@ -125,6 +119,7 @@ function AnalysisPanels({ analysis }: { analysis: AnalysisResult }) {
               <div key={i} className="rounded-lg bg-app-surface-muted p-3">
                 <p className="text-sm font-medium text-amber-300">{t.thread}</p>
                 {t.context && <p className="mt-1 text-xs italic text-app-fg-muted">&quot;{t.context}&quot;</p>}
+                {t.evidence && <p className="mt-1 text-xs text-app-fg-muted">Evidence: {t.evidence}</p>}
               </div>
             ))}
           </div>
@@ -146,12 +141,15 @@ function AnalysisPanels({ analysis }: { analysis: AnalysisResult }) {
 
       {analysis.questions && analysis.questions.length > 0 && (
         <Card>
-          <h2 className="mb-3 font-semibold text-white">❓ Questions for next time</h2>
+          <h2 className="mb-3 font-semibold text-white">{toneCopy.recordAnalysisQuestionsTitle}</h2>
           <ul className="space-y-2">
-            {analysis.questions.map((q, i) => (
+            {(analysis.questionDetails || analysis.questions.map((q) => ({ text: q, contextAnchor: '' }))).map((q, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-indigo-300">
                 <span className="mt-0.5 text-app-fg-muted">{i + 1}.</span>
-                {q}
+                <div>
+                  <p>{q.text}</p>
+                  {q.contextAnchor && <p className="text-xs text-app-fg-muted">{q.contextAnchor}</p>}
+                </div>
               </li>
             ))}
           </ul>
@@ -162,6 +160,9 @@ function AnalysisPanels({ analysis }: { analysis: AnalysisResult }) {
         <Card className="border-green-700/50">
           <h2 className="mb-3 font-semibold text-green-400">✍️ In your voice</h2>
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-app-fg">{analysis.voicePreservedDraft}</p>
+          {analysis.voicePreservedDraftDetails?.justification && (
+            <p className="mt-2 text-xs text-app-fg-muted">{analysis.voicePreservedDraftDetails.justification}</p>
+          )}
         </Card>
       )}
 
@@ -314,7 +315,7 @@ export default function RecordPage() {
       <Container>
         <AppBackLink href={`/project/${id}`} />
         <div className="mt-4" />
-        <AppHeader title="Voice Session" subtitle="Capture raw thought, then let AI trace threads and patterns." />
+        <AppHeader title="Voice Session" subtitle={toneCopy.recordHeaderSubtitle} />
 
         {error && <StatusMessage state="error" title="Recording error" description={error} />}
 
@@ -344,11 +345,15 @@ export default function RecordPage() {
         {(state === 'processing' || state === 'analyzing') && (
           <StatusMessage
             state="loading"
-            title={state === 'processing' ? 'Transcribing...' : 'AI is reading your session...'}
+            title={
+              state === 'processing'
+                ? toneCopy.recordLoadingTranscribeTitle
+                : toneCopy.recordLoadingAnalyzeTitle
+            }
             description={
               state === 'processing'
-                ? 'Turning your voice into raw text'
-                : 'Connecting this session to your broader project context'
+                ? toneCopy.recordLoadingTranscribeDescription
+                : toneCopy.recordLoadingAnalyzeDescription
             }
           />
         )}
@@ -364,6 +369,17 @@ export default function RecordPage() {
 
             {analysis && (
               <AnalysisPanels analysis={analysis} />
+            )}
+
+            {analysis?.contractValidation && !analysis.contractValidation.isValid && (
+              <Card className="border-amber-700 bg-amber-900/20">
+                <h2 className="mb-2 text-sm font-semibold text-amber-300">AI output contract issues</h2>
+                <ul className="list-disc space-y-1 pl-4 text-xs text-amber-200">
+                  {analysis.contractValidation.issues.map((issue, index) => (
+                    <li key={`${issue}:${index}`}>{issue}</li>
+                  ))}
+                </ul>
+              </Card>
             )}
 
             <div className="flex gap-4">
