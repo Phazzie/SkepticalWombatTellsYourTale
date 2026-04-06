@@ -1,0 +1,226 @@
+name: Review Comments Automation
+
+on:
+  pull_request_review_comment:
+    types:
+      - created
+  pull_request_review:
+    types:
+      - submitted
+
+permissions:
+  contents: write
+  pull-requests: read
+  issues: write
+  actions: write
+
+jobs:
+  file-review-as-issue:
+    name: File review comment as issue
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'pull_request_review_comment' ||
+      (github.event_name == 'pull_request_review' && github.event.review.body)
+    steps:
+      - name: Create fix issue from review feedback
+        id: create_issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const eventName = context.eventName;
+            const source = eventName === 'pull_request_review_comment'
+              ? context.payload.comment
+              : context.payload.review;
+
+            const actor = source?.user?.login || context.actor;
+            const DEFAULT_ALLOWED_BOTS = 'copilot-pull-request-reviewer[bot],copilot-swe-agent[bot]';
+            const allowedBotLogins = (process.env.REVIEW_AUTOMATION_ALLOWED_BOTS || DEFAULT_ALLOWED_BOTS)
+              .split(',')
+              .map((value) => value.trim().toLowerCase())
+              .filter(Boolean);
+            const isBotActor = actor.endsWith('[bot]');
+            const isAllowedBot = allowedBotLogins.includes(actor.toLowerCase());
+            if (isBotActor && !isAllowedBot) {
+              core.info(`Skipping bot-authored review content from ${actor}.`);
+              return;
+            }
+
+            const text = (source?.body || '').trim();
+            if (!text) {
+              core.info('Skipping empty review content.');
+              return;
+            }
+
+            if (/\[(no-issue|skip-issue)\]/i.test(text)) {
+              core.info('Skipping due to explicit no-issue marker.');
+              return;
+            }
+
+            const priorityMatch = text.match(/\bpriority\s*:\s*(critical|high|medium|low)\b/i);
+            const priority = (priorityMatch?.[1] || 'medium').toLowerCase();
+
+            const agentMatch = text.match(/\bagent\s*:\s*(copilot|claude|gemini)\b/i);
+            const fallbackAgent = priority === 'critical' || priority === 'high'
+              ? 'claude'
+              : priority === 'medium'
+                ? 'gemini'
+                : 'copilot';
+            const agent = (agentMatch?.[1] || fallbackAgent).toLowerCase();
+
+            const sourceUrl = source?.html_url || pr?.html_url || '';
+            const sourceId = String(source?.id || source?.node_id || `${context.runId}-${context.runAttempt}`);
+            const sourceMarker = `<!-- review-source-id:${sourceId} -->`;
+            const bodyPreview = text.replace(/\s+/g, ' ').slice(0, 80);
+            const issueTitle = `Review fix: PR #${pr.number} - ${bodyPreview}`;
+
+            const labels = [
+              'needs-fix',
+              'from-review-comment',
+              `priority:${priority}`,
+              `agent:${agent}`,
+            ];
+            const isLabelAlreadyExistsError = (error) => {
+              const status = error?.status;
+              const code = error?.response?.data?.errors?.[0]?.code;
+              return status === 422 && code === 'already_exists';
+            };
+
+            for (const name of labels) {
+              try {
+                await github.rest.issues.getLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name,
+                });
+              } catch {
+                try {
+                  await github.rest.issues.createLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name,
+                  });
+                } catch (error) {
+                  if (!isLabelAlreadyExistsError(error)) {
+                    throw error;
+                  }
+                }
+              }
+            }
+
+            const query = [
+              `repo:${context.repo.owner}/${context.repo.repo}`,
+              'is:issue',
+              'is:open',
+              'label:from-review-comment',
+              `"review-source-id:${sourceId}"`,
+            ].join(' ');
+            const searchResponse = await github.rest.search.issuesAndPullRequests({
+              q: query,
+              per_page: 10,
+            });
+            const existingIssue = searchResponse.data.items.find((item) => {
+              return typeof item.body === 'string' && item.body.includes(sourceMarker);
+            });
+            if (existingIssue) {
+              core.setOutput('issue_number', String(existingIssue.number));
+              core.setOutput('priority', priority);
+              core.setOutput('agent', agent);
+              core.info(`Reusing existing issue #${existingIssue.number} for review feedback.`);
+              return;
+            }
+
+            const issueBody = [
+              `Auto-filed from PR review feedback.`,
+              ``,
+              `- PR: ${pr.html_url}`,
+              `- Source: ${sourceUrl}`,
+              `- Reviewer: @${actor}`,
+              `- Suggested agent: \`${agent}\``,
+              `- Priority: \`${priority}\``,
+              ``,
+              `### Review feedback`,
+              text,
+              ``,
+              `### Expected outcome`,
+              `- Produce a code fix for this feedback.`,
+              `- Open a PR (or commit to current PR branch if automation supports it).`,
+              ``,
+              sourceMarker,
+            ].join('\n');
+
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issueTitle,
+              body: issueBody,
+              labels,
+            });
+
+            core.setOutput('issue_number', String(issue.data.number));
+            core.setOutput('priority', priority);
+            core.setOutput('agent', agent);
+            core.info(`Created issue #${issue.data.number} for review feedback.`);
+
+      - name: Trigger Copilot coding workflow (best effort)
+        if: steps.create_issue.outputs.issue_number != '' && steps.create_issue.outputs.agent == 'copilot'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = Number('${{ steps.create_issue.outputs.issue_number }}');
+            const workflowId = process.env.COPILOT_CODING_WORKFLOW_ID;
+            const fallbackRef = typeof context.ref === 'string' && context.ref.startsWith('refs/heads/')
+              ? context.ref.replace('refs/heads/', '')
+              : '';
+            const ref = context.payload.pull_request?.head?.ref || fallbackRef;
+
+            if (!workflowId) {
+              core.warning('COPILOT_CODING_WORKFLOW_ID is not set; skipping workflow dispatch.');
+              return;
+            }
+
+            if (!ref) {
+              core.warning('Could not determine branch ref; skipping workflow dispatch.');
+              return;
+            }
+
+            try {
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: workflowId,
+                ref,
+                inputs: {
+                  issue_number: String(issueNumber),
+                  source: 'review-comments-automation',
+                },
+              });
+              core.info(`Triggered Copilot workflow ${workflowId} for issue #${issueNumber}.`);
+            } catch (error) {
+              core.warning(`Could not dispatch workflow ${workflowId}.`);
+            }
+        env:
+          COPILOT_CODING_WORKFLOW_ID: ${{ vars.COPILOT_CODING_WORKFLOW_ID }}
+
+      - name: Emit repository dispatch for external agent integrations
+        if: steps.create_issue.outputs.issue_number != '' && steps.create_issue.outputs.agent != 'copilot'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = Number('${{ steps.create_issue.outputs.issue_number }}');
+            const agent = '${{ steps.create_issue.outputs.agent }}';
+            const priority = '${{ steps.create_issue.outputs.priority }}';
+            const eventType = `${agent}-review-fix-request`;
+
+            await github.rest.repos.createDispatchEvent({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              event_type: eventType,
+              client_payload: {
+                issue_number: issueNumber,
+                priority,
+                source: 'review-comments-automation',
+              },
+            });
+
+            core.info(`Dispatched ${eventType} for issue #${issueNumber}.`);

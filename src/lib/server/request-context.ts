@@ -1,5 +1,7 @@
+import { randomUUID } from 'node:crypto';
+
 export function getCorrelationId(request?: Request) {
-  return request?.headers.get('x-request-id') || crypto.randomUUID();
+  return request?.headers.get('x-request-id') || randomUUID();
 }
 
 export function getIpAddress(request?: Request) {
