@@ -318,7 +318,7 @@ export function useProjectDashboard(projectId: string) {
       );
 
       if (ok) {
-        setSearchResults(data.results || []);
+        setSearchResults(data?.results || []);
         return;
       }
 

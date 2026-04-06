@@ -34,7 +34,7 @@ export default function SearchPage() {
       setSearching(false);
       return;
     }
-    setResults(data.results || []);
+    setResults(data?.results || []);
     setSearching(false);
   };
 

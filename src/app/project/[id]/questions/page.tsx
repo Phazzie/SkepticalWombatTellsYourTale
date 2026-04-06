@@ -17,8 +17,12 @@ export default function QuestionsPage() {
 
   useEffect(() => {
     requestJson<Question[]>(`/api/projects/${id}/questions?status=${activeFilter === 'all' ? '' : activeFilter}`)
-      .then(({ data }) => {
-        setQuestions(data);
+      .then(({ ok, data }) => {
+        if (ok && Array.isArray(data)) {
+          setQuestions(data);
+        } else {
+          setQuestions([]);
+        }
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -27,10 +31,17 @@ export default function QuestionsPage() {
   const generateQuestions = async () => {
     setGenerating(true);
     setGenerationIssue(null);
-    const { data } = await requestJson<QuestionGenerationPayload>(`/api/projects/${id}/questions`, {
+    const { ok, data } = await requestJson<QuestionGenerationPayload>(`/api/projects/${id}/questions`, {
       method: 'POST',
       body: { action: 'generate' },
     });
+
+    if (!ok || !data || !Array.isArray(data.questions)) {
+      setGenerationIssue('Failed to generate questions. Please try again.');
+      setGenerating(false);
+      return;
+    }
+
     setQuestions((prev) => [...data.questions, ...prev]);
     if (data.contractValidation && !data.contractValidation.isValid) {
       const issueCount = data.contractValidation.issues.length;
@@ -48,7 +59,7 @@ export default function QuestionsPage() {
       method: 'POST',
       body: { action: 'update', questionId, status },
     });
-    if (!ok) return;
+    if (!ok || !data) return;
     setQuestions((prev) => prev.map((q) => (q.id === data.id ? data : q)));
   };
 
