@@ -55,7 +55,8 @@ function RecordingControlCard({
   onToggle: () => void;
 }) {
   return (
-    <Card className="mb-6 text-center">
+    <Card className="mb-6 border-indigo-500/30 bg-gradient-to-br from-indigo-500/10 via-app-surface to-app-surface-muted text-center">
+      <p className="mb-3 text-xs uppercase tracking-wide text-indigo-300">Listening Stage</p>
       <button
         className={`mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full transition-all ${
           state === 'recording'
@@ -316,6 +317,17 @@ export default function RecordPage() {
         <AppBackLink href={`/project/${id}`} />
         <div className="mt-4" />
         <AppHeader title="Voice Session" subtitle={toneCopy.recordHeaderSubtitle} />
+        <Card className="mb-6 border-indigo-500/30 bg-gradient-to-br from-indigo-500/10 via-app-surface to-app-surface-muted">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-indigo-300">Gold Flow</p>
+              <p className="text-sm text-app-fg-muted">Speak naturally, then resolve what matters: threads, gaps, contradictions, and next questions.</p>
+            </div>
+            <span className="inline-flex rounded-full border border-app-border bg-app-surface-muted px-3 py-1 text-xs text-app-fg-muted">
+              Focus Mode
+            </span>
+          </div>
+        </Card>
 
         {error && <StatusMessage state="error" title="Recording error" description={error} />}
 
@@ -336,7 +348,7 @@ export default function RecordPage() {
         )}
 
         {state === 'recording' && liveTranscript && (
-          <Card className="mb-6">
+          <Card className="mb-6 border-indigo-500/20">
             <p className="mb-2 text-xs uppercase tracking-wide text-app-fg-muted">Live Transcript</p>
             <p className="text-sm leading-relaxed text-app-fg">{liveTranscript}</p>
           </Card>
@@ -360,7 +372,7 @@ export default function RecordPage() {
 
         {state === 'done' && (
           <div className="space-y-6">
-            <Card>
+            <Card className="border-indigo-500/20">
               <h2 className="mb-3 flex items-center gap-2 font-semibold text-white">
                 <span>📝</span> Raw Transcript
               </h2>

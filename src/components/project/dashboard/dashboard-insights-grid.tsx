@@ -9,9 +9,51 @@ export function DashboardInsightsGrid({
   onResolveTangent,
   onResolveGap,
 }: DashboardInsightsProps) {
+  const total = pendingTangents.length + openGaps.length + newPatterns.length;
+  const toPolar = (index: number, radiusPercent = 38) => {
+    const angle = (360 / Math.max(total, 1)) * index - 90;
+    const radians = (angle * Math.PI) / 180;
+    const x = 50 + Math.cos(radians) * radiusPercent;
+    const y = 50 + Math.sin(radians) * radiusPercent;
+    return { left: `${x}%`, top: `${y}%` };
+  };
+
   return (
-    <div className="grid md:grid-cols-3 gap-6">
-      <div className="bg-gray-900 border border-gray-700 rounded-xl p-5">
+    <div className="grid gap-6">
+      <div className="rounded-2xl border border-app-border bg-gradient-to-br from-app-surface to-app-surface-muted p-5 shadow-app">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="font-semibold text-white">Insight Orbit</h2>
+            <p className="text-xs text-app-fg-muted">Unresolved story work orbiting your next recording.</p>
+          </div>
+          <span className="rounded-full bg-indigo-500/20 px-3 py-1 text-xs font-semibold text-indigo-300">
+            {total} active
+          </span>
+        </div>
+        <div className="relative mx-auto aspect-square w-full max-w-sm rounded-full border border-app-border bg-app-bg/60">
+          <div className="absolute left-1/2 top-1/2 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-indigo-400/60 bg-indigo-500/20 text-3xl">
+            🎙️
+          </div>
+          {[...pendingTangents.slice(0, 4), ...openGaps.slice(0, 4), ...newPatterns.slice(0, 4)].map((item, idx) => {
+            const isTangent = 'thread' in item;
+            const isGap = 'resolved' in item;
+            const label = isTangent ? '🧵' : isGap ? '🔍' : '🔁';
+            const style = toPolar(idx);
+            return (
+              <div
+                key={`${'id' in item ? item.id : idx}-orbit`}
+                className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-app-border bg-app-surface px-3 py-1 text-xs"
+                style={style}
+              >
+                {label}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-3">
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xl">🧵</span>
           <h2 className="font-semibold text-white">Dropped Threads</h2>
@@ -22,14 +64,14 @@ export function DashboardInsightsGrid({
           )}
         </div>
         {pendingTangents.length === 0 ? (
-          <p className="text-gray-500 text-sm">No dropped threads yet.</p>
+          <p className="text-sm text-app-fg-muted">No dropped threads yet.</p>
         ) : (
           <div className="space-y-3">
             {pendingTangents.slice(0, 5).map((tangent) => (
-              <div key={tangent.id} className="bg-gray-800 rounded-lg p-3">
+              <div key={tangent.id} className="rounded-xl border border-app-border bg-app-surface-muted p-3">
                 <p className="text-sm text-amber-400 font-medium">{tangent.thread}</p>
                 {tangent.context && (
-                  <p className="text-xs text-gray-500 mt-1 italic">&quot;{tangent.context}&quot;</p>
+                  <p className="mt-1 text-xs italic text-app-fg-muted">&quot;{tangent.context}&quot;</p>
                 )}
                 <div className="flex gap-2 mt-2">
                   <button
@@ -46,9 +88,9 @@ export function DashboardInsightsGrid({
             </Link>
           </div>
         )}
-      </div>
+        </div>
 
-      <div className="bg-gray-900 border border-gray-700 rounded-xl p-5">
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xl">🔍</span>
           <h2 className="font-semibold text-white">Gaps</h2>
@@ -59,14 +101,14 @@ export function DashboardInsightsGrid({
           )}
         </div>
         {openGaps.length === 0 ? (
-          <p className="text-gray-500 text-sm">No gaps detected yet. Add more sessions.</p>
+          <p className="text-sm text-app-fg-muted">No gaps detected yet. Add more sessions.</p>
         ) : (
           <div className="space-y-3">
             {openGaps.slice(0, 5).map((gap) => (
-              <div key={gap.id} className="bg-gray-800 rounded-lg p-3">
+              <div key={gap.id} className="rounded-xl border border-app-border bg-app-surface-muted p-3">
                 <p className="text-sm text-red-400">{gap.description}</p>
                 {gap.documentRef && (
-                  <p className="text-xs text-gray-500 mt-1">In: {gap.documentRef}</p>
+                  <p className="mt-1 text-xs text-app-fg-muted">In: {gap.documentRef}</p>
                 )}
                 <button
                   onClick={() => onResolveGap(gap.id)}
@@ -81,9 +123,9 @@ export function DashboardInsightsGrid({
             </Link>
           </div>
         )}
-      </div>
+        </div>
 
-      <div className="bg-gray-900 border border-gray-700 rounded-xl p-5">
+        <div className="rounded-2xl border border-app-border bg-app-surface p-5">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-xl">🔁</span>
           <h2 className="font-semibold text-white">Patterns</h2>
@@ -94,13 +136,13 @@ export function DashboardInsightsGrid({
           )}
         </div>
         {newPatterns.length === 0 ? (
-          <p className="text-gray-500 text-sm">No patterns detected yet.</p>
+          <p className="text-sm text-app-fg-muted">No patterns detected yet.</p>
         ) : (
           <div className="space-y-3">
             {newPatterns.slice(0, 5).map((pattern) => (
-              <div key={pattern.id} className="bg-gray-800 rounded-lg p-3">
+              <div key={pattern.id} className="rounded-xl border border-app-border bg-app-surface-muted p-3">
                 <p className="text-sm text-purple-400">{pattern.description}</p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="mt-1 text-xs text-app-fg-muted">
                   Seen in {pattern.sessionRefs.length} session(s)
                 </p>
               </div>
@@ -110,6 +152,7 @@ export function DashboardInsightsGrid({
             </Link>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

@@ -10,38 +10,38 @@ export function DashboardActionCards({
   sessionCount: number;
 }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-4">
       <Link
         href={`/project/${id}/record`}
-        className="bg-indigo-600 hover:bg-indigo-700 rounded-xl p-5 text-center transition-colors"
+        className="rounded-2xl border border-indigo-500/50 bg-gradient-to-br from-indigo-500/25 via-indigo-600/20 to-purple-500/20 p-6 text-center transition duration-200 hover:-translate-y-0.5 hover:border-indigo-400/70"
       >
-        <div className="text-3xl mb-2">🎙️</div>
-        <div className="font-semibold">Record</div>
-        <div className="text-indigo-300 text-xs mt-1">Voice session</div>
+        <div className="mb-2 text-3xl">🎙️</div>
+        <div className="font-semibold text-white">Record</div>
+        <div className="mt-1 text-xs text-indigo-200">Start a listening session</div>
       </Link>
       <Link
         href={`/project/${id}/documents`}
-        className="bg-gray-800 hover:bg-gray-700 rounded-xl p-5 text-center transition-colors"
+        className="rounded-2xl border border-app-border bg-app-surface p-6 text-center transition duration-200 hover:-translate-y-0.5 hover:border-app-border-strong"
       >
-        <div className="text-3xl mb-2">📄</div>
+        <div className="mb-2 text-3xl">📄</div>
         <div className="font-semibold">Documents</div>
-        <div className="text-gray-400 text-xs mt-1">{documentCount} docs</div>
+        <div className="mt-1 text-xs text-app-fg-muted">{documentCount} docs</div>
       </Link>
       <Link
         href={`/project/${id}/sessions`}
-        className="bg-gray-800 hover:bg-gray-700 rounded-xl p-5 text-center transition-colors"
+        className="rounded-2xl border border-app-border bg-app-surface p-6 text-center transition duration-200 hover:-translate-y-0.5 hover:border-app-border-strong"
       >
-        <div className="text-3xl mb-2">📼</div>
+        <div className="mb-2 text-3xl">📼</div>
         <div className="font-semibold">Sessions</div>
-        <div className="text-gray-400 text-xs mt-1">{sessionCount} sessions</div>
+        <div className="mt-1 text-xs text-app-fg-muted">{sessionCount} sessions</div>
       </Link>
       <Link
         href={`/project/${id}/export`}
-        className="bg-gray-800 hover:bg-gray-700 rounded-xl p-5 text-center transition-colors"
+        className="rounded-2xl border border-app-border bg-app-surface p-6 text-center transition duration-200 hover:-translate-y-0.5 hover:border-app-border-strong"
       >
-        <div className="text-3xl mb-2">📤</div>
+        <div className="mb-2 text-3xl">📤</div>
         <div className="font-semibold">Export</div>
-        <div className="text-gray-400 text-xs mt-1">Export work</div>
+        <div className="mt-1 text-xs text-app-fg-muted">Raw · Structured · Polished · Full</div>
       </Link>
     </div>
   );

@@ -14,10 +14,11 @@ export function DashboardSearchCard({
   onSearch: () => Promise<void>;
 }) {
   return (
-    <div className="mt-6 bg-gray-900 border border-gray-700 rounded-xl p-5">
+    <div className="mt-6 rounded-2xl border border-app-border bg-app-surface p-5">
       <div className="flex items-center gap-2 mb-3">
         <span className="text-xl">🔎</span>
         <h2 className="font-semibold text-white">Search Across Everything</h2>
+        <span className="ml-auto rounded-md border border-app-border bg-app-surface-muted px-2 py-1 text-[11px] text-app-fg-muted">⌘K</span>
       </div>
       <div className="flex gap-2">
         <input
@@ -27,11 +28,11 @@ export function DashboardSearchCard({
           onKeyDown={(e) => e.key === 'Enter' && onSearch()}
           aria-label="Search project content"
           placeholder="Search sessions, docs, concepts, questions..."
-          className="flex-1 bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-500"
+          className="flex-1 rounded-xl border border-app-border bg-app-surface-muted px-3 py-2 text-sm text-app-fg placeholder:text-app-fg-muted"
         />
         <button
           onClick={onSearch}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm"
+          className="rounded-xl bg-app-accent px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:brightness-110"
         >
           {searching ? 'Searching...' : 'Search'}
         </button>
@@ -39,10 +40,10 @@ export function DashboardSearchCard({
       {searchResults.length > 0 && (
         <div className="mt-3 space-y-2">
           {searchResults.slice(0, 10).map((r) => (
-            <div key={`${r.kind}:${r.id}`} className="bg-gray-800 rounded p-3">
-              <p className="text-xs text-gray-500 uppercase">{r.kind}</p>
-              <p className="text-sm text-gray-200">{r.title}</p>
-              {r.snippet && <p className="text-xs text-gray-400 mt-1">{r.snippet}</p>}
+            <div key={`${r.kind}:${r.id}`} className="rounded-xl border border-app-border bg-app-surface-muted p-3">
+              <p className="text-xs uppercase text-app-fg-muted">{r.kind}</p>
+              <p className="text-sm text-app-fg">{r.title}</p>
+              {r.snippet && <p className="mt-1 text-xs text-app-fg-muted">{r.snippet}</p>}
             </div>
           ))}
         </div>
