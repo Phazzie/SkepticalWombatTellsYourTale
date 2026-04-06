@@ -9,57 +9,53 @@ export function DashboardConceptsContradictions({
   onMarkContradictionExplored,
 }: DashboardConceptsContradictionsProps) {
   return (
-    <div className="mt-6 grid md:grid-cols-2 gap-6">
-      <div className="bg-gray-900 border border-gray-700 rounded-xl p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-xl">🏷️</span>
-          <h2 className="font-semibold text-white">Concept Candidates</h2>
-        </div>
+    <div className="mt-4 grid md:grid-cols-2 gap-4">
+      {/* Concept Candidates */}
+      <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-app">
+        <h2 className="font-semibold text-white mb-4">Concept Candidates</h2>
         {pendingConcepts.length === 0 ? (
-          <p className="text-gray-500 text-sm">No pending concept names.</p>
+          <p className="text-app-fg-muted text-sm">No pending concept names.</p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {pendingConcepts.slice(0, 5).map((concept) => (
-              <div key={concept.id} className="bg-gray-800 rounded-lg p-3">
-                <p className="text-sm text-green-300 font-medium">{concept.name}</p>
-                <p className="text-xs text-gray-400 mt-1">{concept.definition}</p>
+              <div key={concept.id} className="rounded-xl bg-app-surface-muted p-3 border border-app-border">
+                <p className="text-sm text-neon-lime font-medium">{concept.name}</p>
+                <p className="text-xs text-app-fg-muted mt-1">{concept.definition}</p>
                 <button
                   onClick={() => onApproveConcept(concept.id)}
-                  className="text-xs text-green-400 hover:text-green-300 mt-2"
+                  className="text-xs text-neon-lime/70 hover:text-neon-lime mt-2 transition-colors"
                 >
                   ✓ Approve
                 </button>
               </div>
             ))}
-            <Link href={`/project/${id}/concepts`} className="text-xs text-indigo-400 hover:text-indigo-300">
-              View all concepts →
+            <Link href={`/project/${id}/concepts`} className="text-xs text-app-fg-muted hover:text-neon-lime transition-colors">
+              View all →
             </Link>
           </div>
         )}
       </div>
 
-      <div className="bg-gray-900 border border-gray-700 rounded-xl p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-xl">⚖️</span>
-          <h2 className="font-semibold text-white">Open Contradictions</h2>
-        </div>
+      {/* Open Contradictions */}
+      <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-app">
+        <h2 className="font-semibold text-white mb-4">Open Contradictions</h2>
         {openContradictions.length === 0 ? (
-          <p className="text-gray-500 text-sm">No unresolved contradictions.</p>
+          <p className="text-app-fg-muted text-sm">No unresolved contradictions.</p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {openContradictions.slice(0, 5).map((item) => (
-              <div key={item.id} className="bg-gray-800 rounded-lg p-3">
-                <p className="text-sm text-red-300">{item.description}</p>
+              <div key={item.id} className="rounded-xl bg-neon-pink-dim p-3 border border-neon-pink/20">
+                <p className="text-sm text-neon-pink">{item.description}</p>
                 <button
                   onClick={() => onMarkContradictionExplored(item.id)}
-                  className="text-xs text-green-400 hover:text-green-300 mt-2"
+                  className="text-xs text-neon-lime/70 hover:text-neon-lime mt-2 transition-colors"
                 >
                   ✓ Mark explored
                 </button>
               </div>
             ))}
-            <Link href={`/project/${id}/contradictions`} className="text-xs text-indigo-400 hover:text-indigo-300">
-              View all contradictions →
+            <Link href={`/project/${id}/contradictions`} className="text-xs text-app-fg-muted hover:text-neon-lime transition-colors">
+              View all →
             </Link>
           </div>
         )}
