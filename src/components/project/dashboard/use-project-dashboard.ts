@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Project } from '@/lib/types';
 import { requestJson } from '@/lib/client/request';
 import { ProjectSearchResult } from '@/components/project/dashboard/types';
@@ -29,6 +29,7 @@ export function useProjectDashboard(projectId: string) {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<ProjectSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
+  const searchInFlightRef = useRef(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -310,6 +311,8 @@ export function useProjectDashboard(projectId: string) {
       setSearchResults([]);
       return;
     }
+    if (searchInFlightRef.current) return;
+    searchInFlightRef.current = true;
     setSearching(true);
 
     try {
@@ -329,6 +332,7 @@ export function useProjectDashboard(projectId: string) {
       setSearchResults([]);
       setActionError('Failed to search project');
     } finally {
+      searchInFlightRef.current = false;
       setSearching(false);
     }
   };
