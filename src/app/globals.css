@@ -17,15 +17,18 @@
   --accent-soft: rgba(99, 102, 241, 0.18);
 
   /* Neon palette */
-  --neon-lime: #a3e635;
-  --neon-lime-dim: rgba(163, 230, 53, 0.14);
-  --neon-lime-border: rgba(163, 230, 53, 0.35);
-  --neon-purple: #d946ef;
-  --neon-purple-dim: rgba(217, 70, 239, 0.12);
-  --neon-purple-border: rgba(217, 70, 239, 0.35);
-  --neon-pink: #ec4899;
-  --neon-pink-dim: rgba(236, 72, 153, 0.12);
-  --neon-pink-border: rgba(236, 72, 153, 0.35);
+  --neon-lime-rgb: 163 230 53;
+  --neon-purple-rgb: 217 70 239;
+  --neon-pink-rgb: 236 72 153;
+  --neon-lime: rgb(var(--neon-lime-rgb));
+  --neon-lime-dim: rgb(var(--neon-lime-rgb) / 0.14);
+  --neon-lime-border: rgb(var(--neon-lime-rgb) / 0.35);
+  --neon-purple: rgb(var(--neon-purple-rgb));
+  --neon-purple-dim: rgb(var(--neon-purple-rgb) / 0.12);
+  --neon-purple-border: rgb(var(--neon-purple-rgb) / 0.35);
+  --neon-pink: rgb(var(--neon-pink-rgb));
+  --neon-pink-dim: rgb(var(--neon-pink-rgb) / 0.12);
+  --neon-pink-border: rgb(var(--neon-pink-rgb) / 0.35);
 
   --shadow: 0 16px 48px rgba(2, 4, 14, 0.6);
   --shadow-neon-lime: 0 0 16px rgba(163, 230, 53, 0.45), 0 0 40px rgba(163, 230, 53, 0.18);
@@ -52,21 +55,6 @@ body {
 .bg-app-accent       { background: var(--accent); }
 .ring-app-accent     { --tw-ring-color: var(--accent); }
 .shadow-app          { box-shadow: var(--shadow); }
-
-/* ── Neon text ── */
-.text-neon-lime   { color: var(--neon-lime); }
-.text-neon-purple { color: var(--neon-purple); }
-.text-neon-pink   { color: var(--neon-pink); }
-
-/* ── Neon borders ── */
-.border-neon-lime   { border-color: var(--neon-lime-border); }
-.border-neon-purple { border-color: var(--neon-purple-border); }
-.border-neon-pink   { border-color: var(--neon-pink-border); }
-
-/* ── Neon backgrounds (dim) ── */
-.bg-neon-lime-dim   { background: var(--neon-lime-dim); }
-.bg-neon-purple-dim { background: var(--neon-purple-dim); }
-.bg-neon-pink-dim   { background: var(--neon-pink-dim); }
 
 /* ── Glow shadows ── */
 .glow-lime   { box-shadow: var(--shadow-neon-lime); }
@@ -122,6 +110,17 @@ body {
 
 .waveform-bar {
   animation: waveform 0.75s ease-in-out infinite;
+}
+
+@keyframes loading-dot {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
 }
 
 /* ── Scan-line shimmer on glass panels ── */
