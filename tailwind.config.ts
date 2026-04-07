@@ -11,9 +11,15 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
-        "neon-lime": "var(--neon-lime)",
-        "neon-purple": "var(--neon-purple)",
-        "neon-pink": "var(--neon-pink)",
+        "neon-lime": "rgb(var(--neon-lime-rgb) / <alpha-value>)",
+        "neon-lime-dim": "rgb(var(--neon-lime-rgb) / 0.14)",
+        "neon-lime-border": "rgb(var(--neon-lime-rgb) / 0.35)",
+        "neon-purple": "rgb(var(--neon-purple-rgb) / <alpha-value>)",
+        "neon-purple-dim": "rgb(var(--neon-purple-rgb) / 0.12)",
+        "neon-purple-border": "rgb(var(--neon-purple-rgb) / 0.35)",
+        "neon-pink": "rgb(var(--neon-pink-rgb) / <alpha-value>)",
+        "neon-pink-dim": "rgb(var(--neon-pink-rgb) / 0.12)",
+        "neon-pink-border": "rgb(var(--neon-pink-rgb) / 0.35)",
       },
       boxShadow: {
         "neon-lime": "var(--shadow-neon-lime)",
