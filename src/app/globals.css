@@ -123,6 +123,10 @@ body {
   }
 }
 
+.loading-dot {
+  animation: loading-dot 1s ease-in-out infinite;
+}
+
 /* ── Scan-line shimmer on glass panels ── */
 @keyframes shimmer {
   0%   { transform: translateX(-100%); }
@@ -144,5 +148,11 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .loading-dot {
+    animation: none !important;
+    opacity: 0.6;
+    transform: none;
   }
 }

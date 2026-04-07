@@ -99,8 +99,8 @@ export function StatusMessage({
       {[0, 1, 2].map((i) => (
         <span
           key={i}
-          className="inline-block h-1.5 w-1.5 rounded-full bg-current opacity-60"
-          style={{ animation: `loading-dot 1s ease-in-out ${i * 0.2}s infinite` }}
+          className="inline-block h-1.5 w-1.5 rounded-full bg-current opacity-60 loading-dot"
+          style={{ animationDelay: `${i * 0.2}s` }}
         />
       ))}
     </span>
