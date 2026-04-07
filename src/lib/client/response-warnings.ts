@@ -1,13 +1,14 @@
 export function warnMalformedResponse(scope: string, expected: string, data: unknown) {
-  if (process.env.NODE_ENV === 'production') {
-    console.error(`[${scope}] malformed response`);
-    return;
-  }
-
+  const isProduction = process.env.NODE_ENV === 'production';
   const shape =
     data && typeof data === 'object'
       ? Object.keys(data as Record<string, unknown>)
       : typeof data;
 
-  console.warn(`[${scope}] expected ${expected}`, { shape });
+  if (isProduction) {
+    console.error(`[${scope}] expected ${expected}`);
+    return;
+  }
+
+  console.error(`[${scope}] expected ${expected}`, { shape });
 }

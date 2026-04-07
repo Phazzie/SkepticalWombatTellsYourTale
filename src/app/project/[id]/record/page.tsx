@@ -27,7 +27,7 @@ const annotationColors: Record<string, string> = {
   important: 'bg-neon-pink-dim border-neon-pink/30 text-neon-pink',
   connection: 'bg-neon-lime-dim border-neon-lime/30 text-neon-lime',
   unfinished: 'bg-neon-purple-dim border-neon-purple/30 text-neon-purple',
-  tangent:   'bg-neon-lime-dim border-neon-lime/30 text-neon-lime',
+  tangent:   'bg-indigo-500/10 border-indigo-500/30 text-indigo-300',
   pattern:   'bg-neon-purple-dim border-neon-purple/30 text-neon-purple',
 };
 
