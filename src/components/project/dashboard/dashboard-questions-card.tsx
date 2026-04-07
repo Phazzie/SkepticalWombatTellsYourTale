@@ -11,7 +11,7 @@ export function DashboardQuestionsCard({ id, pendingQuestionsCount }: { id: stri
         href={`/project/${id}/questions`}
         className="text-indigo-400 hover:text-indigo-300 text-sm"
       >
-        View all questions and prompts →
+        View all questions →
       </Link>
       <p className="text-gray-500 text-xs mt-2">{pendingQuestionsCount} pending</p>
     </div>

@@ -31,7 +31,9 @@ export function DashboardSearchCard({
         />
         <button
           onClick={onSearch}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm"
+          disabled={searching}
+          aria-busy={searching}
+          className="rounded bg-indigo-600 px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60 hover:bg-indigo-700"
         >
           {searching ? 'Searching...' : 'Search'}
         </button>

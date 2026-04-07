@@ -25,7 +25,7 @@ export function DashboardActionCards({
       >
         <div className="text-3xl mb-2">📄</div>
         <div className="font-semibold">Documents</div>
-        <div className="text-gray-400 text-xs mt-1">{documentCount} docs</div>
+        <div className="text-gray-400 text-xs mt-1">{documentCount} {documentCount === 1 ? 'doc' : 'docs'}</div>
       </Link>
       <Link
         href={`/project/${id}/sessions`}
@@ -33,7 +33,7 @@ export function DashboardActionCards({
       >
         <div className="text-3xl mb-2">📼</div>
         <div className="font-semibold">Sessions</div>
-        <div className="text-gray-400 text-xs mt-1">{sessionCount} sessions</div>
+        <div className="text-gray-400 text-xs mt-1">{sessionCount} {sessionCount === 1 ? 'session' : 'sessions'}</div>
       </Link>
       <Link
         href={`/project/${id}/export`}

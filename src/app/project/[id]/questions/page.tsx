@@ -16,7 +16,6 @@ export default function QuestionsPage() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'answered' | 'dismissed'>('pending');
 
   useEffect(() => {
-    setLoading(true);
     requestJson<Question[]>(`/api/projects/${id}/questions?status=${activeFilter === 'all' ? '' : activeFilter}`)
       .then(({ ok, data }) => {
         if (ok && Array.isArray(data)) {

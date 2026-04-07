@@ -235,11 +235,15 @@ export default function RecordPage() {
       });
 
       if (analyzeRes.ok) {
-        const analysisData = await analyzeRes.json();
-        setAnalysis(analysisData);
+        const analysisData = await analyzeRes.json().catch(() => null);
+        if (analysisData) {
+          setAnalysis(analysisData);
+        } else {
+          setError('Analysis response was invalid. Transcript saved; retry later from Sessions.');
+        }
       } else {
         const failure = (await analyzeRes.json().catch(() => null)) as { error?: string } | null;
-        setError(failure?.error || 'Analysis failed, but transcript was saved.');
+        setError(failure?.error || 'Analysis failed. Transcript saved; retry later from Sessions.');
       }
 
       setState('done');
@@ -325,7 +329,7 @@ export default function RecordPage() {
         {questionId && (
           <div className="bg-indigo-900/30 border border-indigo-700 rounded-xl p-4 mb-6">
             <p className="text-indigo-300 text-sm">
-              Prompted response mode: this recording will be linked to question {questionId.slice(0, 8)}...
+              Question response mode: this recording will be linked to question {questionId.slice(0, 8)}...
             </p>
           </div>
         )}

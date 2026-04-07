@@ -130,11 +130,11 @@ export default function HomePage() {
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-white transition-colors group-hover:text-indigo-300">
+                    <h3 className="truncate text-lg font-semibold text-white transition-colors group-hover:text-indigo-300">
                       {project.name}
                     </h3>
                     {project.description && (
-                      <p className="mt-1 text-sm text-app-fg-muted">{project.description}</p>
+                      <p className="mt-1 line-clamp-1 text-sm text-app-fg-muted">{project.description}</p>
                     )}
                     <p className="mt-2 text-xs text-app-fg-muted">
                       Created {new Date(project.createdAt).toLocaleDateString()}

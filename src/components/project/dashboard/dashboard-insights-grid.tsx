@@ -101,7 +101,7 @@ export function DashboardInsightsGrid({
               <div key={pattern.id} className="bg-gray-800 rounded-lg p-3">
                 <p className="text-sm text-purple-400">{pattern.description}</p>
                 <p className="text-xs text-gray-500 mt-1">
-                  Seen in {pattern.sessionRefs.length} session(s)
+                  {pattern.sessionRefs.length} {pattern.sessionRefs.length === 1 ? 'session' : 'sessions'}
                 </p>
               </div>
             ))}
