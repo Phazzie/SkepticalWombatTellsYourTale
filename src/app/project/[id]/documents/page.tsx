@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Document } from '@/lib/types';
+import { requestJson } from '@/lib/client/request';
 
 export default function DocumentsPage() {
   const { id } = useParams<{ id: string }>();
@@ -18,12 +19,12 @@ export default function DocumentsPage() {
   const [voicePrompt, setVoicePrompt] = useState('');
   const [generatingDraft, setGeneratingDraft] = useState(false);
   const [driftFeedback, setDriftFeedback] = useState<{ hasDrift: boolean; details: string; rewriteSuggestion?: string } | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`/api/projects/${id}/documents`)
-      .then((r) => r.json())
-      .then((data) => {
-        setDocuments(data);
+    requestJson<Document[]>(`/api/projects/${id}/documents`)
+      .then(({ data }) => {
+        setDocuments(data || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -31,24 +32,33 @@ export default function DocumentsPage() {
 
   const createDocument = async () => {
     if (!newName.trim()) return;
-    const res = await fetch(`/api/projects/${id}/documents`, {
+    setActionError(null);
+    const res = await requestJson<Document>(`/api/projects/${id}/documents`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newName, type: newType }),
+      body: { name: newName, type: newType },
     });
-    const doc = await res.json();
-    setDocuments((prev) => [...prev, doc]);
+    const createdDocument = res.data;
+    if (!res.ok || !createdDocument) {
+      setActionError(`Failed to create document (${res.status})`);
+      return;
+    }
+    setDocuments((prev) => [...prev, createdDocument]);
     setNewName('');
     setShowNew(false);
   };
 
   const saveDocument = async (docId: string) => {
     setSaving(true);
-    await fetch(`/api/projects/${id}/documents/${docId}`, {
+    setActionError(null);
+    const response = await requestJson(`/api/projects/${id}/documents/${docId}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: editContent }),
+      body: { content: editContent },
     });
+    if (!response.ok) {
+      setSaving(false);
+      setActionError(`Failed to save document (${response.status})`);
+      return;
+    }
     setDocuments((prev) =>
       prev.map((d) => (d.id === docId ? { ...d, content: editContent } : d))
     );
@@ -60,12 +70,25 @@ export default function DocumentsPage() {
     if (!voicePrompt.trim()) return;
     setGeneratingDraft(true);
     setDriftFeedback(null);
-    const res = await fetch(`/api/projects/${id}/voice-draft`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ documentId: docId, prompt: voicePrompt }),
-    });
-    const { draft, drift } = await res.json();
+    setActionError(null);
+    const res = await requestJson<{ draft?: string; drift?: { hasDrift: boolean; details: string; rewriteSuggestion?: string } }>(
+      `/api/projects/${id}/voice-draft`,
+      {
+        method: 'POST',
+        body: { documentId: docId, prompt: voicePrompt },
+      }
+    );
+    if (!res.ok) {
+      setGeneratingDraft(false);
+      setActionError(`Failed to generate draft (${res.status})`);
+      return;
+    }
+    if (!res.data || !res.data.draft) {
+      setGeneratingDraft(false);
+      setActionError('Failed to generate draft content');
+      return;
+    }
+    const { draft, drift } = res.data;
     const doc = documents.find((d) => d.id === docId);
     if (doc) {
       const newContent = doc.content ? `${doc.content}\n\n---\n\n${draft}` : draft;
@@ -101,6 +124,15 @@ export default function DocumentsPage() {
             + New Document
           </button>
         </div>
+        {actionError && (
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="mb-6 rounded-xl border border-red-700 bg-red-900/20 p-4 text-sm text-red-300"
+          >
+            {actionError}
+          </div>
+        )}
 
         {showNew && (
           <div className="bg-gray-900 border border-gray-700 rounded-xl p-5 mb-6">
