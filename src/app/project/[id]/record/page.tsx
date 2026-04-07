@@ -26,7 +26,7 @@ type RecordingState = 'idle' | 'recording' | 'processing' | 'analyzing' | 'done'
 const annotationColors: Record<string, string> = {
   important: 'bg-neon-pink-dim border-neon-pink/30 text-neon-pink',
   connection: 'bg-neon-lime-dim border-neon-lime/30 text-neon-lime',
-  unfinished: 'bg-neon-purple-dim border-neon-purple/30 text-neon-purple',
+  unfinished: 'bg-amber-500/10 border-amber-500/30 text-amber-300',
   tangent:   'bg-indigo-500/10 border-indigo-500/30 text-indigo-300',
   pattern:   'bg-neon-purple-dim border-neon-purple/30 text-neon-purple',
 };
