@@ -100,7 +100,7 @@ export function StatusMessage({
         <span
           key={i}
           className="inline-block h-1.5 w-1.5 rounded-full bg-current opacity-60"
-          style={{ animation: `waveform 1s ease-in-out ${i * 0.2}s infinite` }}
+          style={{ animation: `loading-dot-bounce 1s ease-in-out ${i * 0.2}s infinite` }}
         />
       ))}
     </span>

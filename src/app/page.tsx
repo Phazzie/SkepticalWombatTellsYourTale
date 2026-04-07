@@ -137,7 +137,7 @@ export default function HomePage() {
               <Link
                 key={project.id}
                 href={`/project/${project.id}`}
-                className="group block rounded-2xl border border-app-border bg-app-surface p-5 shadow-app transition-all duration-200 hover:border-neon-lime/40 hover:-translate-y-0.5 hover:glow-lime"
+                className="group block rounded-2xl border border-app-border bg-app-surface p-5 shadow-app transition-all duration-200 hover:border-neon-lime/40 hover:-translate-y-0.5 hover:shadow-neon-lime"
               >
                 <div className="flex items-start justify-between">
                   <div className="min-w-0">

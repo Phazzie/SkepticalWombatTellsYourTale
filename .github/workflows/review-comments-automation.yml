@@ -20,7 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'pull_request_review_comment' ||
-      (github.event_name == 'pull_request_review' && github.event.review.body)
+      (github.event_name == 'pull_request_review' &&
+       github.event.review.body != null &&
+       github.event.review.body != '')
     steps:
       - name: Create fix issue from review feedback
         id: create_issue

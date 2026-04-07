@@ -50,7 +50,7 @@ export function DashboardActionCards({
       {/* Record — primary CTA, neon lime */}
       <Link
         href={`/project/${id}/record`}
-        className="group relative overflow-hidden rounded-2xl border border-neon-lime/30 bg-neon-lime-dim p-5 text-center transition-all duration-200 hover:border-neon-lime/60 hover:glow-lime"
+        className="group relative overflow-hidden rounded-2xl border border-neon-lime/30 bg-neon-lime-dim p-5 text-center transition-all duration-200 hover:border-neon-lime/60 hover:shadow-neon-lime"
       >
         <div className="flex justify-center mb-3 text-neon-lime transition-transform duration-200 group-hover:scale-110">
           <MicIcon />
@@ -86,7 +86,7 @@ export function DashboardActionCards({
       {/* Export */}
       <Link
         href={`/project/${id}/export`}
-        className="group relative overflow-hidden rounded-2xl border border-neon-purple/25 bg-neon-purple-dim p-5 text-center transition-all duration-200 hover:border-neon-purple/50 hover:glow-purple"
+        className="group relative overflow-hidden rounded-2xl border border-neon-purple/25 bg-neon-purple-dim p-5 text-center transition-all duration-200 hover:border-neon-purple/50 hover:shadow-neon-purple"
       >
         <div className="flex justify-center mb-3 text-neon-purple transition-transform duration-200 group-hover:scale-110">
           <ExportIcon />
