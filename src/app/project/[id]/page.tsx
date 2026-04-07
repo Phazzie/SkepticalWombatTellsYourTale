@@ -54,7 +54,7 @@ export default function ProjectPage() {
       <Container wide>
         <AppBackLink href="/" label="Projects" />
         <div className="mt-4" />
-        <AppHeader title={project.name} subtitle={project.description || undefined} />
+        <AppHeader title={project.name} subtitle={project.description || undefined} showMark />
 
         {actionError && (
           <div role="alert">
@@ -98,12 +98,15 @@ export default function ProjectPage() {
         />
 
         <div className="mt-6 flex flex-wrap gap-3 text-sm">
-          <Link href={`/project/${id}/gaps`} className="text-indigo-400 hover:text-indigo-300">Gaps →</Link>
-          <Link href={`/project/${id}/tangents`} className="text-indigo-400 hover:text-indigo-300">Tangents →</Link>
-          <Link href={`/project/${id}/patterns`} className="text-indigo-400 hover:text-indigo-300">Patterns →</Link>
-          <Link href={`/project/${id}/concepts`} className="text-indigo-400 hover:text-indigo-300">Concepts →</Link>
-          <Link href={`/project/${id}/contradictions`} className="text-indigo-400 hover:text-indigo-300">Contradictions →</Link>
-          <Link href={`/project/${id}/search`} className="text-indigo-400 hover:text-indigo-300">Search →</Link>
+          {['gaps', 'tangents', 'patterns', 'concepts', 'contradictions', 'search'].map((route) => (
+            <Link
+              key={route}
+              href={`/project/${id}/${route}`}
+              className="capitalize text-app-fg-muted hover:text-neon-lime transition-colors"
+            >
+              {route} →
+            </Link>
+          ))}
         </div>
       </Container>
     </Shell>

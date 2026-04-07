@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Question, QuestionGenerationPayload } from '@/lib/types';
 import { toneCopy } from '@/lib/copy/tone';
 import { requestJson } from '@/lib/client/request';
+import { warnMalformedResponse } from '@/lib/client/response-warnings';
 
 export default function QuestionsPage() {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +22,7 @@ export default function QuestionsPage() {
         if (ok && Array.isArray(data)) {
           setQuestions(data);
         } else {
+          if (ok) warnMalformedResponse('questions-page', 'questions list array response', data);
           setQuestions([]);
           setGenerationIssue('Failed to load questions.');
         }
