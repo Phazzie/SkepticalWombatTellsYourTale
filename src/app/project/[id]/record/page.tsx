@@ -24,10 +24,10 @@ interface BrowserSpeechRecognition {
 type RecordingState = 'idle' | 'recording' | 'processing' | 'analyzing' | 'done';
 
 const annotationColors: Record<string, string> = {
-  important: 'bg-amber-500/10 border-amber-500/30 text-amber-300',
-  connection: 'bg-blue-500/10 border-blue-500/30 text-blue-300',
-  unfinished: 'bg-orange-500/10 border-orange-500/30 text-orange-300',
-  tangent:   'bg-yellow-500/10 border-yellow-500/30 text-yellow-300',
+  important: 'bg-neon-pink-dim border-neon-pink/30 text-neon-pink',
+  connection: 'bg-neon-lime-dim border-neon-lime/30 text-neon-lime',
+  unfinished: 'bg-amber-500/10 border-amber-500/30 text-amber-300',
+  tangent:   'bg-indigo-500/10 border-indigo-500/30 text-indigo-300',
   pattern:   'bg-neon-purple-dim border-neon-purple/30 text-neon-purple',
 };
 
