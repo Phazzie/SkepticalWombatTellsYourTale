@@ -1,14 +1,15 @@
 import Link from 'next/link';
 import { DashboardInsightsProps } from '@/components/project/dashboard/types';
 
+const NEON_BADGE_STYLES = {
+  lime: 'bg-neon-lime-dim text-neon-lime border border-neon-lime/40',
+  pink: 'bg-neon-pink-dim text-neon-pink border border-neon-pink/40',
+  purple: 'bg-neon-purple-dim text-neon-purple border border-neon-purple/40',
+} as const;
+
 function NeonBadge({ count, color }: { count: number; color: 'lime' | 'pink' | 'purple' }) {
-  const styles = {
-    lime:   'bg-neon-lime-dim text-neon-lime border border-neon-lime/40',
-    pink:   'bg-neon-pink-dim text-neon-pink border border-neon-pink/40',
-    purple: 'bg-neon-purple-dim text-neon-purple border border-neon-purple/40',
-  };
   return (
-    <span className={`ml-auto text-xs font-bold px-2 py-0.5 rounded-full tabular-nums ${styles[color]}`}>
+    <span className={`ml-auto text-xs font-bold px-2 py-0.5 rounded-full tabular-nums ${NEON_BADGE_STYLES[color]}`}>
       {count}
     </span>
   );

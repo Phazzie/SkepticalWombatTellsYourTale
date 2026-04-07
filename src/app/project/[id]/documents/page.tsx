@@ -83,9 +83,14 @@ export default function DocumentsPage() {
       setActionError(`Failed to generate draft (${res.status})`);
       return;
     }
-    if (!res.data || !res.data.draft) {
+    if (!res.data) {
       setGeneratingDraft(false);
-      setActionError('Failed to generate draft content');
+      setActionError('Draft response was empty.');
+      return;
+    }
+    if (!res.data.draft) {
+      setGeneratingDraft(false);
+      setActionError('Unable to generate draft. Please try again.');
       return;
     }
     const { draft, drift } = res.data;

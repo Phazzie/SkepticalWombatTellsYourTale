@@ -87,6 +87,16 @@ body {
   border: 1px solid rgba(255,255,255,0.07);
 }
 
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-soft {
+    background: rgba(22, 25, 34, 0.82);
+  }
+
+  .glass {
+    background: rgba(28, 32, 48, 0.86);
+  }
+}
+
 /* ── Recording state ── */
 @keyframes neon-record-pulse {
   0%, 100% {
