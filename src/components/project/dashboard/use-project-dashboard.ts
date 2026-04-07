@@ -318,7 +318,13 @@ export function useProjectDashboard(projectId: string) {
       );
 
       if (ok) {
-        setSearchResults(data?.results || []);
+        if (data && Array.isArray(data.results)) {
+          setSearchResults(data.results);
+          return;
+        }
+
+        setSearchResults([]);
+        setActionError('Search response was invalid. Please try again.');
         return;
       }
 

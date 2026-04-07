@@ -20,8 +20,14 @@ export default function SessionsPage() {
     requestJson<Session[] | { error?: string }>(`/api/projects/${id}/sessions`)
       .then(({ ok, data, status }) => {
         if (!ok || !Array.isArray(data)) {
-          const failure = data as { error?: string } | null;
-          throw new Error(failure?.error || `Failed to load sessions (${status})`);
+          const failureMessage =
+            typeof data === 'object' &&
+            data !== null &&
+            'error' in data &&
+            typeof data.error === 'string'
+              ? data.error
+              : `Failed to load sessions (${status})`;
+          throw new Error(failureMessage);
         }
         setSessions(data);
         setLoading(false);

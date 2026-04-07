@@ -24,7 +24,8 @@ export function DashboardSearchCard({
           type="text"
           value={searchTerm}
           onChange={(e) => onSearchTermChange(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && onSearch()}
+          onKeyDown={(e) => e.key === 'Enter' && !searching && onSearch()}
+          disabled={searching}
           aria-label="Search project content"
           placeholder="Search sessions, docs, concepts, questions..."
           className="flex-1 bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-500"

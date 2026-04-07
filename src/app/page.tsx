@@ -43,9 +43,13 @@ export default function HomePage() {
         body: { name: newName, description: newDesc },
       });
 
-      if (!res.ok || !res.data || Array.isArray(res.data)) {
+      if (!res.ok || !res.data) {
         const failure = res.data as { error?: string } | null;
         throw new Error(failure?.error || 'Could not create project');
+      }
+
+      if (Array.isArray(res.data)) {
+        throw new Error('Unexpected create-project response shape (array)');
       }
 
       const project = res.data as Project;
