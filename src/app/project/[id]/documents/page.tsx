@@ -90,7 +90,7 @@ export default function DocumentsPage() {
     }
     if (!res.data.draft) {
       setGeneratingDraft(false);
-      setActionError('Draft response is missing generated content.');
+      setActionError('Unable to generate draft. Please try again.');
       return;
     }
     const { draft, drift } = res.data;

@@ -324,7 +324,7 @@ export function useProjectDashboard(projectId: string) {
         }
 
         setSearchResults([]);
-        setActionError('Search response was malformed.');
+        setActionError('Unable to load search results. Please try again.');
         return;
       }
 
