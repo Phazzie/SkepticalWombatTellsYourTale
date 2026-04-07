@@ -236,7 +236,7 @@ export default function RecordPage() {
 
       if (analyzeRes.ok) {
         const analysisData = await analyzeRes.json().catch((parseError) => {
-          console.error('[record] failed to parse analysis response', parseError);
+          console.error('[record] failed to parse analysis response', parseError instanceof Error ? parseError.message : 'unknown parse error');
           return null;
         });
         if (analysisData) {
