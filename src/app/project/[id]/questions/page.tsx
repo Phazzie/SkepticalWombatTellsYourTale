@@ -6,18 +6,7 @@ import Link from 'next/link';
 import { Question, QuestionGenerationPayload } from '@/lib/types';
 import { toneCopy } from '@/lib/copy/tone';
 import { requestJson } from '@/lib/client/request';
-
-function warnMalformedQuestionsResponse(data: unknown) {
-  if (process.env.NODE_ENV === 'production') {
-    console.error('[questions-page] malformed questions list response');
-    return;
-  }
-  const shape =
-    data && typeof data === 'object'
-      ? Object.keys(data as Record<string, unknown>)
-      : typeof data;
-  console.warn('[questions-page] expected questions list array response', { shape });
-}
+import { warnMalformedResponse } from '@/lib/client/response-warnings';
 
 export default function QuestionsPage() {
   const { id } = useParams<{ id: string }>();
@@ -33,7 +22,7 @@ export default function QuestionsPage() {
         if (ok && Array.isArray(data)) {
           setQuestions(data);
         } else {
-          if (ok) warnMalformedQuestionsResponse(data);
+          if (ok) warnMalformedResponse('questions-page', 'questions list array response', data);
           setQuestions([]);
         }
         setLoading(false);
