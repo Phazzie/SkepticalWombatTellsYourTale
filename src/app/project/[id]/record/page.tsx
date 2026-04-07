@@ -236,11 +236,7 @@ export default function RecordPage() {
 
       if (analyzeRes.ok) {
         const analysisData = await analyzeRes.json().catch((parseError) => {
-          if (process.env.NODE_ENV === 'production') {
-            console.error('[record] failed to parse analysis response');
-          } else {
-            console.error(parseError);
-          }
+          console.error('[record] failed to parse analysis response', parseError);
           return null;
         });
         if (analysisData) {

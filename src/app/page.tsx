@@ -9,6 +9,17 @@ import { Card, Container, PrimaryButton, SecondaryButton, Shell, StatusMessage, 
 import { toneCopy } from '@/lib/copy/tone';
 import { requestJson } from '@/lib/client/request';
 
+function isProjectPayload(value: unknown): value is Project {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'id' in value &&
+    typeof value.id === 'string' &&
+    'name' in value &&
+    typeof value.name === 'string'
+  );
+}
+
 export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,16 +59,12 @@ export default function HomePage() {
         throw new Error(failure?.error || 'Could not create project');
       }
 
-      if (Array.isArray(res.data)) {
-        if (process.env.NODE_ENV === 'production') {
-          console.error('[home] unexpected create-project response shape');
-        } else {
-          console.error(res.data);
-        }
-        throw new Error('Unexpected create-project response shape (array)');
+      if (!isProjectPayload(res.data)) {
+        console.error('[home] unexpected create-project response shape', res.data);
+        throw new Error('Unexpected create-project response shape');
       }
 
-      const project = res.data as Project;
+      const project = res.data;
       setProjects((prev) => [project, ...prev]);
       setNewName('');
       setNewDesc('');
