@@ -17,10 +17,12 @@ export default function QuestionsPage() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'answered' | 'dismissed'>('pending');
 
   useEffect(() => {
+    setGenerationIssue(null);
     requestJson<Question[]>(`/api/projects/${id}/questions?status=${activeFilter === 'all' ? '' : activeFilter}`)
       .then(({ ok, data }) => {
         if (ok && Array.isArray(data)) {
           setQuestions(data);
+          setGenerationIssue(null);
         } else {
           if (ok) warnMalformedResponse('questions-page', 'questions list array response', data);
           setQuestions([]);

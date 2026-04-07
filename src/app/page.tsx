@@ -61,7 +61,7 @@ export default function HomePage() {
 
       if (!isProjectPayload(res.data)) {
         console.error('[home] unexpected create-project response shape', typeof res.data);
-        throw new Error('Unexpected create-project response shape');
+        throw new Error('Could not create project');
       }
 
       const project = res.data;

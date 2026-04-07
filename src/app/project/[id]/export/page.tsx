@@ -139,7 +139,7 @@ export default function ExportPage() {
           {[
             { value: includeTranscripts, setter: setIncludeTranscripts, label: 'Raw transcripts alongside polished versions' },
             { value: includeAnnotations, setter: setIncludeAnnotations, label: 'AI annotations and session notes' },
-            { value: includeGaps,        setter: setIncludeGaps,        label: 'Detected gaps and open questions' },
+            { value: includeGaps, setter: setIncludeGaps, label: 'Detected gaps and open questions' },
           ].map(({ value, setter, label }, i) => (
             <label key={i} className="flex cursor-pointer items-center gap-3 group">
               <span

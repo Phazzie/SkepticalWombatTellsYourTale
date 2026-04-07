@@ -34,7 +34,12 @@ export default function SearchPage() {
         setResults([]);
         return;
       }
-      setResults(data?.results || []);
+      if (!data || !Array.isArray(data.results)) {
+        setError('Unable to load search results. Please try again.');
+        setResults([]);
+        return;
+      }
+      setResults(data.results);
     } catch {
       setError('Search failed. Please try again.');
       setResults([]);
