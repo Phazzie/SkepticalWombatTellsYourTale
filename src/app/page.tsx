@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import { Project } from '@/lib/types';
 import { AppHeader } from '@/components/layout/app-header';
-import { Card, Container, PrimaryButton, SecondaryButton, Shell, StatusMessage, TextArea, TextInput } from '@/components/ui/primitives';
+import { Card, Container, GlassCard, PrimaryButton, SecondaryButton, Shell, StatusMessage, TextArea, TextInput, WombatMark } from '@/components/ui/primitives';
 import { toneCopy } from '@/lib/copy/tone';
 
 export default function HomePage() {
@@ -64,26 +64,34 @@ export default function HomePage() {
   return (
     <Shell>
       <Container>
-        <AppHeader
-          title="SkepticalWombat"
-          subtitle={toneCopy.homeSubtitle}
-          actions={
-            <div className="flex items-center gap-2">
-              <SecondaryButton onClick={() => signOut({ callbackUrl: '/sign-in' })}>
-                Sign out
-              </SecondaryButton>
+        {/* Brand header */}
+        <div className="mb-10 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="rounded-2xl bg-app-surface-muted p-2.5 border border-neon-lime/20 glow-lime">
+              <WombatMark size={44} />
             </div>
-          }
-        />
-
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-white">Your Projects</h2>
-          <PrimaryButton onClick={() => setShowNew(true)}>+ New Project</PrimaryButton>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-white">SkepticalWombat</h1>
+              <p className="text-sm text-app-fg-muted">{toneCopy.homeSubtitle}</p>
+            </div>
+          </div>
+          <SecondaryButton onClick={() => signOut({ callbackUrl: '/sign-in' })}>
+            Sign out
+          </SecondaryButton>
         </div>
 
+        {/* Section header */}
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-white">Your Projects</h2>
+          <PrimaryButton onClick={() => setShowNew(true)}>
+            + New Project
+          </PrimaryButton>
+        </div>
+
+        {/* New project form */}
         {showNew && (
-          <Card className="mb-6">
-            <h3 className="text-lg font-semibold mb-4">New Project</h3>
+          <GlassCard className="mb-6 border-neon-lime/20">
+            <h3 className="text-base font-semibold mb-4 text-white">New Project</h3>
             <TextInput
               type="text"
               placeholder="Project name..."
@@ -94,7 +102,7 @@ export default function HomePage() {
               autoFocus
             />
             <TextArea
-              placeholder="What is this project? (optional)"
+              placeholder="What is this project about? (optional)"
               value={newDesc}
               onChange={(e) => setNewDesc(e.target.value)}
               rows={3}
@@ -108,7 +116,7 @@ export default function HomePage() {
                 Cancel
               </SecondaryButton>
             </div>
-          </Card>
+          </GlassCard>
         )}
 
         {error && <StatusMessage state="error" title="Something went wrong" description={error} />}
@@ -116,32 +124,34 @@ export default function HomePage() {
         {loading ? (
           <StatusMessage state="loading" title={toneCopy.homeLoadingProjects} />
         ) : projects.length === 0 ? (
-          <Card className="text-center py-16">
-            <div className="text-6xl mb-4">🎙️</div>
+          <GlassCard className="text-center py-16">
+            <div className="mx-auto mb-5 w-fit">
+              <WombatMark size={56} />
+            </div>
             <p className="text-xl mb-2 text-white">{toneCopy.homeEmptyProjectsTitle}</p>
-            <p className="text-app-fg-muted">{toneCopy.homeEmptyProjectsDescription}</p>
-          </Card>
+            <p className="text-app-fg-muted text-sm">{toneCopy.homeEmptyProjectsDescription}</p>
+          </GlassCard>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-3">
             {projects.map((project) => (
               <Link
                 key={project.id}
                 href={`/project/${project.id}`}
-                className="group block rounded-2xl border border-app-border bg-app-surface p-6 shadow-app transition duration-200 hover:border-app-border-strong hover:-translate-y-0.5"
+                className="group block rounded-2xl border border-app-border bg-app-surface p-5 shadow-app transition-all duration-200 hover:border-neon-lime/40 hover:-translate-y-0.5 hover:glow-lime"
               >
                 <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-white transition-colors group-hover:text-indigo-300">
+                  <div className="min-w-0">
+                    <h3 className="text-base font-semibold text-white transition-colors group-hover:text-neon-lime truncate">
                       {project.name}
                     </h3>
                     {project.description && (
-                      <p className="mt-1 text-sm text-app-fg-muted">{project.description}</p>
+                      <p className="mt-1 text-sm text-app-fg-muted line-clamp-1">{project.description}</p>
                     )}
                     <p className="mt-2 text-xs text-app-fg-muted">
                       Created {new Date(project.createdAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <span className="text-app-fg-muted transition-colors group-hover:text-indigo-300">→</span>
+                  <span className="text-app-fg-muted transition-colors group-hover:text-neon-lime ml-4 shrink-0 mt-0.5">→</span>
                 </div>
               </Link>
             ))}

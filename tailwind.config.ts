@@ -11,6 +11,15 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        "neon-lime": "var(--neon-lime)",
+        "neon-purple": "var(--neon-purple)",
+        "neon-pink": "var(--neon-pink)",
+      },
+      boxShadow: {
+        "neon-lime": "var(--shadow-neon-lime)",
+        "neon-purple": "var(--shadow-neon-purple)",
+        "neon-pink": "var(--shadow-neon-pink)",
+        "neon-indigo": "var(--shadow-neon-indigo)",
       },
     },
   },
