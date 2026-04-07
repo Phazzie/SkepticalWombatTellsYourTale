@@ -29,6 +29,8 @@ This follow-up plan uses **WCAG 2.2 AA** as the required baseline:
 - **Normal text contrast**: at least **4.5:1**
 - **Large text contrast**: at least **3:1**
 
+(These contrast ratios are unchanged from WCAG 2.1 AA.)
+
 (AAA can be pursued opportunistically but is not a release gate for this follow-up.)
 
 ---

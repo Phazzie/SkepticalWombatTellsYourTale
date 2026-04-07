@@ -31,9 +31,9 @@
   --neon-pink-border: rgb(var(--neon-pink-rgb) / 0.35);
 
   --shadow: 0 16px 48px rgba(2, 4, 14, 0.6);
-  --shadow-neon-lime: 0 0 16px rgba(163, 230, 53, 0.45), 0 0 40px rgba(163, 230, 53, 0.18);
-  --shadow-neon-purple: 0 0 16px rgba(217, 70, 239, 0.45), 0 0 40px rgba(217, 70, 239, 0.18);
-  --shadow-neon-pink: 0 0 16px rgba(236, 72, 153, 0.55), 0 0 40px rgba(236, 72, 153, 0.22);
+  --shadow-neon-lime: 0 0 16px rgb(var(--neon-lime-rgb) / 0.45), 0 0 40px rgb(var(--neon-lime-rgb) / 0.18);
+  --shadow-neon-purple: 0 0 16px rgb(var(--neon-purple-rgb) / 0.45), 0 0 40px rgb(var(--neon-purple-rgb) / 0.18);
+  --shadow-neon-pink: 0 0 16px rgb(var(--neon-pink-rgb) / 0.55), 0 0 40px rgb(var(--neon-pink-rgb) / 0.22);
   --shadow-neon-indigo: 0 0 16px rgba(99, 102, 241, 0.45), 0 0 40px rgba(99, 102, 241, 0.18);
 }
 
