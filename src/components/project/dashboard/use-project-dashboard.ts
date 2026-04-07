@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Project } from '@/lib/types';
 import { requestJson } from '@/lib/client/request';
-import { warnMalformedResponse } from '@/lib/client/response-warnings';
 import { ProjectSearchResult } from '@/components/project/dashboard/types';
 import { isOpenGap, isPendingTangent } from '@/components/project/dashboard/selectors';
 
@@ -327,7 +326,6 @@ export function useProjectDashboard(projectId: string) {
           return;
         }
 
-        warnMalformedResponse('project-dashboard.search', 'search results payload', data);
         setSearchResults([]);
         setActionError('Unable to load search results. Please try again.');
         return;

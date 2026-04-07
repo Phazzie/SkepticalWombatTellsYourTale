@@ -17,52 +17,69 @@ export default function QuestionsPage() {
   const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'answered' | 'dismissed'>('pending');
 
   useEffect(() => {
+    setGenerationIssue(null);
     requestJson<Question[]>(`/api/projects/${id}/questions?status=${activeFilter === 'all' ? '' : activeFilter}`)
       .then(({ ok, data }) => {
         if (ok && Array.isArray(data)) {
           setQuestions(data);
+          setGenerationIssue(null);
         } else {
           if (ok) warnMalformedResponse('questions-page', 'questions list array response', data);
           setQuestions([]);
+          setGenerationIssue('Failed to load questions.');
         }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setGenerationIssue('Failed to load questions.');
+        setLoading(false);
+      });
   }, [id, activeFilter]);
 
   const generateQuestions = async () => {
     setGenerating(true);
     setGenerationIssue(null);
-    const { ok, data } = await requestJson<QuestionGenerationPayload>(`/api/projects/${id}/questions`, {
-      method: 'POST',
-      body: { action: 'generate' },
-    });
+    try {
+      const { ok, data } = await requestJson<QuestionGenerationPayload>(`/api/projects/${id}/questions`, {
+        method: 'POST',
+        body: { action: 'generate' },
+      });
 
-    if (!ok || !data || !Array.isArray(data.questions)) {
+      if (!ok || !data || !Array.isArray(data.questions)) {
+        setGenerationIssue('Failed to generate questions. Please try again.');
+        return;
+      }
+
+      setQuestions((prev) => [...data.questions, ...prev]);
+      if (data.contractValidation && !data.contractValidation.isValid) {
+        const issueCount = data.contractValidation.issues.length;
+        const issueSummary =
+          issueCount > 1
+            ? `${data.contractValidation.issues[0]} (+${issueCount - 1} more)`
+            : data.contractValidation.issues[0];
+        setGenerationIssue(issueSummary || 'AI response contract was invalid for question generation.');
+      }
+    } catch {
       setGenerationIssue('Failed to generate questions. Please try again.');
+    } finally {
       setGenerating(false);
-      return;
     }
-
-    setQuestions((prev) => [...data.questions, ...prev]);
-    if (data.contractValidation && !data.contractValidation.isValid) {
-      const issueCount = data.contractValidation.issues.length;
-      const issueSummary =
-        issueCount > 1
-          ? `${data.contractValidation.issues[0]} (+${issueCount - 1} more)`
-          : data.contractValidation.issues[0];
-      setGenerationIssue(issueSummary || 'AI response contract was invalid for question generation.');
-    }
-    setGenerating(false);
   };
 
   const setQuestionStatus = async (questionId: string, status: 'pending' | 'answered' | 'dismissed') => {
-    const { ok, data } = await requestJson<Question>(`/api/projects/${id}/questions`, {
-      method: 'POST',
-      body: { action: 'update', questionId, status },
-    });
-    if (!ok || !data) return;
-    setQuestions((prev) => prev.map((q) => (q.id === data.id ? data : q)));
+    try {
+      const { ok, data } = await requestJson<Question>(`/api/projects/${id}/questions`, {
+        method: 'POST',
+        body: { action: 'update', questionId, status },
+      });
+      if (!ok || !data) {
+        setGenerationIssue('Failed to update question status.');
+        return;
+      }
+      setQuestions((prev) => prev.map((q) => (q.id === data.id ? data : q)));
+    } catch {
+      setGenerationIssue('Failed to update question status.');
+    }
   };
 
   if (loading) {

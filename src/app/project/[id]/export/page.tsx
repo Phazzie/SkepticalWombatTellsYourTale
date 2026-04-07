@@ -51,33 +51,36 @@ export default function ExportPage() {
   const handleExport = async () => {
     setExporting(true);
     setError(null);
+    try {
+      const res = await fetch(`/api/projects/${id}/export`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          level: exportLevel,
+          includeTranscripts,
+          includeAnnotations,
+          includeGaps,
+        }),
+      });
 
-    const res = await fetch(`/api/projects/${id}/export`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        level: exportLevel,
-        includeTranscripts,
-        includeAnnotations,
-        includeGaps,
-      }),
-    });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        setError(data?.error || 'Export failed');
+        return;
+      }
 
-    if (!res.ok) {
-      const data = (await res.json()) as { error?: string };
-      setError(data.error || 'Export failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `export-${exportLevel}-${new Date().toISOString().split('T')[0]}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError('Export failed. Please try again.');
+    } finally {
       setExporting(false);
-      return;
     }
-
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `export-${exportLevel}-${new Date().toISOString().split('T')[0]}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setExporting(false);
   };
 
   return (
@@ -136,7 +139,7 @@ export default function ExportPage() {
           {[
             { value: includeTranscripts, setter: setIncludeTranscripts, label: 'Raw transcripts alongside polished versions' },
             { value: includeAnnotations, setter: setIncludeAnnotations, label: 'AI annotations and session notes' },
-            { value: includeGaps,        setter: setIncludeGaps,        label: 'Detected gaps and open questions' },
+            { value: includeGaps, setter: setIncludeGaps, label: 'Detected gaps and open questions' },
           ].map(({ value, setter, label }, i) => (
             <label key={i} className="flex cursor-pointer items-center gap-3 group">
               <span

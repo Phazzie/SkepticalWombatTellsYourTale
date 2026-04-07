@@ -1,20 +1,6 @@
 import Link from 'next/link';
 import { DashboardInsightsProps } from '@/components/project/dashboard/types';
 
-const NEON_BADGE_STYLES = {
-  lime: 'bg-neon-lime-dim text-neon-lime border border-neon-lime/40',
-  pink: 'bg-neon-pink-dim text-neon-pink border border-neon-pink/40',
-  purple: 'bg-neon-purple-dim text-neon-purple border border-neon-purple/40',
-} as const;
-
-function NeonBadge({ count, color }: { count: number; color: 'lime' | 'pink' | 'purple' }) {
-  return (
-    <span className={`ml-auto text-xs font-bold px-2 py-0.5 rounded-full tabular-nums ${NEON_BADGE_STYLES[color]}`}>
-      {count}
-    </span>
-  );
-}
-
 export function DashboardInsightsGrid({
   id,
   pendingTangents,
@@ -24,89 +10,103 @@ export function DashboardInsightsGrid({
   onResolveGap,
 }: DashboardInsightsProps) {
   return (
-    <div className="grid md:grid-cols-3 gap-4 mb-6">
-      {/* Dropped Threads */}
-      <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-app">
+    <div className="grid md:grid-cols-3 gap-6">
+      <div className="bg-gray-900 border border-gray-700 rounded-xl p-5">
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-base font-semibold text-white">Dropped Threads</span>
-          {pendingTangents.length > 0 && <NeonBadge count={pendingTangents.length} color="lime" />}
+          <span className="text-xl">🧵</span>
+          <h2 className="font-semibold text-white">Dropped Threads</h2>
+          {pendingTangents.length > 0 && (
+            <span className="bg-amber-500 text-black text-xs font-bold px-2 py-0.5 rounded-full ml-auto">
+              {pendingTangents.length}
+            </span>
+          )}
         </div>
         {pendingTangents.length === 0 ? (
-          <p className="text-app-fg-muted text-sm">No dropped threads yet.</p>
+          <p className="text-gray-500 text-sm">No dropped threads yet.</p>
         ) : (
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {pendingTangents.slice(0, 5).map((tangent) => (
-              <div key={tangent.id} className="rounded-xl bg-app-surface-muted p-3 border border-app-border">
-                <p className="text-sm text-neon-lime font-medium">{tangent.thread}</p>
+              <div key={tangent.id} className="bg-gray-800 rounded-lg p-3">
+                <p className="text-sm text-amber-400 font-medium">{tangent.thread}</p>
                 {tangent.context && (
-                  <p className="text-xs text-app-fg-muted mt-1 italic">&quot;{tangent.context}&quot;</p>
+                  <p className="text-xs text-gray-500 mt-1 italic">&quot;{tangent.context}&quot;</p>
                 )}
-                <button
-                  onClick={() => onResolveTangent(tangent.id)}
-                  className="text-xs text-neon-lime/70 hover:text-neon-lime mt-2 transition-colors"
-                >
-                  ✓ Resolved
-                </button>
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => onResolveTangent(tangent.id)}
+                    className="text-xs text-green-400 hover:text-green-300"
+                  >
+                    ✓ Resolved
+                  </button>
+                </div>
               </div>
             ))}
-            <Link href={`/project/${id}/tangents`} className="text-xs text-app-fg-muted hover:text-neon-lime transition-colors">
-              View all →
+            <Link href={`/project/${id}/tangents`} className="text-xs text-indigo-400 hover:text-indigo-300">
+              View all tangents →
             </Link>
           </div>
         )}
       </div>
 
-      {/* Gaps */}
-      <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-app">
+      <div className="bg-gray-900 border border-gray-700 rounded-xl p-5">
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-base font-semibold text-white">Gaps</span>
-          {openGaps.length > 0 && <NeonBadge count={openGaps.length} color="pink" />}
+          <span className="text-xl">🔍</span>
+          <h2 className="font-semibold text-white">Gaps</h2>
+          {openGaps.length > 0 && (
+            <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full ml-auto">
+              {openGaps.length}
+            </span>
+          )}
         </div>
         {openGaps.length === 0 ? (
-          <p className="text-app-fg-muted text-sm">No gaps detected yet.</p>
+          <p className="text-gray-500 text-sm">No gaps detected yet. Add more sessions.</p>
         ) : (
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {openGaps.slice(0, 5).map((gap) => (
-              <div key={gap.id} className="rounded-xl bg-app-surface-muted p-3 border border-app-border">
-                <p className="text-sm text-neon-pink">{gap.description}</p>
+              <div key={gap.id} className="bg-gray-800 rounded-lg p-3">
+                <p className="text-sm text-red-400">{gap.description}</p>
                 {gap.documentRef && (
-                  <p className="text-xs text-app-fg-muted mt-1">In: {gap.documentRef}</p>
+                  <p className="text-xs text-gray-500 mt-1">In: {gap.documentRef}</p>
                 )}
                 <button
                   onClick={() => onResolveGap(gap.id)}
-                  className="text-xs text-neon-lime/70 hover:text-neon-lime mt-2 transition-colors"
+                  className="text-xs text-green-400 hover:text-green-300 mt-2"
                 >
                   ✓ Resolved
                 </button>
               </div>
             ))}
-            <Link href={`/project/${id}/gaps`} className="text-xs text-app-fg-muted hover:text-neon-lime transition-colors">
-              View all →
+            <Link href={`/project/${id}/gaps`} className="text-xs text-indigo-400 hover:text-indigo-300">
+              View all gaps →
             </Link>
           </div>
         )}
       </div>
 
-      {/* Patterns */}
-      <div className="rounded-2xl border border-app-border bg-app-surface p-5 shadow-app">
+      <div className="bg-gray-900 border border-gray-700 rounded-xl p-5">
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-base font-semibold text-white">Patterns</span>
-          {newPatterns.length > 0 && <NeonBadge count={newPatterns.length} color="purple" />}
+          <span className="text-xl">🔁</span>
+          <h2 className="font-semibold text-white">Patterns</h2>
+          {newPatterns.length > 0 && (
+            <span className="bg-purple-500 text-white text-xs font-bold px-2 py-0.5 rounded-full ml-auto">
+              {newPatterns.length}
+            </span>
+          )}
         </div>
         {newPatterns.length === 0 ? (
-          <p className="text-app-fg-muted text-sm">No patterns detected yet.</p>
+          <p className="text-gray-500 text-sm">No patterns detected yet.</p>
         ) : (
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {newPatterns.slice(0, 5).map((pattern) => (
-              <div key={pattern.id} className="rounded-xl bg-app-surface-muted p-3 border border-app-border">
-                <p className="text-sm text-neon-purple">{pattern.description}</p>
-                <p className="text-xs text-app-fg-muted mt-1">
-                  {pattern.sessionRefs.length} session{pattern.sessionRefs.length !== 1 ? 's' : ''}
+              <div key={pattern.id} className="bg-gray-800 rounded-lg p-3">
+                <p className="text-sm text-purple-400">{pattern.description}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {pattern.sessionRefs.length} {pattern.sessionRefs.length === 1 ? 'session' : 'sessions'}
                 </p>
               </div>
             ))}
-            <Link href={`/project/${id}/patterns`} className="text-xs text-app-fg-muted hover:text-neon-lime transition-colors">
-              View all →
+            <Link href={`/project/${id}/patterns`} className="text-xs text-indigo-400 hover:text-indigo-300">
+              View all patterns →
             </Link>
           </div>
         )}

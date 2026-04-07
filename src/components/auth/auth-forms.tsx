@@ -16,21 +16,25 @@ export function SignInForm() {
     event.preventDefault();
     setError(null);
     setLoading(true);
+    try {
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
 
-    const result = await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
-    });
+      if (result?.ok) {
+        router.push('/');
+        router.refresh();
+        return;
+      }
 
-    if (result?.ok) {
-      router.push('/');
-      router.refresh();
-      return;
+      setError('Invalid email or password');
+    } catch {
+      setError('Sign-in failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-    setError('Invalid email or password');
-    setLoading(false);
   };
 
   return (
@@ -80,34 +84,37 @@ export function RegisterForm() {
     event.preventDefault();
     setError(null);
     setLoading(true);
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
+      });
 
-    const response = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password }),
-    });
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as { error?: string } | null;
+        setError(data?.error || 'Registration failed');
+        return;
+      }
 
-    if (!response.ok) {
-      const data = (await response.json()) as { error?: string };
-      setError(data.error || 'Registration failed');
+      const signInResult = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (!signInResult?.ok) {
+        setError('Account created, but sign-in failed. Try signing in manually.');
+        return;
+      }
+
+      router.push('/');
+      router.refresh();
+    } catch {
+      setError('Registration failed. Please try again.');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const signInResult = await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
-    });
-
-    if (!signInResult?.ok) {
-      setError('Account created, but sign-in failed. Try signing in manually.');
-      setLoading(false);
-      return;
-    }
-
-    router.push('/');
-    router.refresh();
   };
 
   return (

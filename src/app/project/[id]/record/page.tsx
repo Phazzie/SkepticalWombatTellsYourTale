@@ -5,7 +5,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { AnalysisResult } from '@/lib/types';
 import { AppHeader } from '@/components/layout/app-header';
-import { AppBackLink, Card, GlassCard, Container, PrimaryButton, SecondaryButton, Shell, StatusMessage } from '@/components/ui/primitives';
+import { AppBackLink, Card, Container, PrimaryButton, SecondaryButton, Shell, StatusMessage } from '@/components/ui/primitives';
 import { toneCopy } from '@/lib/copy/tone';
 
 interface SpeechRecognitionResults {
@@ -24,19 +24,19 @@ interface BrowserSpeechRecognition {
 type RecordingState = 'idle' | 'recording' | 'processing' | 'analyzing' | 'done';
 
 const annotationColors: Record<string, string> = {
-  important: 'bg-neon-pink-dim border-neon-pink/30 text-neon-pink',
-  connection: 'bg-neon-lime-dim border-neon-lime/30 text-neon-lime',
-  unfinished: 'bg-amber-500/10 border-amber-500/30 text-amber-300',
-  tangent:   'bg-indigo-500/10 border-indigo-500/30 text-indigo-300',
-  pattern:   'bg-neon-purple-dim border-neon-purple/30 text-neon-purple',
+  important: 'bg-amber-500/20 border-amber-500/50 text-amber-300',
+  connection: 'bg-blue-500/20 border-blue-500/50 text-blue-300',
+  unfinished: 'bg-orange-500/20 border-orange-500/50 text-orange-300',
+  tangent: 'bg-yellow-500/20 border-yellow-500/50 text-yellow-300',
+  pattern: 'bg-purple-500/20 border-purple-500/50 text-purple-300',
 };
 
 const annotationIcons: Record<string, string> = {
   important: '⚡',
   connection: '🔗',
   unfinished: '🧵',
-  tangent:   '↪️',
-  pattern:   '🔁',
+  tangent: '↪️',
+  pattern: '🔁',
 };
 
 const formatDuration = (seconds: number) => {
@@ -54,74 +54,40 @@ function RecordingControlCard({
   duration: number;
   onToggle: () => void;
 }) {
-  const isRecording = state === 'recording';
-
   return (
-    <GlassCard className={`mb-6 text-center py-10 border ${isRecording ? 'border-neon-pink/30' : 'border-neon-lime/20'}`}>
-      {/* Outer glow ring */}
-      <div className="relative mx-auto mb-8 flex items-center justify-center" style={{ width: 144, height: 144 }}>
-        {isRecording && (
-          <>
-            <span className="absolute inset-0 rounded-full border-2 border-neon-pink/20 animate-ping" style={{ animationDuration: '1.6s' }} />
-            <span className="absolute inset-[-12px] rounded-full border border-neon-pink/10" />
-          </>
-        )}
-        {!isRecording && (
-          <span className="absolute inset-[-12px] rounded-full border border-neon-lime/10 idle-glow-pulse" />
-        )}
-        <button
-          onClick={onToggle}
-          aria-label={isRecording ? 'Stop recording' : 'Start recording'}
-          className={`relative z-10 flex h-28 w-28 items-center justify-center rounded-full transition-all duration-300 ${
-            isRecording
-              ? 'bg-neon-pink/15 border-2 border-neon-pink recording-pulse'
-              : 'bg-neon-lime-dim border-2 border-neon-lime/50 hover:border-neon-lime idle-glow-pulse'
-          }`}
-        >
-          {isRecording ? (
-            /* Stop icon */
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden>
-              <rect x="8" y="8" width="16" height="16" rx="3" fill="#ec4899" />
-            </svg>
-          ) : (
-            /* Mic icon */
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden>
-              <rect x="12" y="3" width="12" height="19" rx="6" stroke="#a3e635" strokeWidth="2" />
-              <path d="M7 18c0 6.075 4.925 11 11 11s11-4.925 11-11" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" />
-              <line x1="18" y1="29" x2="18" y2="34" stroke="#a3e635" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          )}
-        </button>
-      </div>
+    <Card className="mb-6 text-center">
+      <button
+        className={`mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full transition-all ${
+          state === 'recording'
+            ? 'recording-pulse bg-red-600 shadow-lg shadow-red-900'
+            : 'bg-app-accent hover:brightness-110'
+        }`}
+        onClick={onToggle}
+      >
+        <span className="text-4xl">{state === 'recording' ? '⏹' : '🎙️'}</span>
+      </button>
 
-      {isRecording ? (
+      {state === 'recording' ? (
         <div>
-          {/* Neon waveform */}
-          <div className="mb-4 flex items-end justify-center gap-1" style={{ height: 36 }}>
-            {[...Array(9)].map((_, i) => (
+          <div className="mb-3 flex items-center justify-center gap-1">
+            {[...Array(5)].map((_, i) => (
               <div
                 key={i}
-                className="waveform-bar w-1.5 rounded-full bg-neon-pink"
-                style={{
-                  animationDelay: `${i * 0.09}s`,
-                  minHeight: 5,
-                  opacity: 0.75 + (i % 3) * 0.08,
-                }}
+                className="waveform-bar w-1 rounded-full bg-red-500"
+                style={{ animationDelay: `${i * 0.15}s` }}
               />
             ))}
           </div>
-          <p className="text-2xl font-bold tabular-nums text-neon-pink tracking-wider">
-            {formatDuration(duration)}
-          </p>
-          <p className="mt-2 text-sm text-app-fg-muted">Recording — tap to stop</p>
+          <p className="text-lg font-medium text-red-400">{formatDuration(duration)}</p>
+          <p className="mt-1 text-sm text-app-fg-muted">Recording... tap to stop</p>
         </div>
       ) : (
         <div>
-          <p className="text-xl font-semibold text-white">Tap to start talking</p>
+          <p className="text-xl font-medium text-white">Tap to start talking</p>
           <p className="mt-2 text-sm text-app-fg-muted">Don&apos;t worry about structure. Say everything.</p>
         </div>
       )}
-    </GlassCard>
+    </Card>
   );
 }
 
@@ -129,30 +95,28 @@ function AnalysisPanels({ analysis }: { analysis: AnalysisResult }) {
   return (
     <>
       {analysis.documentSuggestion && (
-        <GlassCard className="border-neon-purple/20 bg-neon-purple-dim">
-          <h2 className="mb-2 font-semibold text-neon-purple">
-            Goes in: {analysis.documentSuggestion.documentName}
-          </h2>
+        <Card className="border-indigo-700 bg-indigo-900/30">
+          <h2 className="mb-2 font-semibold text-indigo-300">📄 Goes in: {analysis.documentSuggestion.documentName}</h2>
           <p className="text-sm text-app-fg-muted">{analysis.documentSuggestion.reason}</p>
-        </GlassCard>
+        </Card>
       )}
 
       {analysis.significance && (
-        <GlassCard className="border-amber-500/25 bg-amber-500/5">
-          <h2 className="mb-2 font-semibold text-amber-400">{toneCopy.recordAnalysisSignificanceTitle}</h2>
+        <Card className="border-amber-700 bg-amber-900/30">
+          <h2 className="mb-2 font-semibold text-amber-300">{toneCopy.recordAnalysisSignificanceTitle}</h2>
           <p className="text-sm text-app-fg">{analysis.significance}</p>
           {analysis.significanceDetails?.justification && (
             <p className="mt-2 text-xs text-app-fg-muted">{analysis.significanceDetails.justification}</p>
           )}
-        </GlassCard>
+        </Card>
       )}
 
       {analysis.tangents && analysis.tangents.length > 0 && (
-        <Card className="border-amber-500/20">
-          <h2 className="mb-3 font-semibold text-amber-400">You dropped these threads</h2>
-          <div className="space-y-2.5">
+        <Card className="border-amber-700/50">
+          <h2 className="mb-3 font-semibold text-amber-400">🧵 You dropped these threads</h2>
+          <div className="space-y-3">
             {analysis.tangents.map((t, i) => (
-              <div key={i} className="rounded-xl bg-app-surface-muted p-3 border border-app-border">
+              <div key={i} className="rounded-lg bg-app-surface-muted p-3">
                 <p className="text-sm font-medium text-amber-300">{t.thread}</p>
                 {t.context && <p className="mt-1 text-xs italic text-app-fg-muted">&quot;{t.context}&quot;</p>}
                 {t.evidence && <p className="mt-1 text-xs text-app-fg-muted">Evidence: {t.evidence}</p>}
@@ -163,28 +127,28 @@ function AnalysisPanels({ analysis }: { analysis: AnalysisResult }) {
       )}
 
       {analysis.contradictions && analysis.contradictions.length > 0 && (
-        <GlassCard className="border-neon-pink/25 bg-neon-pink-dim">
-          <h2 className="mb-3 font-semibold text-neon-pink">This conflicts with something</h2>
-          <div className="space-y-2">
+        <Card className="border-red-700/50 bg-red-900/20">
+          <h2 className="mb-3 font-semibold text-red-400">⚠️ This conflicts with something</h2>
+          <div className="space-y-3">
             {analysis.contradictions.map((c, i) => (
-              <div key={i} className="rounded-xl bg-app-surface-muted p-3 border border-neon-pink/15">
-                <p className="text-sm text-neon-pink/90">{c.description}</p>
+              <div key={i} className="rounded-lg bg-app-surface-muted p-3">
+                <p className="text-sm text-red-300">{c.description}</p>
               </div>
             ))}
           </div>
-        </GlassCard>
+        </Card>
       )}
 
       {analysis.questions && analysis.questions.length > 0 && (
         <Card>
           <h2 className="mb-3 font-semibold text-white">{toneCopy.recordAnalysisQuestionsTitle}</h2>
-          <ul className="space-y-2.5">
+          <ul className="space-y-2">
             {(analysis.questionDetails || analysis.questions.map((q) => ({ text: q, contextAnchor: '' }))).map((q, i) => (
-              <li key={i} className="flex items-start gap-2.5 text-sm">
-                <span className="mt-0.5 text-app-fg-muted tabular-nums shrink-0">{i + 1}.</span>
+              <li key={i} className="flex items-start gap-2 text-sm text-indigo-300">
+                <span className="mt-0.5 text-app-fg-muted">{i + 1}.</span>
                 <div>
-                  <p className="text-neon-lime/90">{q.text}</p>
-                  {q.contextAnchor && <p className="text-xs text-app-fg-muted mt-0.5">{q.contextAnchor}</p>}
+                  <p>{q.text}</p>
+                  {q.contextAnchor && <p className="text-xs text-app-fg-muted">{q.contextAnchor}</p>}
                 </div>
               </li>
             ))}
@@ -193,29 +157,29 @@ function AnalysisPanels({ analysis }: { analysis: AnalysisResult }) {
       )}
 
       {analysis.voicePreservedDraft && (
-        <GlassCard className="border-neon-lime/20 bg-neon-lime-dim">
-          <h2 className="mb-3 font-semibold text-neon-lime">In your voice</h2>
+        <Card className="border-green-700/50">
+          <h2 className="mb-3 font-semibold text-green-400">✍️ In your voice</h2>
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-app-fg">{analysis.voicePreservedDraft}</p>
           {analysis.voicePreservedDraftDetails?.justification && (
             <p className="mt-2 text-xs text-app-fg-muted">{analysis.voicePreservedDraftDetails.justification}</p>
           )}
-        </GlassCard>
+        </Card>
       )}
 
       {analysis.annotations && analysis.annotations.length > 0 && (
-        <Card className="border-neon-purple/20">
-          <h2 className="mb-3 font-semibold text-neon-purple">AI Coach Notes</h2>
+        <Card className="border-purple-700/50">
+          <h2 className="mb-3 font-semibold text-purple-400">🤖 AI Coach Notes</h2>
           <div className="space-y-2">
             {analysis.annotations.map((ann, i) => (
               <div
                 key={`${ann.type}:${ann.reference ?? ''}:${ann.text}:${i}`}
-                className={`rounded-xl border px-3 py-2.5 text-sm ${
+                className={`rounded-lg border px-3 py-2 text-sm ${
                   annotationColors[ann.type] || 'border-app-border bg-app-surface-muted text-app-fg'
                 }`}
               >
                 <span className="mr-2">{annotationIcons[ann.type] || '💡'}</span>
                 {ann.text}
-                {ann.reference && <span className="ml-2 text-xs opacity-60">({ann.reference})</span>}
+                {ann.reference && <span className="ml-2 text-xs opacity-70">({ann.reference})</span>}
               </div>
             ))}
           </div>
@@ -271,8 +235,18 @@ export default function RecordPage() {
       });
 
       if (analyzeRes.ok) {
-        const analysisData = await analyzeRes.json();
-        setAnalysis(analysisData);
+        const analysisData = await analyzeRes.json().catch((parseError) => {
+          console.error('[record] failed to parse analysis response', parseError instanceof Error ? parseError.message : 'unknown parse error');
+          return null;
+        });
+        if (analysisData) {
+          setAnalysis(analysisData);
+        } else {
+          setError('Analysis response was invalid. Transcript saved; retry later from Sessions.');
+        }
+      } else {
+        const failure = (await analyzeRes.json().catch(() => null)) as { error?: string } | null;
+        setError(failure?.error || 'Analysis failed. Transcript saved; retry later from Sessions.');
       }
 
       setState('done');
@@ -356,11 +330,11 @@ export default function RecordPage() {
         {error && <StatusMessage state="error" title="Recording error" description={error} />}
 
         {questionId && (
-          <GlassCard className="border-neon-purple/25 mb-6">
-            <p className="text-neon-purple text-sm">
-              Prompted response — linked to question {questionId.slice(0, 8)}…
+          <div className="bg-indigo-900/30 border border-indigo-700 rounded-xl p-4 mb-6">
+            <p className="text-indigo-300 text-sm">
+              Question response mode: this recording will be linked to question {questionId.slice(0, 8)}...
             </p>
-          </GlassCard>
+          </div>
         )}
 
         {(state === 'idle' || state === 'recording') && (
@@ -372,10 +346,10 @@ export default function RecordPage() {
         )}
 
         {state === 'recording' && liveTranscript && (
-          <GlassCard className="mb-6 border-neon-pink/15">
-            <p className="mb-2 text-xs uppercase tracking-widest text-neon-pink/60">Live Transcript</p>
+          <Card className="mb-6">
+            <p className="mb-2 text-xs uppercase tracking-wide text-app-fg-muted">Live Transcript</p>
             <p className="text-sm leading-relaxed text-app-fg">{liveTranscript}</p>
-          </GlassCard>
+          </Card>
         )}
 
         {(state === 'processing' || state === 'analyzing') && (
@@ -395,20 +369,22 @@ export default function RecordPage() {
         )}
 
         {state === 'done' && (
-          <div className="space-y-5">
-            <GlassCard className="border-app-border">
-              <h2 className="mb-3 font-semibold text-white flex items-center gap-2">
-                Raw Transcript
+          <div className="space-y-6">
+            <Card>
+              <h2 className="mb-3 flex items-center gap-2 font-semibold text-white">
+                <span>📝</span> Raw Transcript
               </h2>
               <p className="whitespace-pre-wrap text-sm leading-relaxed text-app-fg">{transcript}</p>
-            </GlassCard>
+            </Card>
 
-            {analysis && <AnalysisPanels analysis={analysis} />}
+            {analysis && (
+              <AnalysisPanels analysis={analysis} />
+            )}
 
             {analysis?.contractValidation && !analysis.contractValidation.isValid && (
-              <Card className="border-amber-500/30 bg-amber-500/5">
-                <h2 className="mb-2 text-sm font-semibold text-amber-400">AI output contract issues</h2>
-                <ul className="list-disc space-y-1 pl-4 text-xs text-amber-300/80">
+              <Card className="border-amber-700 bg-amber-900/20">
+                <h2 className="mb-2 text-sm font-semibold text-amber-300">AI output contract issues</h2>
+                <ul className="list-disc space-y-1 pl-4 text-xs text-amber-200">
                   {analysis.contractValidation.issues.map((issue, index) => (
                     <li key={`${issue}:${index}`}>{issue}</li>
                   ))}
@@ -416,7 +392,7 @@ export default function RecordPage() {
               </Card>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               <PrimaryButton
                 onClick={() => {
                   setState('idle');

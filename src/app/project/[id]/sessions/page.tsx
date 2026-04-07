@@ -7,6 +7,7 @@ import { AnnotationList } from '@/components/annotations/annotation-list';
 import { AppHeader } from '@/components/layout/app-header';
 import { AppBackLink, Card, Container, Shell, StatusMessage } from '@/components/ui/primitives';
 import { toneCopy } from '@/lib/copy/tone';
+import { requestJson } from '@/lib/client/request';
 
 export default function SessionsPage() {
   const { id } = useParams<{ id: string }>();
@@ -16,15 +17,18 @@ export default function SessionsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`/api/projects/${id}/sessions`)
-      .then(async (r) => {
-        if (!r.ok) {
-          const data = (await r.json()) as { error?: string };
-          throw new Error(data.error || 'Failed to load sessions');
+    requestJson<Session[] | { error?: string }>(`/api/projects/${id}/sessions`)
+      .then(({ ok, data, status }) => {
+        if (!ok || !Array.isArray(data)) {
+          const failureMessage =
+            typeof data === 'object' &&
+            data !== null &&
+            'error' in data &&
+            typeof data.error === 'string'
+              ? data.error
+              : `Failed to load sessions (${status})`;
+          throw new Error(failureMessage);
         }
-        return r.json();
-      })
-      .then((data) => {
         setSessions(data);
         setLoading(false);
       })
