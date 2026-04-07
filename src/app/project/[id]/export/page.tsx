@@ -140,7 +140,7 @@ export default function ExportPage() {
           ].map(({ value, setter, label }, i) => (
             <label key={i} className="flex cursor-pointer items-center gap-3 group">
               <span
-                className={`relative flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all ${
+                className={`relative flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all group-focus-within:ring-2 group-focus-within:ring-neon-lime group-focus-within:ring-offset-2 group-focus-within:ring-offset-background ${
                   value
                     ? 'border-neon-lime/60 bg-neon-lime-dim'
                     : 'border-app-border bg-app-surface-muted group-hover:border-app-border-strong'

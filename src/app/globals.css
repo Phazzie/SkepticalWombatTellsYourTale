@@ -134,6 +134,19 @@ body {
   animation: waveform 0.75s ease-in-out infinite;
 }
 
+@keyframes loading-dot-bounce {
+  0%,
+  80%,
+  100% {
+    opacity: 0.45;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
 /* ── Scan-line shimmer on glass panels ── */
 @keyframes shimmer {
   0%   { transform: translateX(-100%); }
