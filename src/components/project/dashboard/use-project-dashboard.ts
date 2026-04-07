@@ -324,7 +324,7 @@ export function useProjectDashboard(projectId: string) {
         }
 
         setSearchResults([]);
-        setActionError('Search response was invalid. Please try again.');
+        setActionError('Search results could not be loaded due to an invalid response.');
         return;
       }
 

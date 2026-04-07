@@ -49,6 +49,11 @@ export default function HomePage() {
       }
 
       if (Array.isArray(res.data)) {
+        if (process.env.NODE_ENV === 'production') {
+          console.error('[home] unexpected create-project response shape');
+        } else {
+          console.error(res.data);
+        }
         throw new Error('Unexpected create-project response shape (array)');
       }
 
