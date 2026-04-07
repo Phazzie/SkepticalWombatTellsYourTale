@@ -237,6 +237,9 @@ export default function RecordPage() {
       if (analyzeRes.ok) {
         const analysisData = await analyzeRes.json();
         setAnalysis(analysisData);
+      } else {
+        const failure = (await analyzeRes.json().catch(() => null)) as { error?: string } | null;
+        setError(failure?.error || 'Analysis failed, but transcript was saved.');
       }
 
       setState('done');

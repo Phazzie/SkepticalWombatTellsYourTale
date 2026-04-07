@@ -7,6 +7,7 @@ import { Project } from '@/lib/types';
 import { AppHeader } from '@/components/layout/app-header';
 import { Card, Container, PrimaryButton, SecondaryButton, Shell, StatusMessage, TextArea, TextInput } from '@/components/ui/primitives';
 import { toneCopy } from '@/lib/copy/tone';
+import { requestJson } from '@/lib/client/request';
 
 export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -18,12 +19,11 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/projects')
-      .then(async (r) => {
-        if (!r.ok) throw new Error('Failed to load projects');
-        return r.json();
-      })
-      .then((data) => {
+    requestJson<Project[]>('/api/projects')
+      .then(({ ok, data, status }) => {
+        if (!ok || !Array.isArray(data)) {
+          throw new Error(`Failed to load projects (${status})`);
+        }
         setProjects(data);
         setLoading(false);
       })
@@ -38,18 +38,17 @@ export default function HomePage() {
     setCreating(true);
     setError(null);
     try {
-      const res = await fetch('/api/projects', {
+      const res = await requestJson<Project | { error?: string }>('/api/projects', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newName, description: newDesc }),
+        body: { name: newName, description: newDesc },
       });
 
-      if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        throw new Error(data.error || 'Could not create project');
+      if (!res.ok || !res.data || Array.isArray(res.data)) {
+        const failure = res.data as { error?: string } | null;
+        throw new Error(failure?.error || 'Could not create project');
       }
 
-      const project = await res.json();
+      const project = res.data as Project;
       setProjects((prev) => [project, ...prev]);
       setNewName('');
       setNewDesc('');

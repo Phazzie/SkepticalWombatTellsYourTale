@@ -25,17 +25,22 @@ export default function SearchPage() {
     }
     setSearching(true);
     setError(null);
-    const { ok, status, data } = await requestJson<SearchResponse>(
-      `/api/projects/${id}/search?q=${encodeURIComponent(query.trim())}`
-    );
-    if (!ok) {
-      setError(`Search failed (${status})`);
+    try {
+      const { ok, status, data } = await requestJson<SearchResponse>(
+        `/api/projects/${id}/search?q=${encodeURIComponent(query.trim())}`
+      );
+      if (!ok) {
+        setError(`Search failed (${status})`);
+        setResults([]);
+        return;
+      }
+      setResults(data?.results || []);
+    } catch {
+      setError('Search failed. Please try again.');
       setResults([]);
+    } finally {
       setSearching(false);
-      return;
     }
-    setResults(data?.results || []);
-    setSearching(false);
   };
 
   return (

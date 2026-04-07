@@ -33,37 +33,45 @@ export default function DocumentsPage() {
   const createDocument = async () => {
     if (!newName.trim()) return;
     setActionError(null);
-    const res = await requestJson<Document>(`/api/projects/${id}/documents`, {
-      method: 'POST',
-      body: { name: newName, type: newType },
-    });
-    const createdDocument = res.data;
-    if (!res.ok || !createdDocument) {
-      setActionError(`Failed to create document (${res.status})`);
-      return;
+    try {
+      const res = await requestJson<Document>(`/api/projects/${id}/documents`, {
+        method: 'POST',
+        body: { name: newName, type: newType },
+      });
+      const createdDocument = res.data;
+      if (!res.ok || !createdDocument) {
+        setActionError(`Failed to create document (${res.status})`);
+        return;
+      }
+      setDocuments((prev) => [...prev, createdDocument]);
+      setNewName('');
+      setShowNew(false);
+    } catch {
+      setActionError('Failed to create document');
     }
-    setDocuments((prev) => [...prev, createdDocument]);
-    setNewName('');
-    setShowNew(false);
   };
 
   const saveDocument = async (docId: string) => {
     setSaving(true);
     setActionError(null);
-    const response = await requestJson(`/api/projects/${id}/documents/${docId}`, {
-      method: 'PATCH',
-      body: { content: editContent },
-    });
-    if (!response.ok) {
+    try {
+      const response = await requestJson(`/api/projects/${id}/documents/${docId}`, {
+        method: 'PATCH',
+        body: { content: editContent },
+      });
+      if (!response.ok) {
+        setActionError(`Failed to save document (${response.status})`);
+        return;
+      }
+      setDocuments((prev) =>
+        prev.map((d) => (d.id === docId ? { ...d, content: editContent } : d))
+      );
+      setEditingId(null);
+    } catch {
+      setActionError('Failed to save document');
+    } finally {
       setSaving(false);
-      setActionError(`Failed to save document (${response.status})`);
-      return;
     }
-    setDocuments((prev) =>
-      prev.map((d) => (d.id === docId ? { ...d, content: editContent } : d))
-    );
-    setSaving(false);
-    setEditingId(null);
   };
 
   const generateDraft = async (docId: string) => {
@@ -71,32 +79,35 @@ export default function DocumentsPage() {
     setGeneratingDraft(true);
     setDriftFeedback(null);
     setActionError(null);
-    const res = await requestJson<{ draft?: string; drift?: { hasDrift: boolean; details: string; rewriteSuggestion?: string } }>(
-      `/api/projects/${id}/voice-draft`,
-      {
-        method: 'POST',
-        body: { documentId: docId, prompt: voicePrompt },
+    try {
+      const res = await requestJson<{ draft?: string; drift?: { hasDrift: boolean; details: string; rewriteSuggestion?: string } }>(
+        `/api/projects/${id}/voice-draft`,
+        {
+          method: 'POST',
+          body: { documentId: docId, prompt: voicePrompt },
+        }
+      );
+      if (!res.ok) {
+        setActionError(`Failed to generate draft (${res.status})`);
+        return;
       }
-    );
-    if (!res.ok) {
+      if (!res.data || !res.data.draft) {
+        setActionError('Failed to generate draft content');
+        return;
+      }
+      const { draft, drift } = res.data;
+      const doc = documents.find((d) => d.id === docId);
+      if (doc) {
+        const newContent = doc.content ? `${doc.content}\n\n---\n\n${draft}` : draft;
+        setEditContent(newContent);
+      }
+      if (drift) setDriftFeedback(drift);
+      setVoicePrompt('');
+    } catch {
+      setActionError('Failed to generate draft');
+    } finally {
       setGeneratingDraft(false);
-      setActionError(`Failed to generate draft (${res.status})`);
-      return;
     }
-    if (!res.data || !res.data.draft) {
-      setGeneratingDraft(false);
-      setActionError('Failed to generate draft content');
-      return;
-    }
-    const { draft, drift } = res.data;
-    const doc = documents.find((d) => d.id === docId);
-    if (doc) {
-      const newContent = doc.content ? `${doc.content}\n\n---\n\n${draft}` : draft;
-      setEditContent(newContent);
-    }
-    if (drift) setDriftFeedback(drift);
-    setVoicePrompt('');
-    setGeneratingDraft(false);
   };
 
   const documentTypes = ['general', 'stories', 'concepts', 'structure', 'characters', 'unfinished', 'chapters'];
