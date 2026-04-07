@@ -5,6 +5,7 @@ import { validateSchema } from '@/lib/server/schema';
 import { analyzeRequestSchema } from '@/lib/server/schemas/api/analyze';
 import { analyzeProjectSession } from '@/lib/server/services/analysis.service';
 import { enforceRateLimit } from '@/lib/server/rate-limit';
+import { parseJsonBody } from '@/lib/server/validation';
 
 export async function POST(
   request: Request,
@@ -17,7 +18,7 @@ export async function POST(
 
     enforceRateLimit(`analyze:${userId}:${id}`, 3, 60_000);
 
-    const body = validateSchema(await request.json(), analyzeRequestSchema);
+    const body = validateSchema(await parseJsonBody(request), analyzeRequestSchema);
     return analyzeProjectSession({ projectId: id, sessionId: body.sessionId, transcript: body.transcript });
   }, { request, operation: 'projects.analyze' });
 }

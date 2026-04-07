@@ -5,6 +5,7 @@ import { notFound } from '@/lib/server/errors';
 import { prisma } from '@/lib/db';
 import { conceptsPatchSchema } from '@/lib/server/schemas/api/concepts';
 import { validateSchema } from '@/lib/server/schema';
+import { parseJsonBody } from '@/lib/server/validation';
 
 export async function GET(
   request: Request,
@@ -31,7 +32,7 @@ export async function PATCH(
     const { id } = await params;
     await requireProjectAccess(id, userId);
 
-    const body = validateSchema(await request.json(), conceptsPatchSchema);
+    const body = validateSchema(await parseJsonBody(request), conceptsPatchSchema);
 
     const existing = await prisma.concept.findFirst({ where: { id: body.conceptId, projectId: id } });
     if (!existing) {

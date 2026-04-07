@@ -72,3 +72,17 @@ export function asOptionalString(value: unknown, field: string, opts?: { max?: n
 
   return trimmed;
 }
+
+/**
+ * Parses a JSON request body and converts invalid JSON into AppError(400).
+ */
+export async function parseJsonBody<T>(
+  request: Request,
+  message = 'Invalid or missing JSON request body'
+): Promise<T> {
+  try {
+    return (await request.json()) as T;
+  } catch {
+    throw badRequest(message);
+  }
+}

@@ -3,6 +3,7 @@ import { requireUser } from '@/lib/server/auth';
 import { requireProjectAccess } from '@/lib/server/services/project-access';
 import { parseAiAnnotations } from '@/lib/server/mappers/ai-annotations';
 import { sessionsRepository } from '@/lib/server/repositories/sessions';
+import { parseJsonBody } from '@/lib/server/validation';
 
 export async function GET(
   request: Request,
@@ -32,7 +33,7 @@ export async function POST(
 
     await requireProjectAccess(id, userId);
 
-    const data = (await request.json()) as { transcript?: unknown; aiAnnotations?: unknown };
+    const data = await parseJsonBody<{ transcript?: unknown; aiAnnotations?: unknown }>(request);
     const transcript = typeof data.transcript === 'string' ? data.transcript : '';
     const aiAnnotations = Array.isArray(data.aiAnnotations) ? data.aiAnnotations : [];
 

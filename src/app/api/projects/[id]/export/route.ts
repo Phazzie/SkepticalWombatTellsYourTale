@@ -2,8 +2,9 @@ import { prisma } from '@/lib/db';
 import { handleRoute } from '@/lib/server/http';
 import { requireUser } from '@/lib/server/auth';
 import { requireProjectAccess } from '@/lib/server/services/project-access';
-import { notFound } from '@/lib/server/errors';
+import { badRequest, notFound } from '@/lib/server/errors';
 import { parseAiAnnotations } from '@/lib/server/mappers/ai-annotations';
+import { parseJsonBody } from '@/lib/server/validation';
 
 export async function POST(
   request: Request,
@@ -14,7 +15,20 @@ export async function POST(
     const { id } = await params;
     await requireProjectAccess(id, userId);
 
-    const { level, includeTranscripts, includeAnnotations, includeGaps } = await request.json();
+    const { level, includeTranscripts, includeAnnotations, includeGaps } = await parseJsonBody<{
+      level?: unknown;
+      includeTranscripts?: unknown;
+      includeAnnotations?: unknown;
+      includeGaps?: unknown;
+    }>(request);
+    const normalizedLevel = typeof level === 'string' ? level : 'full';
+    const allowedLevels = new Set(['raw', 'structured', 'polished', 'full']);
+    if (!allowedLevels.has(normalizedLevel)) {
+      throw badRequest('level must be one of: raw, structured, polished, full');
+    }
+    const shouldIncludeTranscripts = includeTranscripts === true;
+    const shouldIncludeAnnotations = includeAnnotations === true;
+    const shouldIncludeGaps = includeGaps === true;
 
     const project = await prisma.project.findUnique({
       where: { id },
@@ -33,7 +47,7 @@ export async function POST(
 
     let content = `# ${project.name}\n`;
     if (project.description) content += `\n${project.description}\n`;
-    content += `\nExported: ${new Date().toLocaleString()}\nExport level: ${level}\n\n---\n\n`;
+    content += `\nExported: ${new Date().toLocaleString()}\nExport level: ${normalizedLevel}\n\n---\n\n`;
 
     if (project.documents.length > 0) {
       content += '# Documents\n\n';
@@ -44,13 +58,13 @@ export async function POST(
       }
     }
 
-    if ((level === 'raw' || level === 'full' || includeTranscripts) && project.sessions.length > 0) {
+    if ((normalizedLevel === 'raw' || normalizedLevel === 'full' || shouldIncludeTranscripts) && project.sessions.length > 0) {
       content += '# Raw Voice Transcripts\n\n';
       for (const session of project.sessions) {
         content += `## Session — ${new Date(session.createdAt).toLocaleString()}\n\n`;
         content += `${session.transcript}\n\n`;
 
-        if (includeAnnotations) {
+        if (shouldIncludeAnnotations) {
           const annotations = parseAiAnnotations(session.aiAnnotations);
           if (annotations.length > 0) {
             content += '### AI Notes\n\n';
@@ -64,7 +78,7 @@ export async function POST(
       }
     }
 
-    if (includeGaps || level === 'full') {
+    if (shouldIncludeGaps || normalizedLevel === 'full') {
       const openGaps = project.gaps.filter((g) => !g.resolved);
       if (openGaps.length > 0) {
         content += '# Open Gaps\n\n';
@@ -87,7 +101,7 @@ export async function POST(
     return new Response(content, {
       headers: {
         'Content-Type': 'text/markdown',
-        'Content-Disposition': `attachment; filename="export-${level}-${Date.now()}.md"`,
+        'Content-Disposition': `attachment; filename="export-${normalizedLevel}-${Date.now()}.md"`,
       },
     });
   }, { request, operation: 'projects.export' });
