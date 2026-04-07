@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import { Project } from '@/lib/types';
-import { AppHeader } from '@/components/layout/app-header';
-import { Card, Container, GlassCard, PrimaryButton, SecondaryButton, Shell, StatusMessage, TextArea, TextInput, WombatMark } from '@/components/ui/primitives';
+import { Container, GlassCard, PrimaryButton, SecondaryButton, Shell, StatusMessage, TextArea, TextInput, WombatMark } from '@/components/ui/primitives';
 import { toneCopy } from '@/lib/copy/tone';
 
 export default function HomePage() {
