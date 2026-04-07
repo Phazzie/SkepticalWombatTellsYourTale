@@ -172,3 +172,6 @@ export interface Contradiction {
   createdAt: string;
   updatedAt: string;
 }
+
+export const EXPORT_LEVELS = ['raw', 'structured', 'polished', 'full'] as const;
+export type ExportLevel = (typeof EXPORT_LEVELS)[number];

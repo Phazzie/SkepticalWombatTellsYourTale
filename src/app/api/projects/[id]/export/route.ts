@@ -5,6 +5,7 @@ import { requireProjectAccess } from '@/lib/server/services/project-access';
 import { badRequest, notFound } from '@/lib/server/errors';
 import { parseAiAnnotations } from '@/lib/server/mappers/ai-annotations';
 import { parseJsonBody } from '@/lib/server/validation';
+import { EXPORT_LEVELS, type ExportLevel } from '@/lib/types';
 
 export async function POST(
   request: Request,
@@ -22,8 +23,7 @@ export async function POST(
       includeGaps?: unknown;
     }>(request);
     const normalizedLevel = typeof level === 'string' ? level : 'full';
-    const allowedLevels = new Set(['raw', 'structured', 'polished', 'full']);
-    if (!allowedLevels.has(normalizedLevel)) {
+    if (!EXPORT_LEVELS.includes(normalizedLevel as ExportLevel)) {
       throw badRequest('level must be one of: raw, structured, polished, full');
     }
     const shouldIncludeTranscripts = includeTranscripts === true;
