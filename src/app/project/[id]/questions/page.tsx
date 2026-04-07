@@ -7,6 +7,14 @@ import { Question, QuestionGenerationPayload } from '@/lib/types';
 import { toneCopy } from '@/lib/copy/tone';
 import { requestJson } from '@/lib/client/request';
 
+function warnMalformedQuestionsResponse() {
+  if (process.env.NODE_ENV === 'production') {
+    console.error('[questions-page] malformed questions list response');
+    return;
+  }
+  console.warn('[questions-page] expected questions list array response');
+}
+
 export default function QuestionsPage() {
   const { id } = useParams<{ id: string }>();
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -21,6 +29,7 @@ export default function QuestionsPage() {
         if (ok && Array.isArray(data)) {
           setQuestions(data);
         } else {
+          if (ok) warnMalformedQuestionsResponse();
           setQuestions([]);
         }
         setLoading(false);
