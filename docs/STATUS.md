@@ -157,7 +157,7 @@
 - [x] `npm run lint` passes locally
 - [x] `npm run build` passes locally
 - [x] `npm run test:unit` passes locally
-- [ ] Prisma local checks re-run in this exact pass (`validate`, `format --check`, schema diff)
+- [x] Prisma local checks re-run in this exact pass (`validate`, `format --check`, schema diff)
 - [ ] CI run-history pass-rate audit complete (phase 6)
 - [ ] Security/risk gate sign-off complete (phase 7+)
 - [ ] Staging deploy + smoke + rollback drill complete (phase 8+)
