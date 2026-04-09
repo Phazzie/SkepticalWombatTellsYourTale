@@ -8,6 +8,7 @@ import {
   contradictionsQuerySchema,
 } from '@/lib/server/schemas/api/contradictions';
 import { validateSchema } from '@/lib/server/schema';
+import { parseJsonBody } from '@/lib/server/validation';
 
 export async function GET(
   request: Request,
@@ -44,7 +45,7 @@ export async function PATCH(
     const { id } = await params;
     await requireProjectAccess(id, userId);
 
-    const body = validateSchema(await request.json(), contradictionsPatchSchema);
+    const body = validateSchema(await parseJsonBody(request), contradictionsPatchSchema);
 
     const existing = await prisma.contradiction.findFirst({
       where: { id: body.contradictionId, projectId: id },

@@ -1,7 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { AppError } from '@/lib/server/errors';
-import { asOptionalString, assertBoolean, assertRawString, assertString } from '@/lib/server/validation';
+import {
+  asOptionalString,
+  assertBoolean,
+  assertRawString,
+  assertString,
+  parseJsonBody,
+} from '@/lib/server/validation';
 
 test('assertString trims and validates min/max', () => {
   assert.equal(assertString('  hello  ', 'field', { min: 3, max: 10 }), 'hello');
@@ -33,6 +39,26 @@ test('asOptionalString returns null for nullish and trims strings', () => {
 test('validation errors are AppError(400)', () => {
   assert.throws(
     () => assertString(null, 'field'),
+    (error: unknown) => error instanceof AppError && error.status === 400
+  );
+});
+
+test('parseJsonBody returns parsed JSON and maps invalid JSON to AppError(400)', async () => {
+  const validRequest = new Request('http://localhost/api/test', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ ok: true }),
+  });
+  const parsed = await parseJsonBody<{ ok: boolean }>(validRequest);
+  assert.equal(parsed.ok, true);
+
+  const invalidRequest = new Request('http://localhost/api/test', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: '{bad',
+  });
+  await assert.rejects(
+    () => parseJsonBody(invalidRequest),
     (error: unknown) => error instanceof AppError && error.status === 400
   );
 });

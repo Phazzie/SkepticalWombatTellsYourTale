@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { AppHeader } from '@/components/layout/app-header';
 import { AppBackLink, Container, GlassCard, PrimaryButton, Shell, StatusMessage } from '@/components/ui/primitives';
-
-type ExportLevel = 'raw' | 'structured' | 'polished' | 'full';
+import type { ExportLevel } from '@/lib/types';
 
 const exportLevels: Array<{
   value: ExportLevel;

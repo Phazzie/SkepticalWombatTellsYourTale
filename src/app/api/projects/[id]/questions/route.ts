@@ -2,10 +2,10 @@ import { handleRoute } from '@/lib/server/http';
 import { requireUser } from '@/lib/server/auth';
 import { requireProjectAccess } from '@/lib/server/services/project-access';
 import { badRequest } from '@/lib/server/errors';
-import { validateSchema } from '@/lib/server/schema';
-import { questionsPostSchema, questionStatusSchema } from '@/lib/server/schemas/api/questions';
+import { questionStatusSchema } from '@/lib/server/schemas/api/questions';
 import { generateQuestions, listQuestions, updateQuestionStatus } from '@/lib/server/services/questions.service';
 import { enforceRateLimit } from '@/lib/server/rate-limit';
+import { parseQuestionsPostBody } from '@/lib/server/routes/questions';
 
 export async function GET(
   request: Request,
@@ -32,9 +32,7 @@ export async function POST(
     const { userId } = await requireUser();
     const { id } = await params;
     await requireProjectAccess(id, userId);
-
-    const body = validateSchema(await request.json().catch(() => ({})), questionsPostSchema);
-    const action = body.action || 'generate';
+    const { body, action } = await parseQuestionsPostBody(request);
 
     if (action === 'update') {
       if (!body.questionId || !body.status) {

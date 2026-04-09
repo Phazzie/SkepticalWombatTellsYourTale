@@ -1,7 +1,7 @@
 import { handleRoute } from '@/lib/server/http';
 import { requireUser } from '@/lib/server/auth';
 import { requireProjectAccess } from '@/lib/server/services/project-access';
-import { assertBoolean } from '@/lib/server/validation';
+import { assertBoolean, parseJsonBody } from '@/lib/server/validation';
 import { notFound } from '@/lib/server/errors';
 import { analysisRepository } from '@/lib/server/repositories/analysis';
 
@@ -14,7 +14,7 @@ export async function PATCH(
     const { id, gapId } = await params;
     await requireProjectAccess(id, userId);
 
-    const body = (await request.json()) as { resolved?: unknown };
+    const body = await parseJsonBody<{ resolved?: unknown }>(request);
     const resolved = assertBoolean(body.resolved, 'resolved');
 
     const result = await analysisRepository.updateGapResolved(id, gapId, resolved);

@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { handleRoute } from '@/lib/server/http';
 import { validateSchema } from '@/lib/server/schema';
 import { questionsPostSchema } from '@/lib/server/schemas/api/questions';
-import { badRequest } from '@/lib/server/errors';
+import { AppError, badRequest } from '@/lib/server/errors';
+import { parseQuestionsPostBody } from '@/lib/server/routes/questions';
 
 test('questions update contract accepts action/update payload', () => {
   const parsed = validateSchema(
@@ -54,4 +55,18 @@ test('questions error contract returns status + error (+details)', async () => {
   assert.equal(payload.error, 'Invalid question update payload');
   assert.deepEqual(payload.details, { field: 'status' });
   assert.equal(payload.correlationId, 'questions-error-id');
+});
+
+test('questions body parser returns 400 on malformed JSON', async () => {
+  await assert.rejects(
+    () =>
+      parseQuestionsPostBody(
+        new Request('http://localhost/api/projects/p1/questions', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: '{',
+        })
+      ),
+    (error: unknown) => error instanceof AppError && error.status === 400
+  );
 });

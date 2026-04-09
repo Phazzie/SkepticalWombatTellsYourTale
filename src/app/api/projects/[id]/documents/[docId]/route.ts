@@ -1,7 +1,7 @@
 import { handleRoute } from '@/lib/server/http';
 import { requireUser } from '@/lib/server/auth';
 import { requireProjectAccess } from '@/lib/server/services/project-access';
-import { assertRawString, assertString } from '@/lib/server/validation';
+import { assertRawString, assertString, parseJsonBody } from '@/lib/server/validation';
 import { notFound } from '@/lib/server/errors';
 import { documentsRepository } from '@/lib/server/repositories/documents';
 
@@ -20,7 +20,7 @@ export async function PATCH(
       throw notFound('Document not found');
     }
 
-    const body = (await request.json()) as { name?: unknown; content?: unknown; type?: unknown };
+    const body = await parseJsonBody<{ name?: unknown; content?: unknown; type?: unknown }>(request);
     const data: { name?: string; content?: string; type?: string } = {};
 
     if (body.name !== undefined) {

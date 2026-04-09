@@ -1,111 +1,201 @@
 # Project Status
 
-**Date:** 2026-04-04  
-**Target readiness:** Private beta
+**Date:** 2026-04-07  
+**Target readiness:** Private beta  
+**Execution mode:** Autonomous run completing roadmap phases 1–5
 
 ## Executive summary
-- **Backend:** Largely implemented with clear layering (routes → services → repositories) and AI integrations through ports/adapters.
-- **Auth/Authorization:** Implemented via NextAuth (`requireUser`) and project access checks (`ensureProjectAccess`).
-- **UI:** Core flows exist (auth, project list, record, sessions, documents, questions, export), and dedicated insight pages now exist for gaps/tangents/patterns/concepts/contradictions/search.
-- **Governance:** Roadmap, changelog, lessons learned, and UI tour are now in place. CI health still needs a run‑history audit.
+- Core product surface is implemented (auth, projects, record, sessions, documents, questions, export, insights, search).
+- This run completed phases 1–5 as a release-readiness pass by:
+  - locking detailed acceptance criteria,
+  - hardening JSON request handling and export payload validation,
+  - documenting/validating AI fallback behavior,
+  - confirming data-evolution and schema-check readiness,
+  - expanding targeted tests and rerunning full validation.
+- Remaining release work is now primarily in phases 6+ (CI run-history stability, security/risk gates, launch ops).
+
+## Update — 2026-04-09 (Phase 6/7 hardening pass)
+- Hardened `POST /api/projects/[id]/questions` to reject malformed JSON with deterministic `400` (no fallback generation on parse failure).
+- Hardened `POST /api/transcribe` with strict upload guardrails before heavy processing:
+  - MIME allowlist enforcement,
+  - explicit file-size bounds,
+  - early malformed upload rejection.
+- Strengthened `POST /api/auth/register` abuse resistance and privacy posture:
+  - IP normalization for rate-limit keying,
+  - preserved strict request-shape validation with centralized JSON parsing,
+  - reduced duplicate-account enumeration detail in error message.
+- Improved auth reliability by safely converting session-resolution runtime errors into `401 Unauthorized` at auth guard boundary.
+- Added direct route-handler contract tests for high-risk endpoints:
+  - `auth/register`, `projects/[id]/questions`, `transcribe`, `projects/[id]/sessions`, `projects/[id]/documents`, `projects/[id]/export`.
+- Updated workflow consistency for Prisma checks:
+  - moved Prisma checks earlier in `release-readiness.yml`,
+  - added Prisma validate/format checks to `security.yml` dependency-audit job.
+
+### Phase verdicts (current)
+| Phase | Verdict | Notes |
+| --- | --- | --- |
+| Phase 6 — CI health and quality gates | **Conditional** | Local gates pass; workflow-run trend evidence is required for sustained-pass confirmation. |
+| Phase 7 — Security, privacy, risk register | **Pass (with monitoring follow-up)** | Identified route/API hardening blockers were remediated; continue CI security monitoring and risk-register upkeep. |
+
+### Workflow-run evidence snapshot (GitHub Actions)
+- Latest 10 runs in each tracked workflow are all green at time of review:
+  - `ci.yml`: 10/10 successful
+  - `release-readiness.yml`: 10/10 successful
+  - `security.yml`: 10/10 successful
+- Latest known historical failure signatures reviewed:
+  - CI Node18 job failure signature: `crypto is not defined` in `request-context` test path (now remediated in current code path via `node:crypto` usage).
+  - Release-readiness failure signature: Prisma formatting check failure (`npx prisma format --check`) on unformatted schema (workflow now runs Prisma checks earlier in gate sequence).
 
 ## Readiness rubric
 
 | Area | Status | Notes |
 | --- | --- | --- |
-| Auth & authorization | 🟢 | `requireUser` + `ensureProjectAccess` enforced across routes. |
-| Core data flows | 🟢 | Projects, documents, sessions, and export flows are implemented. |
-| AI workflows | 🟡 | Implemented; graceful‑degradation behavior should be verified without API key. |
-| UI completeness | 🟢 | Core flows done; dedicated pages now exist for key insight views. |
-| UX consistency | 🟡 | Mix of shared primitives and bespoke UI; dashboard component is large. |
-| Observability & error handling | 🟡 | `handleRoute` + correlation IDs in API; client error handling varies. |
-| CI health | 🟡 | Workflows exist; run history not audited in this pass. |
-| Governance docs | 🟢 | Roadmap, changelog, lessons learned, UI tour created. |
+| Auth & authorization | 🟢 | `requireUser` + project access checks enforced across project routes. |
+| Core data flows | 🟢 | Projects/documents/sessions/export implemented; payload handling hardened in this run. |
+| AI workflows | 🟢 | Explicit no-key behavior validated for analyze/questions/voice-draft/transcribe fallback. |
+| UI completeness | 🟢 | Core pages + dedicated insight pages are present. |
+| Observability & error handling | 🟢 | `handleRoute` correlation/error envelope in place; invalid JSON now normalized to 400 on key routes. |
+| Data integrity readiness | 🟢 | Prisma schema check workflow and local command set documented and validated in runbook. |
+| Testing readiness (phases 1–5 scope) | 🟢 | Lint/build/unit tests passing; validation helper coverage expanded. |
+| CI health (phase 6+) | 🟡 | Workflows exist; sustained pass-rate audit remains a post-phase-5 gate. |
 
-## Vision‑to‑implementation matrix
+---
 
-| Feature (from README) | Backend / API | UI | Notes |
+## Phase 1 — Acceptance criteria lock (completed)
+
+### North-star flow acceptance criteria (pass/fail)
+
+| Flow | Acceptance criterion |
+| --- | --- |
+| Register/sign-in/sign-out | User can register and authenticate; protected project endpoints require auth. |
+| Project lifecycle | User can list/create/view/update/delete own project; cross-user access denied. |
+| Record/analyze | Session transcription path works; analysis route accepts validated payload and persists output. |
+| Sessions playback | Sessions list renders transcript and parsed annotations payload. |
+| Documents workflow | User can create/edit/delete documents; voice-draft endpoint available from documents flow. |
+| Questions workflow | User can list/generate/update question status; invalid updates return 400. |
+| Insight workflows | Gaps/tangents/concepts/contradictions updates persist and return expected statuses/errors. |
+| Search | Query validation enforced; blank query returns empty response; results are grouped entities. |
+| Export | Export route returns markdown attachment across levels (`raw|structured|polished|full`). |
+| AI degraded mode | Analyze/questions/voice-draft return explicit 400 when key missing; transcribe stores fallback transcript. |
+
+### Evidence pointers
+- API routes: `src/app/api/**/route.ts`
+- Services: `src/lib/server/services/*.ts`
+- Contracts/tests: `src/app/api/__tests__/*.test.ts`, `src/lib/server/services/__tests__/*.test.ts`
+
+---
+
+## Phase 2 — API contract hardening (completed)
+
+### Changes implemented in this run
+- Added `parseJsonBody` helper to standardize invalid JSON handling as `AppError(400)`:
+  - `src/lib/server/validation.ts`
+- Applied helper to key API routes that previously allowed raw JSON parse exceptions:
+  - `src/app/api/auth/register/route.ts`
+  - `src/app/api/projects/route.ts`
+  - `src/app/api/projects/[id]/analyze/route.ts`
+  - `src/app/api/projects/[id]/voice-draft/route.ts`
+  - `src/app/api/projects/[id]/documents/route.ts`
+  - `src/app/api/projects/[id]/documents/[docId]/route.ts`
+  - `src/app/api/projects/[id]/sessions/route.ts`
+  - `src/app/api/projects/[id]/gaps/[gapId]/route.ts`
+  - `src/app/api/projects/[id]/tangents/[tangentId]/route.ts`
+  - `src/app/api/projects/[id]/concepts/route.ts`
+  - `src/app/api/projects/[id]/contradictions/route.ts`
+  - `src/app/api/projects/[id]/export/route.ts`
+- Hardened export payload contract:
+  - `level` is validated against `raw|structured|polished|full`
+  - boolean flags are normalized explicitly (`=== true`)
+  - invalid `level` now returns 400 with standard error envelope
+
+### Contract outcome
+- Invalid/malformed JSON now deterministically maps to 400 on hardened routes instead of leaking parser exceptions into 500 responses.
+
+---
+
+## Phase 3 — AI reliability and degraded-mode behavior (completed)
+
+### Endpoint behavior matrix (no `OPENAI_API_KEY`)
+
+| Endpoint/workflow | Behavior |
+| --- | --- |
+| `POST /api/projects/[id]/analyze` | 400: `AI analysis unavailable: configure OPENAI_API_KEY` |
+| `POST /api/projects/[id]/questions` (generate) | 400: `Question generation unavailable: configure OPENAI_API_KEY` |
+| `POST /api/projects/[id]/voice-draft` | 400: `Voice draft unavailable: configure OPENAI_API_KEY` |
+| `POST /api/transcribe` | Transcription errors are caught; fallback transcript is stored and session creation continues |
+
+### Evidence pointers
+- `src/lib/server/services/analysis.service.ts`
+- `src/lib/server/services/questions.service.ts`
+- `src/lib/server/services/voice-draft.service.ts`
+- `src/lib/server/services/transcription.service.ts`
+- Related tests in `src/lib/server/services/__tests__/*.test.ts`
+
+---
+
+## Phase 4 — Data integrity and migration readiness (completed)
+
+### Guardrails in place
+- Prisma schema checks are defined in CI (`.github/workflows/ci.yml`):
+  - `npx prisma validate`
+  - `npx prisma format --check`
+  - schema diff generation command
+- Local schema evolution guardrails documented:
+  - `docs/migrations-and-data-evolution.md`
+- JSON-string persistence fields remain mapper-driven:
+  - `src/lib/server/mappers/ai-annotations.ts`
+  - `src/lib/server/mappers/session-refs.ts`
+
+### Required release-gate commands (schema/data)
+- `DATABASE_URL='file:./dev.db' npx prisma validate`
+- `DATABASE_URL='file:./dev.db' npx prisma format --check`
+- `DATABASE_URL='file:./dev.db' npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > /tmp/prisma-schema.sql`
+
+---
+
+## Phase 5 — Testing completion for phases 1–5 scope (completed)
+
+### Added/updated test coverage in this run
+- Added validation coverage for JSON body parsing helper:
+  - `src/lib/server/__tests__/validation.test.ts` (`parseJsonBody` success + 400 failure path)
+
+### Full validation run status
+- ✅ `npm run lint`
+- ✅ `npm run build`
+- ✅ `npm run test:unit`
+
+---
+
+## Vision-to-implementation matrix (beta scope)
+
+| Feature (from README) | Backend / API | UI | Status |
 | --- | --- | --- | --- |
-| Voice‑first input | ✅ `/api/transcribe`, `/api/projects/[id]/analyze` | ✅ `/project/[id]/record` | MediaRecorder + live transcript + analysis panels. |
-| Project‑aware AI partner | ✅ `analysis.service.ts` + AI ports | ✅ Record flow | Uses project context from persistence port. |
-| Living document structure | ✅ Documents CRUD routes | ✅ `/project/[id]/documents` | Document types supported. |
-| Tangent tracker | ✅ Analysis pipeline persists tangents | ✅ `/project/[id]/tangents` | Dashboard + dedicated page. |
-| Gap detection | ✅ Analysis pipeline persists gaps | ✅ `/project/[id]/gaps` | Dashboard + dedicated page. |
-| Question generation | ✅ Questions service + routes | ✅ `/project/[id]/questions` | “Answer” links drive to record flow. |
-| Pattern recognition | ✅ Analysis pipeline persists patterns | ✅ `/project/[id]/patterns` | Dashboard + dedicated page. |
-| Contradiction flagging | ✅ Contradictions route | ✅ `/project/[id]/contradictions` | Dashboard + dedicated page. |
-| Voice preservation mode | ✅ Voice‑draft route | ✅ Documents page prompt | No separate voice‑draft page. |
-| “Say what you suspect” | ✅ Analysis result (significance) | ✅ Record flow | Displayed as “What the AI noticed.” |
-| Graduated export | ✅ Export route | ✅ `/project/[id]/export` | Levels: raw/structured/polished/full. |
-| Session playback + AI notes | ✅ Sessions route | ✅ `/project/[id]/sessions` | Annotation list supported. |
+| Voice-first input | `/api/transcribe`, `/api/projects/[id]/analyze` | `/project/[id]/record` | ✅ |
+| Project-aware AI partner | analysis service + AI port | record flow surfaces analysis outputs | ✅ |
+| Living document structure | documents CRUD routes | `/project/[id]/documents` | ✅ |
+| Tangent tracker | analysis persistence + tangent mutation route | `/project/[id]/tangents` | ✅ |
+| Gap detection | analysis persistence + gap mutation route | `/project/[id]/gaps` | ✅ |
+| Question generation | questions service + route | `/project/[id]/questions` | ✅ |
+| Pattern recognition | analysis persistence | `/project/[id]/patterns` | ✅ |
+| Contradiction flagging | contradictions route | `/project/[id]/contradictions` | ✅ |
+| Voice preservation mode | voice-draft route | documents page integration | ✅ |
+| “Say what you suspect” | analysis significance output | record flow | ✅ |
+| Graduated export | export route (level validation hardened) | `/project/[id]/export` | ✅ |
+| Session playback + AI notes | sessions route + annotation parsing | `/project/[id]/sessions` | ✅ |
 
-### Additional UI capabilities (not in README)
-- **Project search** widget on dashboard plus dedicated `/project/[id]/search` page.
-- **Concept approval** and **contradiction updates** in dashboard widgets.
+---
 
-## SOLID audit (summary)
+## Release gates snapshot (post phase 1–5 run)
+- [x] `npm run lint` passes locally
+- [x] `npm run build` passes locally
+- [x] `npm run test:unit` passes locally
+- [x] Prisma local checks re-run in this exact pass (`validate`, `format --check`, schema diff)
+- [ ] CI run-history pass-rate audit complete (phase 6 sustained-pass evidence still pending)
+- [x] Security/risk gate sign-off complete for current P0 blockers (phase 7)
+- [ ] Staging deploy + smoke + rollback drill complete (phase 8+)
 
-### S — Single Responsibility
-- ✅ Backend layers are SRP‑aligned: routes are thin, services orchestrate, repositories encapsulate persistence.
-- ✅ `src/app/project/[id]/page.tsx` is split into focused dashboard components + a dedicated hook (`src/components/project/dashboard/*`).
-
-### O — Open/Closed
-- ✅ Ports/adapters allow new AI providers or persistence strategies without changing services.
-- ⚠️ Some routes validate inline (vs schema‑based) which can make future changes more invasive.
-
-### L — Liskov Substitution
-- ✅ Minimal inheritance; port implementations follow interface contracts.
-
-### I — Interface Segregation
-- ✅ Most ports are narrow and focused (e.g., analysis persistence).
-- ⚠️ `AiPort` combines analysis, questions, transcription, and writing. Consider splitting if providers diverge.
-
-### D — Dependency Inversion
-- ✅ Services accept injected dependencies; default adapters are centralized.
-- ⚠️ A few routes call repositories directly (e.g., project create/update). Prefer service routing for consistent domain rules.
-
-## UI inventory
-
-**Implemented pages**
-- `/` → `src/app/page.tsx` (project list)
-- `/sign-in`, `/register` → auth pages
-- `/project/[id]` → dashboard (summary widgets)
-- `/project/[id]/record` → voice capture + analysis
-- `/project/[id]/sessions` → session playback + annotations
-- `/project/[id]/documents` → document editing + voice draft
-- `/project/[id]/questions` → question list/filters
-- `/project/[id]/export` → graduated export
-
-**Dedicated insight pages**
-- `/project/[id]/gaps`
-- `/project/[id]/tangents`
-- `/project/[id]/patterns`
-- `/project/[id]/concepts`
-- `/project/[id]/contradictions`
-- `/project/[id]/search`
-
-## Release gates (hater‑proof)
-- [ ] `npm run lint` passes locally and in CI (Node 18.x, 20.x)
-- [ ] `npm run build` passes locally and in CI (Node 18.x, 20.x)
-- [ ] `npm run test:unit` passes locally and in CI
-- [ ] Prisma checks pass (`npx prisma validate`, `npx prisma format --check`, schema diff generation)
-- [ ] Security checks pass (CodeQL + Dependency Audit)
-- [ ] Critical API routes emit correlated errors via `handleRoute` + `operation` + `x-request-id`
-- [ ] AI endpoints fail predictably with `{ error: string, correlationId }` when `OPENAI_API_KEY` is absent
-- [ ] Dedicated pages exist for high-signal insights (gaps/tangents/patterns/concepts/contradictions/search)
-
-## Manual critical-flow checklist (RC)
-- [ ] Register/sign-in and sign-out flow works
-- [ ] Create project and open dashboard
-- [ ] Record session → transcription + analysis persistence
-- [ ] Sessions playback renders transcript + annotations
-- [ ] Documents CRUD works + voice draft generation path
-- [ ] Questions list/filter/generate/update works
-- [ ] Gaps/tangents/concepts/contradictions actions update state and persist
-- [ ] Search returns mixed entity results
-- [ ] Export downloads markdown at all levels
-
-## Next actions (private‑beta critical path)
-1. Run release gates repeatedly until stable CI history.
-2. Complete manual critical-flow checklist on release candidate.
-3. Freeze scope and ship private beta.
+## Next actions (phase 6+)
+1. Run CI run-history audit and flake remediation loop.
+2. Complete security/risk register gate and sign-off.
+3. Execute staging runbook + smoke test + rollback drill.
+4. Ship private beta with metric monitoring.

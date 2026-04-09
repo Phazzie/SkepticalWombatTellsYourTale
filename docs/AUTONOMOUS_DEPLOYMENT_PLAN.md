@@ -5,6 +5,10 @@ Target: Private beta readiness → deployable build
 
 Note on critiques: The critiques below are simulated personas used to stress-test the plan. No real people were consulted.
 
+## Canonical plan section
+- **Canonical implementation target:** **Plan v3 (final)** in this document.
+- **Historical context only:** Plan v0, Plan v1, and Plan v2 are retained as revision history and should not be used as active execution criteria.
+
 ## Current testing snapshot
 - Existing tests: API contract tests in `src/app/api/__tests__`.
 - No dedicated unit tests for services; no end-to-end flow tests.

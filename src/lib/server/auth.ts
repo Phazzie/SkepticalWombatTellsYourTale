@@ -2,10 +2,32 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth/config';
 import { prisma } from '@/lib/db';
 import { forbidden, notFound, unauthorized } from '@/lib/server/errors';
+import { log } from '@/lib/server/logger';
+
+function getSessionEmail(session: unknown): string | null {
+  if (!session || typeof session !== 'object' || !('user' in session)) {
+    return null;
+  }
+
+  const user = session.user;
+  if (!user || typeof user !== 'object' || !('email' in user)) {
+    return null;
+  }
+
+  return typeof user.email === 'string' ? user.email : null;
+}
 
 export async function requireUser() {
-  const session = await getServerSession(authOptions);
-  const email = session?.user?.email;
+  let session: Awaited<ReturnType<typeof getServerSession>>;
+  try {
+    session = await getServerSession(authOptions);
+  } catch (error) {
+    log('warn', 'Session resolution failed in requireUser', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw unauthorized();
+  }
+  const email = getSessionEmail(session);
 
   if (!email) {
     throw unauthorized();
