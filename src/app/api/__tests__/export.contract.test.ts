@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { AppError } from '@/lib/server/errors';
-import { parseExportIncludeFlag } from '@/lib/server/routes/export';
+import { EXPORT_FLAG_ERROR_MESSAGE, parseExportIncludeFlag } from '@/lib/server/routes/export';
 
 test('parseExportIncludeFlag accepts supported boolean-like values', () => {
   assert.equal(parseExportIncludeFlag(true, 'includeTranscripts'), true);
@@ -26,7 +26,7 @@ test('parseExportIncludeFlag rejects unsupported values with AppError(400)', () 
     (error: unknown) => {
       assert.ok(error instanceof AppError);
       assert.equal(error.status, 400);
-      assert.equal(error.message, 'includeTranscripts must be a boolean-like value (true/false or 1/0)');
+      assert.equal(error.message, `includeTranscripts ${EXPORT_FLAG_ERROR_MESSAGE}`);
       return true;
     }
   );
