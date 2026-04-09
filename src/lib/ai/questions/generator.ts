@@ -1,4 +1,5 @@
 import { openai } from '@/lib/ai/client';
+import { AI_MODELS, AI_TEMPERATURES } from '@/lib/ai/config';
 import { asObject, parseAiJsonObjectStrict, safeString } from '@/lib/ai/parsing';
 
 export type GeneratedQuestion = { text: string; sessionRef?: string; contextAnchor: string };
@@ -52,7 +53,7 @@ export async function generateQuestionsFromProjectContext(
   documentContext: string
 ): Promise<QuestionGenerationResult> {
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: AI_MODELS.chat,
     messages: [
       {
         role: 'system',
@@ -67,7 +68,7 @@ export async function generateQuestionsFromProjectContext(
       },
     ],
     response_format: { type: 'json_object' },
-    temperature: 0.8,
+    temperature: AI_TEMPERATURES.questions,
   });
 
   const parsed = parseAiJsonObjectStrict<GeneratedQuestion[]>({

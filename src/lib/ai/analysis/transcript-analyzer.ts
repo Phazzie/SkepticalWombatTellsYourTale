@@ -1,4 +1,5 @@
 import { openai } from '@/lib/ai/client';
+import { AI_MODELS, AI_TEMPERATURES } from '@/lib/ai/config';
 import { asObject, asStringArray, parseAiJsonObjectStrict, safeString } from '@/lib/ai/parsing';
 import { AnalysisResult } from '@/lib/types';
 
@@ -467,13 +468,13 @@ Return a JSON object with this exact structure:
 }`;
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: AI_MODELS.chat,
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
     ],
     response_format: { type: 'json_object' },
-    temperature: 0.7,
+    temperature: AI_TEMPERATURES.analysis,
   });
 
   const parsed = parseAiJsonObjectStrict<AnalysisResult>({
