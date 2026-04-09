@@ -8,6 +8,17 @@ import {
   safeString,
 } from '@/lib/ai/parsing';
 
+// Suppress console.warn so warning-path tests don't pollute CI output.
+function withSilencedWarn<T>(fn: () => T): T {
+  const original = console.warn;
+  console.warn = () => {};
+  try {
+    return fn();
+  } finally {
+    console.warn = original;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // parseAiJsonObject
 // ---------------------------------------------------------------------------
@@ -23,31 +34,37 @@ test('parseAiJsonObject returns parsed value for valid JSON', () => {
 
 test('parseAiJsonObject returns fallback for null content', () => {
   const fallback = { name: 'default' };
-  const result = parseAiJsonObject<{ name: string }>({
-    content: null,
-    fallback,
-    label: 'test',
-  });
+  const result = withSilencedWarn(() =>
+    parseAiJsonObject<{ name: string }>({
+      content: null,
+      fallback,
+      label: 'test',
+    })
+  );
   assert.equal(result, fallback);
 });
 
 test('parseAiJsonObject returns fallback for empty string content', () => {
   const fallback = { name: 'default' };
-  const result = parseAiJsonObject<{ name: string }>({
-    content: '',
-    fallback,
-    label: 'test',
-  });
+  const result = withSilencedWarn(() =>
+    parseAiJsonObject<{ name: string }>({
+      content: '',
+      fallback,
+      label: 'test',
+    })
+  );
   assert.equal(result, fallback);
 });
 
 test('parseAiJsonObject returns fallback for invalid JSON', () => {
   const fallback = { name: 'default' };
-  const result = parseAiJsonObject<{ name: string }>({
-    content: '{bad json',
-    fallback,
-    label: 'test',
-  });
+  const result = withSilencedWarn(() =>
+    parseAiJsonObject<{ name: string }>({
+      content: '{bad json',
+      fallback,
+      label: 'test',
+    })
+  );
   assert.equal(result, fallback);
 });
 
@@ -63,14 +80,16 @@ test('parseAiJsonObject applies normalize function when provided', () => {
 
 test('parseAiJsonObject returns fallback when normalize throws', () => {
   const fallback = 'safe';
-  const result = parseAiJsonObject<string>({
-    content: JSON.stringify({ name: 'x' }),
-    fallback,
-    label: 'test',
-    normalize: () => {
-      throw new Error('normalize failed');
-    },
-  });
+  const result = withSilencedWarn(() =>
+    parseAiJsonObject<string>({
+      content: JSON.stringify({ name: 'x' }),
+      fallback,
+      label: 'test',
+      normalize: () => {
+        throw new Error('normalize failed');
+      },
+    })
+  );
   assert.equal(result, fallback);
 });
 
@@ -95,12 +114,14 @@ test('parseAiJsonObjectStrict returns value and empty contractIssues for valid i
 
 test('parseAiJsonObjectStrict returns fallback and contract issue for null content', () => {
   const fallback = { value: 'fallback' };
-  const result = parseAiJsonObjectStrict<{ value: string }>({
-    content: null,
-    fallback,
-    label: 'test',
-    normalize: () => ({ value: { value: 'should not run' }, contractIssues: [] }),
-  });
+  const result = withSilencedWarn(() =>
+    parseAiJsonObjectStrict<{ value: string }>({
+      content: null,
+      fallback,
+      label: 'test',
+      normalize: () => ({ value: { value: 'should not run' }, contractIssues: [] }),
+    })
+  );
   assert.equal(result.value, fallback);
   assert.ok(result.contractIssues.length > 0);
   assert.equal(result.parseError, 'missing_content');
@@ -108,15 +129,34 @@ test('parseAiJsonObjectStrict returns fallback and contract issue for null conte
 
 test('parseAiJsonObjectStrict returns fallback and contract issue for invalid JSON', () => {
   const fallback = { value: 'fallback' };
-  const result = parseAiJsonObjectStrict<{ value: string }>({
-    content: '{bad',
-    fallback,
-    label: 'test',
-    normalize: () => ({ value: { value: 'should not run' }, contractIssues: [] }),
-  });
+  const result = withSilencedWarn(() =>
+    parseAiJsonObjectStrict<{ value: string }>({
+      content: '{bad',
+      fallback,
+      label: 'test',
+      normalize: () => ({ value: { value: 'should not run' }, contractIssues: [] }),
+    })
+  );
   assert.equal(result.value, fallback);
   assert.ok(result.contractIssues.some((issue) => issue.includes('JSON parse failed')));
   assert.ok(typeof result.parseError === 'string');
+});
+
+test('parseAiJsonObjectStrict returns fallback and contract issue when normalize throws', () => {
+  const fallback = { value: 'fallback' };
+  const result = withSilencedWarn(() =>
+    parseAiJsonObjectStrict<{ value: string }>({
+      content: JSON.stringify({ value: 'ok' }),
+      fallback,
+      label: 'test',
+      normalize: () => {
+        throw new Error('normalizer exploded');
+      },
+    })
+  );
+  assert.equal(result.value, fallback);
+  assert.deepEqual(result.contractIssues, ['AI response JSON parse failed']);
+  assert.ok(typeof result.parseError === 'string' && result.parseError.includes('normalizer exploded'));
 });
 
 test('parseAiJsonObjectStrict passes through contractIssues from normalize', () => {
@@ -198,3 +238,4 @@ test('safeString returns custom fallback for non-string value', () => {
   assert.equal(safeString(null, 'none'), 'none');
   assert.equal(safeString(false, 'default'), 'default');
 });
+
