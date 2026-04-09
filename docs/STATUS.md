@@ -22,7 +22,7 @@
   - early malformed upload rejection.
 - Strengthened `POST /api/auth/register` abuse resistance and privacy posture:
   - IP normalization for rate-limit keying,
-  - additional email-keyed throttling,
+  - preserved strict request-shape validation with centralized JSON parsing,
   - reduced duplicate-account enumeration detail in error message.
 - Improved auth reliability by safely converting session-resolution runtime errors into `401 Unauthorized` at auth guard boundary.
 - Added direct route-handler contract tests for high-risk endpoints:
