@@ -1,6 +1,9 @@
 import { openai } from '@/lib/ai/client';
-import { AI_MODELS, AI_TEMPERATURES } from '@/lib/ai/config';
+import { AI_MODELS, AI_TEMPERATURES, AI_TOKEN_BUDGETS } from '@/lib/ai/config';
 import { asObject, asStringArray, parseAiJsonObjectStrict, safeString } from '@/lib/ai/parsing';
+import { withRetry } from '@/lib/ai/retry';
+import { sanitizeForPrompt, truncateToTokenBudget } from '@/lib/ai/utils';
+import { log } from '@/lib/server/logger';
 import { AnalysisResult } from '@/lib/types';
 
 function normalizeAnalysis(value: unknown): { value: AnalysisResult; contractIssues: string[] } {
@@ -357,6 +360,9 @@ export async function analyzeTranscript(
   existingDocuments: Array<{ id: string; name: string; content: string }>,
   sessionId: string
 ): Promise<AnalysisResult> {
+  const safeTranscript = truncateToTokenBudget(sanitizeForPrompt(transcript), AI_TOKEN_BUDGETS.transcriptMaxChars);
+  const safeProjectContext = sanitizeForPrompt(projectContext);
+  const safeSessionHistory = truncateToTokenBudget(sanitizeForPrompt(sessionHistory), AI_TOKEN_BUDGETS.sessionHistoryMaxChars);
   const documentsContext = existingDocuments
     .map((d) => `Document "${d.name}":\n${d.content.slice(0, 500)}`)
     .join('\n\n');
@@ -382,16 +388,16 @@ Respond with valid JSON only.`;
   const userPrompt = `Analyze this new voice transcript for the project.
 
 PROJECT CONTEXT:
-${projectContext}
+${safeProjectContext}
 
 SESSION HISTORY (previous sessions):
-${sessionHistory}
+${safeSessionHistory}
 
 EXISTING DOCUMENTS:
 ${documentsContext}
 
 NEW TRANSCRIPT (Session ID: ${sessionId}):
-${transcript}
+${safeTranscript}
 
 Return a JSON object with this exact structure:
 {
@@ -467,15 +473,29 @@ Return a JSON object with this exact structure:
   }
 }`;
 
-  const response = await openai.chat.completions.create({
-    model: AI_MODELS.chat,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-    response_format: { type: 'json_object' },
-    temperature: AI_TEMPERATURES.analysis,
-  });
+  log('info', 'analyzeTranscript start', { model: AI_MODELS.chat, sessionId });
+  const startTime = Date.now();
+  let response: Awaited<ReturnType<typeof openai.chat.completions.create>>;
+  try {
+    response = await withRetry(() => openai.chat.completions.create({
+      model: AI_MODELS.chat,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: AI_TEMPERATURES.analysis,
+    }));
+    log('info', 'analyzeTranscript success', {
+      model: response.model,
+      durationMs: Date.now() - startTime,
+      promptTokens: response.usage?.prompt_tokens,
+      completionTokens: response.usage?.completion_tokens,
+    });
+  } catch (err) {
+    log('error', 'analyzeTranscript failed', { sessionId, error: String(err), durationMs: Date.now() - startTime });
+    return buildFallbackAnalysis();
+  }
 
   const parsed = parseAiJsonObjectStrict<AnalysisResult>({
     content: response.choices[0].message.content,

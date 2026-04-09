@@ -1,6 +1,9 @@
 import { openai } from '@/lib/ai/client';
-import { AI_MODELS, AI_TEMPERATURES } from '@/lib/ai/config';
+import { AI_MODELS, AI_TEMPERATURES, AI_TOKEN_BUDGETS } from '@/lib/ai/config';
 import { asObject, parseAiJsonObjectStrict, safeString } from '@/lib/ai/parsing';
+import { withRetry } from '@/lib/ai/retry';
+import { sanitizeForPrompt, truncateToTokenBudget } from '@/lib/ai/utils';
+import { log } from '@/lib/server/logger';
 
 export type GeneratedQuestion = { text: string; sessionRef?: string; contextAnchor: string };
 export type QuestionGenerationResult = {
@@ -52,24 +55,40 @@ export async function generateQuestionsFromProjectContext(
   recentTranscriptContext: string,
   documentContext: string
 ): Promise<QuestionGenerationResult> {
-  const response = await openai.chat.completions.create({
-    model: AI_MODELS.chat,
-    messages: [
-      {
-        role: 'system',
-        content:
-          'You are a skilled interviewer who asks questions that pull out the real story. Generate specific, pointed questions based on what the person has said — not generic prompts. Questions like "what happened right before that?" or "you mentioned X but never said what happened next." Return JSON only.',
-      },
-      {
-        role: 'user',
-        content:
-          `Generate 8 specific questions for this project.\n\nRECENT TRANSCRIPTS:\n${recentTranscriptContext}\n\nDOCUMENTS:\n${documentContext}\n\n` +
-          `Return JSON: { "questions": [{ "text": "question text", "sessionRef": null, "contextAnchor": "specific quote or reference to where this comes from" }] }`,
-      },
-    ],
-    response_format: { type: 'json_object' },
-    temperature: AI_TEMPERATURES.questions,
-  });
+  const safeTranscript = truncateToTokenBudget(sanitizeForPrompt(recentTranscriptContext), AI_TOKEN_BUDGETS.transcriptMaxChars);
+  const safeDocContext = truncateToTokenBudget(sanitizeForPrompt(documentContext), AI_TOKEN_BUDGETS.documentContextMaxChars);
+  log('info', 'generateQuestionsFromProjectContext start', { model: AI_MODELS.chat });
+  const startTime = Date.now();
+  let response: Awaited<ReturnType<typeof openai.chat.completions.create>>;
+  try {
+    response = await withRetry(() => openai.chat.completions.create({
+      model: AI_MODELS.chat,
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a skilled interviewer who asks questions that pull out the real story. Generate specific, pointed questions based on what the person has said — not generic prompts. Questions like "what happened right before that?" or "you mentioned X but never said what happened next." Return JSON only.',
+        },
+        {
+          role: 'user',
+          content:
+            `Generate 8 specific questions for this project.\n\nRECENT TRANSCRIPTS:\n${safeTranscript}\n\nDOCUMENTS:\n${safeDocContext}\n\n` +
+            `Return JSON: { "questions": [{ "text": "question text", "sessionRef": null, "contextAnchor": "specific quote or reference to where this comes from" }] }`,
+        },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: AI_TEMPERATURES.questions,
+    }));
+    log('info', 'generateQuestionsFromProjectContext success', {
+      model: response.model,
+      durationMs: Date.now() - startTime,
+      promptTokens: response.usage?.prompt_tokens,
+      completionTokens: response.usage?.completion_tokens,
+    });
+  } catch (err) {
+    log('error', 'generateQuestionsFromProjectContext failed', { error: String(err), durationMs: Date.now() - startTime });
+    return { questions: [], contractValidation: { isValid: false, issues: [String(err)] } };
+  }
 
   const parsed = parseAiJsonObjectStrict<GeneratedQuestion[]>({
     content: response.choices[0].message.content,
