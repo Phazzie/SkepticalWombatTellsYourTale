@@ -9,7 +9,8 @@ import { EXPORT_LEVELS, type ExportLevel } from '@/lib/types';
 
 const EXPORT_LEVEL_SET = new Set<string>(EXPORT_LEVELS);
 const TRUE_EXPORT_FLAG_VALUES = new Set(['true', '1']);
-const FALSE_EXPORT_FLAG_VALUES = new Set(['false', '0', '']);
+const FALSE_EXPORT_FLAG_VALUES = new Set(['false', '0']);
+const EXPORT_FLAG_ERROR_MESSAGE = 'must be a boolean-like value (true/false or 1/0)';
 
 function isExportLevel(value: string): value is ExportLevel {
   return EXPORT_LEVEL_SET.has(value);
@@ -29,7 +30,7 @@ function parseExportIncludeFlag(value: unknown, field: string): boolean {
     if (value === 0) {
       return false;
     }
-    throw badRequest(`${field} must be a boolean`);
+    throw badRequest(`${field} ${EXPORT_FLAG_ERROR_MESSAGE}`);
   }
   if (typeof value === 'string') {
     const normalized = value.trim().toLowerCase();
@@ -39,9 +40,9 @@ function parseExportIncludeFlag(value: unknown, field: string): boolean {
     if (FALSE_EXPORT_FLAG_VALUES.has(normalized)) {
       return false;
     }
-    throw badRequest(`${field} must be a boolean`);
+    throw badRequest(`${field} ${EXPORT_FLAG_ERROR_MESSAGE}`);
   }
-  throw badRequest(`${field} must be a boolean`);
+  throw badRequest(`${field} ${EXPORT_FLAG_ERROR_MESSAGE}`);
 }
 
 export async function POST(
