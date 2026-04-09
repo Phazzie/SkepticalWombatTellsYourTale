@@ -4,6 +4,7 @@ import { requireUser } from '@/lib/server/auth';
 import { requireProjectAccess } from '@/lib/server/services/project-access';
 import { badRequest, notFound } from '@/lib/server/errors';
 import { parseAiAnnotations } from '@/lib/server/mappers/ai-annotations';
+import { parseExportIncludeFlag } from '@/lib/server/routes/export';
 import { parseJsonBody } from '@/lib/server/validation';
 import { EXPORT_LEVELS, type ExportLevel } from '@/lib/types';
 
@@ -30,11 +31,11 @@ export async function POST(
     }>(request);
     const normalizedLevel = typeof level === 'string' ? level : 'full';
     if (!isExportLevel(normalizedLevel)) {
-      throw badRequest('level must be one of: raw, structured, polished, full');
+      throw badRequest(`level must be one of: ${EXPORT_LEVELS.join(', ')}`);
     }
-    const shouldIncludeTranscripts = includeTranscripts === true;
-    const shouldIncludeAnnotations = includeAnnotations === true;
-    const shouldIncludeGaps = includeGaps === true;
+    const shouldIncludeTranscripts = parseExportIncludeFlag(includeTranscripts, 'includeTranscripts');
+    const shouldIncludeAnnotations = parseExportIncludeFlag(includeAnnotations, 'includeAnnotations');
+    const shouldIncludeGaps = parseExportIncludeFlag(includeGaps, 'includeGaps');
 
     const project = await prisma.project.findUnique({
       where: { id },
