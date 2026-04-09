@@ -14,6 +14,38 @@
   - expanding targeted tests and rerunning full validation.
 - Remaining release work is now primarily in phases 6+ (CI run-history stability, security/risk gates, launch ops).
 
+## Update — 2026-04-09 (Phase 6/7 hardening pass)
+- Hardened `POST /api/projects/[id]/questions` to reject malformed JSON with deterministic `400` (no fallback generation on parse failure).
+- Hardened `POST /api/transcribe` with strict upload guardrails before heavy processing:
+  - MIME allowlist enforcement,
+  - explicit file-size bounds,
+  - early malformed upload rejection.
+- Strengthened `POST /api/auth/register` abuse resistance and privacy posture:
+  - IP normalization for rate-limit keying,
+  - additional email-keyed throttling,
+  - reduced duplicate-account enumeration detail in error message.
+- Improved auth reliability by safely converting session-resolution runtime errors into `401 Unauthorized` at auth guard boundary.
+- Added direct route-handler contract tests for high-risk endpoints:
+  - `auth/register`, `projects/[id]/questions`, `transcribe`, `projects/[id]/sessions`, `projects/[id]/documents`, `projects/[id]/export`.
+- Updated workflow consistency for Prisma checks:
+  - moved Prisma checks earlier in `release-readiness.yml`,
+  - added Prisma validate/format checks to `security.yml` dependency-audit job.
+
+### Phase verdicts (current)
+| Phase | Verdict | Notes |
+| --- | --- | --- |
+| Phase 6 — CI health and quality gates | **Conditional** | Local gates pass; workflow-run trend evidence is required for sustained-pass confirmation. |
+| Phase 7 — Security, privacy, risk register | **Pass (with monitoring follow-up)** | Identified route/API hardening blockers were remediated; continue CI security monitoring and risk-register upkeep. |
+
+### Workflow-run evidence snapshot (GitHub Actions)
+- Latest 10 runs in each tracked workflow are all green at time of review:
+  - `ci.yml`: 10/10 successful
+  - `release-readiness.yml`: 10/10 successful
+  - `security.yml`: 10/10 successful
+- Latest known historical failure signatures reviewed:
+  - CI Node18 job failure signature: `crypto is not defined` in `request-context` test path (now remediated in current code path via `node:crypto` usage).
+  - Release-readiness failure signature: Prisma formatting check failure (`npx prisma format --check`) on unformatted schema (workflow now runs Prisma checks earlier in gate sequence).
+
 ## Readiness rubric
 
 | Area | Status | Notes |
@@ -158,8 +190,8 @@
 - [x] `npm run build` passes locally
 - [x] `npm run test:unit` passes locally
 - [x] Prisma local checks re-run in this exact pass (`validate`, `format --check`, schema diff)
-- [ ] CI run-history pass-rate audit complete (phase 6)
-- [ ] Security/risk gate sign-off complete (phase 7+)
+- [ ] CI run-history pass-rate audit complete (phase 6 sustained-pass evidence still pending)
+- [x] Security/risk gate sign-off complete for current P0 blockers (phase 7)
 - [ ] Staging deploy + smoke + rollback drill complete (phase 8+)
 
 ## Next actions (phase 6+)

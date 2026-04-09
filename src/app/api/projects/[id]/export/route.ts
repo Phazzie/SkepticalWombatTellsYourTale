@@ -7,6 +7,12 @@ import { parseAiAnnotations } from '@/lib/server/mappers/ai-annotations';
 import { parseJsonBody } from '@/lib/server/validation';
 import { EXPORT_LEVELS, type ExportLevel } from '@/lib/types';
 
+const EXPORT_LEVEL_SET = new Set<string>(EXPORT_LEVELS);
+
+function isExportLevel(value: string): value is ExportLevel {
+  return EXPORT_LEVEL_SET.has(value);
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -23,7 +29,7 @@ export async function POST(
       includeGaps?: unknown;
     }>(request);
     const normalizedLevel = typeof level === 'string' ? level : 'full';
-    if (!EXPORT_LEVELS.includes(normalizedLevel as ExportLevel)) {
+    if (!isExportLevel(normalizedLevel)) {
       throw badRequest('level must be one of: raw, structured, polished, full');
     }
     const shouldIncludeTranscripts = includeTranscripts === true;

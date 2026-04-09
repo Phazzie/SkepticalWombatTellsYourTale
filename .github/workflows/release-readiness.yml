@@ -35,16 +35,16 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Lint
-        run: npm run lint
-      - name: Build
-        run: npm run build
       - name: Validate Prisma schema
         run: npx prisma validate
       - name: Check Prisma formatting
         run: npx prisma format --check
       - name: Check schema diff generation
         run: npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > /tmp/prisma-schema.sql
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        run: npm run build
 
   deploy-ready:
     name: Deploy Ready
