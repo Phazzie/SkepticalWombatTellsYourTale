@@ -1,7 +1,7 @@
 import { badRequest } from '@/lib/server/errors';
 
-const TRUTHY_EXPORT_VALUES = new Set(['true', '1']);
-const FALSY_EXPORT_VALUES = new Set(['false', '0']);
+const TRUTHY_INCLUDE_FLAG_VALUES = new Set(['true', '1']);
+const FALSY_INCLUDE_FLAG_VALUES = new Set(['false', '0']);
 export const EXPORT_FLAG_ERROR_MESSAGE = 'must be a boolean-like value (true/false or 1/0)';
 
 export function parseExportIncludeFlag(value: unknown, field: string): boolean {
@@ -22,10 +22,10 @@ export function parseExportIncludeFlag(value: unknown, field: string): boolean {
   }
   if (typeof value === 'string') {
     const normalized = value.trim().toLowerCase();
-    if (TRUTHY_EXPORT_VALUES.has(normalized)) {
+    if (TRUTHY_INCLUDE_FLAG_VALUES.has(normalized)) {
       return true;
     }
-    if (FALSY_EXPORT_VALUES.has(normalized)) {
+    if (FALSY_INCLUDE_FLAG_VALUES.has(normalized)) {
       return false;
     }
     throw badRequest(`${field} ${EXPORT_FLAG_ERROR_MESSAGE}`);
