@@ -10,9 +10,11 @@ test('parseExportIncludeFlag accepts supported boolean-like values', () => {
   assert.equal(parseExportIncludeFlag(0, 'includeTranscripts'), false);
   assert.equal(parseExportIncludeFlag('true', 'includeTranscripts'), true);
   assert.equal(parseExportIncludeFlag('TRUE', 'includeTranscripts'), true);
+  assert.equal(parseExportIncludeFlag(' true ', 'includeTranscripts'), true);
   assert.equal(parseExportIncludeFlag('1', 'includeTranscripts'), true);
   assert.equal(parseExportIncludeFlag('false', 'includeTranscripts'), false);
   assert.equal(parseExportIncludeFlag('FALSE', 'includeTranscripts'), false);
+  assert.equal(parseExportIncludeFlag(' 0 ', 'includeTranscripts'), false);
   assert.equal(parseExportIncludeFlag('0', 'includeTranscripts'), false);
   assert.equal(parseExportIncludeFlag(undefined, 'includeTranscripts'), false);
   assert.equal(parseExportIncludeFlag(null, 'includeTranscripts'), false);
