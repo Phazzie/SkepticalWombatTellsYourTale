@@ -1,6 +1,7 @@
 import { openai } from '@/lib/ai/client';
 import { AI_MODELS, AI_TEMPERATURES, AI_TOKEN_BUDGETS } from '@/lib/ai/config';
 import { asObject, parseAiJsonObjectStrict, safeString } from '@/lib/ai/parsing';
+import { QUESTIONS_SYSTEM_PROMPT, buildQuestionsUserPrompt } from '@/lib/ai/prompts/questions.prompts';
 import { withRetry } from '@/lib/ai/retry';
 import { sanitizeForPrompt, truncateToTokenBudget } from '@/lib/ai/utils';
 import { log } from '@/lib/server/logger';

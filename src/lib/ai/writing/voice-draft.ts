@@ -1,6 +1,12 @@
 import { openai } from '@/lib/ai/client';
 import { AI_MODELS, AI_SLICE_LIMITS, AI_TEMPERATURES, AI_TOKEN_BUDGETS } from '@/lib/ai/config';
 import { asObject, parseAiJsonObjectStrict, safeString } from '@/lib/ai/parsing';
+import {
+  VOICE_DRAFT_SYSTEM_PROMPT,
+  VOICE_DRIFT_SYSTEM_PROMPT,
+  buildVoiceDraftUserPrompt,
+  buildVoiceDriftUserPrompt,
+} from '@/lib/ai/prompts/voice-draft.prompts';
 import { withRetry } from '@/lib/ai/retry';
 import { sanitizeForPrompt, truncateToTokenBudget } from '@/lib/ai/utils';
 import { log } from '@/lib/server/logger';
