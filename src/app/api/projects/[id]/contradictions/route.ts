@@ -1,8 +1,7 @@
 import { handleRoute } from '@/lib/server/http';
-import { requireUser } from '@/lib/server/auth';
-import { requireProjectAccess } from '@/lib/server/services/project-access';
 import { notFound } from '@/lib/server/errors';
-import { prisma } from '@/lib/db';
+import { contradictionsRepository } from '@/lib/server/repositories/contradictions';
+import { requireProjectHandler } from '@/lib/server/route-guard';
 import {
   contradictionsPatchSchema,
   contradictionsQuerySchema,
@@ -15,9 +14,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   return handleRoute(async () => {
-    const { userId } = await requireUser();
-    const { id } = await params;
-    await requireProjectAccess(id, userId);
+    const { projectId } = await requireProjectHandler(params);
 
     const url = new URL(request.url);
     const query = validateSchema(
@@ -26,13 +23,7 @@ export async function GET(
       'query'
     );
 
-    return prisma.contradiction.findMany({
-      where: {
-        projectId: id,
-        ...(query.status ? { status: query.status } : {}),
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    return contradictionsRepository.listByProject(projectId, query.status);
   }, { request, operation: 'projects.contradictions.list' });
 }
 
@@ -41,23 +32,14 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   return handleRoute(async () => {
-    const { userId } = await requireUser();
-    const { id } = await params;
-    await requireProjectAccess(id, userId);
-
+    const { projectId } = await requireProjectHandler(params);
     const body = validateSchema(await parseJsonBody(request), contradictionsPatchSchema);
 
-    const existing = await prisma.contradiction.findFirst({
-      where: { id: body.contradictionId, projectId: id },
-    });
-
+    const existing = await contradictionsRepository.findInProject(body.contradictionId, projectId);
     if (!existing) {
       throw notFound('Contradiction not found');
     }
 
-    return prisma.contradiction.update({
-      where: { id: body.contradictionId },
-      data: { status: body.status },
-    });
+    return contradictionsRepository.updateStatus(body.contradictionId, body.status);
   }, { request, operation: 'projects.contradictions.patch' });
 }

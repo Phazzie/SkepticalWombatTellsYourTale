@@ -1,9 +1,9 @@
-import { prisma } from '@/lib/db';
 import { hashPassword } from '@/lib/auth/password';
 import { handleRoute } from '@/lib/server/http';
 import { badRequest } from '@/lib/server/errors';
 import { asOptionalString, assertString, parseJsonBody } from '@/lib/server/validation';
 import { enforceRateLimit } from '@/lib/server/rate-limit';
+import { usersRepository } from '@/lib/server/repositories/users';
 
 export async function POST(request: Request) {
   return handleRoute(async () => {
@@ -21,20 +21,15 @@ export async function POST(request: Request) {
       throw badRequest('email must be a valid email address');
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await usersRepository.findByEmail(email);
     if (existing) {
       throw badRequest('Unable to register with provided credentials');
     }
 
-    const user = await prisma.user.create({
-      data: {
-        email,
-        name,
-        passwordHash: hashPassword(password),
-      },
-      select: { id: true, email: true, name: true },
+    return usersRepository.create({
+      email,
+      name,
+      passwordHash: hashPassword(password),
     });
-
-    return user;
   }, { request, operation: 'auth.register' });
 }

@@ -1,8 +1,7 @@
 import { handleRoute } from '@/lib/server/http';
-import { requireUser } from '@/lib/server/auth';
-import { requireProjectAccess } from '@/lib/server/services/project-access';
 import { notFound } from '@/lib/server/errors';
-import { prisma } from '@/lib/db';
+import { conceptsRepository } from '@/lib/server/repositories/concepts';
+import { requireProjectHandler } from '@/lib/server/route-guard';
 import { conceptsPatchSchema } from '@/lib/server/schemas/api/concepts';
 import { validateSchema } from '@/lib/server/schema';
 import { parseJsonBody } from '@/lib/server/validation';
@@ -12,14 +11,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   return handleRoute(async () => {
-    const { userId } = await requireUser();
-    const { id } = await params;
-    await requireProjectAccess(id, userId);
-
-    return prisma.concept.findMany({
-      where: { projectId: id },
-      orderBy: { createdAt: 'desc' },
-    });
+    const { projectId } = await requireProjectHandler(params);
+    return conceptsRepository.listByProject(projectId);
   }, { request, operation: 'projects.concepts.list' });
 }
 
@@ -28,23 +21,17 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   return handleRoute(async () => {
-    const { userId } = await requireUser();
-    const { id } = await params;
-    await requireProjectAccess(id, userId);
-
+    const { projectId } = await requireProjectHandler(params);
     const body = validateSchema(await parseJsonBody(request), conceptsPatchSchema);
 
-    const existing = await prisma.concept.findFirst({ where: { id: body.conceptId, projectId: id } });
+    const existing = await conceptsRepository.findInProject(body.conceptId, projectId);
     if (!existing) {
       throw notFound('Concept not found');
     }
 
-    return prisma.concept.update({
-      where: { id: body.conceptId },
-      data: {
-        ...(typeof body.approved === 'boolean' ? { approved: body.approved } : {}),
-        ...(typeof body.status === 'string' ? { status: body.status } : {}),
-      },
+    return conceptsRepository.update(body.conceptId, {
+      ...(typeof body.approved === 'boolean' ? { approved: body.approved } : {}),
+      ...(typeof body.status === 'string' ? { status: body.status } : {}),
     });
   }, { request, operation: 'projects.concepts.patch' });
 }

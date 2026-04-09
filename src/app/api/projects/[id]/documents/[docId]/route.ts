@@ -1,6 +1,5 @@
 import { handleRoute } from '@/lib/server/http';
-import { requireUser } from '@/lib/server/auth';
-import { requireProjectAccess } from '@/lib/server/services/project-access';
+import { requireProjectHandler } from '@/lib/server/route-guard';
 import { assertRawString, assertString, parseJsonBody } from '@/lib/server/validation';
 import { notFound } from '@/lib/server/errors';
 import { documentsRepository } from '@/lib/server/repositories/documents';
@@ -10,12 +9,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string; docId: string }> }
 ) {
   return handleRoute(async () => {
-    const { userId } = await requireUser();
-    const { id, docId } = await params;
+    const { projectId, docId } = await requireProjectHandler(params);
 
-    await requireProjectAccess(id, userId);
-
-    const existing = await documentsRepository.findByIdInProject(docId, id);
+    const existing = await documentsRepository.findByIdInProject(docId, projectId);
     if (!existing) {
       throw notFound('Document not found');
     }
@@ -44,12 +40,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; docId: string }> }
 ) {
   return handleRoute(async () => {
-    const { userId } = await requireUser();
-    const { id, docId } = await params;
+    const { projectId, docId } = await requireProjectHandler(params);
 
-    await requireProjectAccess(id, userId);
-
-    const result = await documentsRepository.delete(docId, id);
+    const result = await documentsRepository.delete(docId, projectId);
     if (result.count === 0) {
       throw notFound('Document not found');
     }
