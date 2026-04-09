@@ -36,6 +36,7 @@ test('parseExportIncludeFlag rejects unsupported values with AppError(400)', () 
     (error: unknown) => {
       assert.ok(error instanceof AppError);
       assert.equal(error.status, 400);
+      assert.equal(error.message, `includeTranscripts ${EXPORT_FLAG_ERROR_MESSAGE}`);
       return true;
     }
   );
