@@ -23,13 +23,23 @@ function parseExportIncludeFlag(value: unknown, field: string): boolean {
     return value;
   }
   if (typeof value === 'number') {
-    if (value === 1) return true;
-    if (value === 0) return false;
+    if (value === 1) {
+      return true;
+    }
+    if (value === 0) {
+      return false;
+    }
+    throw badRequest(`${field} must be a boolean`);
   }
   if (typeof value === 'string') {
     const normalized = value.trim().toLowerCase();
-    if (TRUE_EXPORT_FLAG_VALUES.has(normalized)) return true;
-    if (FALSE_EXPORT_FLAG_VALUES.has(normalized)) return false;
+    if (TRUE_EXPORT_FLAG_VALUES.has(normalized)) {
+      return true;
+    }
+    if (FALSE_EXPORT_FLAG_VALUES.has(normalized)) {
+      return false;
+    }
+    throw badRequest(`${field} must be a boolean`);
   }
   throw badRequest(`${field} must be a boolean`);
 }
