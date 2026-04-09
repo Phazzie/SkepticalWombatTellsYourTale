@@ -8,9 +8,30 @@ import { parseJsonBody } from '@/lib/server/validation';
 import { EXPORT_LEVELS, type ExportLevel } from '@/lib/types';
 
 const EXPORT_LEVEL_SET = new Set<string>(EXPORT_LEVELS);
+const TRUE_EXPORT_FLAG_VALUES = new Set(['true', '1']);
+const FALSE_EXPORT_FLAG_VALUES = new Set(['false', '0', '']);
 
 function isExportLevel(value: string): value is ExportLevel {
   return EXPORT_LEVEL_SET.has(value);
+}
+
+function parseExportIncludeFlag(value: unknown, field: string): boolean {
+  if (value === undefined || value === null) {
+    return false;
+  }
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value === 'number') {
+    if (value === 1) return true;
+    if (value === 0) return false;
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (TRUE_EXPORT_FLAG_VALUES.has(normalized)) return true;
+    if (FALSE_EXPORT_FLAG_VALUES.has(normalized)) return false;
+  }
+  throw badRequest(`${field} must be a boolean`);
 }
 
 export async function POST(
@@ -30,11 +51,11 @@ export async function POST(
     }>(request);
     const normalizedLevel = typeof level === 'string' ? level : 'full';
     if (!isExportLevel(normalizedLevel)) {
-      throw badRequest('level must be one of: raw, structured, polished, full');
+      throw badRequest(`level must be one of: ${EXPORT_LEVELS.join(', ')}`);
     }
-    const shouldIncludeTranscripts = includeTranscripts === true;
-    const shouldIncludeAnnotations = includeAnnotations === true;
-    const shouldIncludeGaps = includeGaps === true;
+    const shouldIncludeTranscripts = parseExportIncludeFlag(includeTranscripts, 'includeTranscripts');
+    const shouldIncludeAnnotations = parseExportIncludeFlag(includeAnnotations, 'includeAnnotations');
+    const shouldIncludeGaps = parseExportIncludeFlag(includeGaps, 'includeGaps');
 
     const project = await prisma.project.findUnique({
       where: { id },
