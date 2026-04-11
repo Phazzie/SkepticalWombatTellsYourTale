@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { handleRoute } from '@/lib/server/http';
 import { AppError, badRequest } from '@/lib/server/errors';
-import { parseTranscribeRequest, validateTranscribeAudioFile } from '@/lib/server/routes/transcribe';
+import { parseTranscribeRequest, validateTranscribeAudioFile, ALLOWED_AUDIO_MIME_TYPES } from '@/lib/server/routes/transcribe';
 
 function normalizeQuestionId(value: FormDataEntryValue | null) {
   return typeof value === 'string' && value ? value : undefined;
@@ -103,13 +103,7 @@ test('parseTranscribeRequest rejects empty projectId with 400', () => {
 });
 
 test('validateTranscribeAudioFile accepts all supported audio MIME types', () => {
-  const supportedTypes = [
-    'audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/webm', 'audio/wav',
-    'audio/x-wav', 'audio/ogg', 'audio/flac', 'audio/x-flac', 'audio/aac',
-    'audio/m4a',
-  ];
-
-  for (const mimeType of supportedTypes) {
+  for (const mimeType of ALLOWED_AUDIO_MIME_TYPES) {
     const file = new File(['audio-content'], 'audio', { type: mimeType });
     assert.doesNotThrow(
       () => validateTranscribeAudioFile(file),
@@ -127,11 +121,8 @@ test('validateTranscribeAudioFile rejects empty file (size 0) with 400', () => {
 });
 
 test('validateTranscribeAudioFile rejects oversized file with 400', () => {
-  const oversized = {
-    type: 'audio/webm',
-    size: 16 * 1024 * 1024,
-    name: 'big.webm',
-  } as unknown as File;
+  const bigData = new Uint8Array(16 * 1024 * 1024); // 16 MB of zeros
+  const oversized = new File([bigData], 'big.webm', { type: 'audio/webm' });
 
   assert.throws(
     () => validateTranscribeAudioFile(oversized),
