@@ -46,6 +46,7 @@ export default function ExportPage() {
   const [includeGaps, setIncludeGaps] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const handleExport = async () => {
     setExporting(true);
@@ -77,6 +78,38 @@ export default function ExportPage() {
       URL.revokeObjectURL(url);
     } catch {
       setError('Export failed. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    setExporting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/projects/${id}/export`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          level: exportLevel,
+          includeTranscripts,
+          includeAnnotations,
+          includeGaps,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        setError(data?.error || 'Export failed');
+        return;
+      }
+
+      const text = await res.text();
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError('Copy failed. Please try again.');
     } finally {
       setExporting(false);
     }
@@ -165,13 +198,22 @@ export default function ExportPage() {
           ))}
         </GlassCard>
 
-        <PrimaryButton
-          onClick={handleExport}
-          disabled={exporting}
-          className="w-full py-4 text-base"
-        >
-          {exporting ? 'Preparing export…' : 'Export as Markdown'}
-        </PrimaryButton>
+        <div className="flex gap-3">
+          <PrimaryButton
+            onClick={handleExport}
+            disabled={exporting}
+            className="flex-1 py-4 text-base"
+          >
+            {exporting ? 'Preparing…' : 'Export as Markdown'}
+          </PrimaryButton>
+          <PrimaryButton
+            onClick={handleCopy}
+            disabled={exporting}
+            className="flex-1 py-4 text-base"
+          >
+            {copied ? '✓ Copied!' : 'Copy to Clipboard'}
+          </PrimaryButton>
+        </div>
       </Container>
     </Shell>
   );

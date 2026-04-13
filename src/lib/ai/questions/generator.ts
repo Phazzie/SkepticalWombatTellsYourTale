@@ -67,14 +67,11 @@ export async function generateQuestionsFromProjectContext(
       messages: [
         {
           role: 'system',
-          content:
-            'You are a skilled interviewer who asks questions that pull out the real story. Generate specific, pointed questions based on what the person has said — not generic prompts. Questions like "what happened right before that?" or "you mentioned X but never said what happened next." Return JSON only.',
+          content: QUESTIONS_SYSTEM_PROMPT,
         },
         {
           role: 'user',
-          content:
-            `Generate 8 specific questions for this project.\n\nRECENT TRANSCRIPTS:\n${safeTranscript}\n\nDOCUMENTS:\n${safeDocContext}\n\n` +
-            `Return JSON: { "questions": [{ "text": "question text", "sessionRef": null, "contextAnchor": "specific quote or reference to where this comes from" }] }`,
+          content: buildQuestionsUserPrompt({ recentTranscriptContext: safeTranscript, documentContext: safeDocContext }),
         },
       ],
       response_format: { type: 'json_object' },

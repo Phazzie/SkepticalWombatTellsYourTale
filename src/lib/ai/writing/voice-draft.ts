@@ -21,11 +21,6 @@ export async function generateVoicePreservedDraft(
   const safeVoiceSamples = truncateToTokenBudget(sanitizeForPrompt(voiceSamples), AI_TOKEN_BUDGETS.voiceDraftInputMaxChars);
   const safeDocContext = truncateToTokenBudget(sanitizeForPrompt(documentContext), AI_TOKEN_BUDGETS.documentContextMaxChars);
 
-  const systemPrompt =
-    "You are a ghostwriter who writes ENTIRELY in the speaker's voice. Study these voice transcripts carefully — the cadence, word choices, sentence fragments, how they circle back, what they emphasize, their specific vocabulary. Write the requested passage so that when the speaker reads it back, they think \"yeah, that sounds exactly like me.\" Do NOT clean it up. Do NOT make it sound literary or professional. Capture the actual way they talk.";
-
-  const userPrompt = `VOICE SAMPLES FROM TRANSCRIPTS:\n${safeVoiceSamples}\n\nRELEVANT DOCUMENT CONTENT:\n${safeDocContext}\n\nWRITING REQUEST:\n${safePrompt}\n\nWrite this in the speaker's actual voice as learned from the transcripts above.`;
-
   log('info', 'generateVoicePreservedDraft start', { model: AI_MODELS.chat });
   const startTime = Date.now();
   let response: Awaited<ReturnType<typeof openai.chat.completions.create>>;
@@ -33,8 +28,8 @@ export async function generateVoicePreservedDraft(
     response = await withRetry(() => openai.chat.completions.create({
       model: AI_MODELS.chat,
       messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
+        { role: 'system', content: VOICE_DRAFT_SYSTEM_PROMPT },
+        { role: 'user', content: buildVoiceDraftUserPrompt({ voiceSamples: safeVoiceSamples, documentContext: safeDocContext, prompt: safePrompt }) },
       ],
       temperature: AI_TEMPERATURES.voiceDraft,
     }));
@@ -80,11 +75,11 @@ export async function detectVoiceDrift(
       messages: [
         {
           role: 'system',
-          content: 'You compare generated writing to transcript voice patterns and detect drift. Return only valid JSON.',
+          content: VOICE_DRIFT_SYSTEM_PROMPT,
         },
         {
           role: 'user',
-          content: `Analyze whether this generated draft has drifted from the speaker's natural voice.\n\nVOICE SAMPLES:\n${safeVoiceSamples}\n\nGENERATED DRAFT:\n${safeDraft}\n\nReturn JSON:\n{\n  "hasDrift": true/false,\n  "details": "specific explanation of what drifted or why it matches",\n  "rewriteSuggestion": "optional short suggestion closer to voice"\n}`,
+          content: buildVoiceDriftUserPrompt({ voiceSamples: safeVoiceSamples, draft: safeDraft }),
         },
       ],
       response_format: { type: 'json_object' },

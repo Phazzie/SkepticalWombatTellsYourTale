@@ -47,7 +47,7 @@ test('generateVoiceDraft returns draft and drift info', async () => {
 
   const ai: AiPort = {
     async analyzeTranscript() {
-      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
+      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], questionDetails: [], annotations: [] };
     },
     async generateQuestionsFromProjectContext() {
       return { questions: [], contractValidation: { isValid: true, issues: [] } };
@@ -81,7 +81,7 @@ test('generateVoiceDraft throws notFound when requested document does not exist'
 
   const ai: AiPort = {
     async analyzeTranscript() {
-      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
+      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], questionDetails: [], annotations: [] };
     },
     async generateQuestionsFromProjectContext() {
       return { questions: [], contractValidation: { isValid: true, issues: [] } };
@@ -121,7 +121,7 @@ test('generateVoiceDraft passes prompt/transcripts/document to ai port', async (
 
   const ai: AiPort = {
     async analyzeTranscript() {
-      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
+      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], questionDetails: [], annotations: [] };
     },
     async generateQuestionsFromProjectContext() {
       return { questions: [], contractValidation: { isValid: true, issues: [] } };
