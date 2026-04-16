@@ -381,7 +381,7 @@ export async function analyzeTranscript(
   const startTime = Date.now();
   let response: Awaited<ReturnType<typeof openai.chat.completions.create>>;
   try {
-    response = await withRetry(() => openai.chat.completions.create({
+    response = await withRetry((signal) => openai.chat.completions.create({
       model: AI_MODELS.chat,
       messages: [
         { role: 'system', content: systemPrompt },
@@ -389,7 +389,7 @@ export async function analyzeTranscript(
       ],
       response_format: { type: 'json_object' },
       temperature: AI_TEMPERATURES.analysis,
-    }));
+    }, { signal }));
     log('info', 'analyzeTranscript success', {
       model: response.model,
       durationMs: Date.now() - startTime,

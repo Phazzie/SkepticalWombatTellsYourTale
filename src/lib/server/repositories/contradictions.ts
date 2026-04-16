@@ -15,10 +15,18 @@ export const contradictionsRepository = {
     return prisma.contradiction.findFirst({ where: { id: contradictionId, projectId } });
   },
 
-  updateStatus(contradictionId: string, status: string) {
-    return prisma.contradiction.update({
-      where: { id: contradictionId },
+  async updateStatus(contradictionId: string, projectId: string, status: string) {
+    const result = await prisma.contradiction.updateMany({
+      where: { id: contradictionId, projectId },
       data: { status },
+    });
+
+    if (result.count !== 1) {
+      throw new Error('Contradiction not found in project');
+    }
+
+    return prisma.contradiction.findFirst({
+      where: { id: contradictionId, projectId },
     });
   },
 };

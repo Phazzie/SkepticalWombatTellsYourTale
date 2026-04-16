@@ -62,7 +62,7 @@ export async function generateQuestionsFromProjectContext(
   const startTime = Date.now();
   let response: Awaited<ReturnType<typeof openai.chat.completions.create>>;
   try {
-    response = await withRetry(() => openai.chat.completions.create({
+    response = await withRetry((signal) => openai.chat.completions.create({
       model: AI_MODELS.chat,
       messages: [
         {
@@ -76,7 +76,7 @@ export async function generateQuestionsFromProjectContext(
       ],
       response_format: { type: 'json_object' },
       temperature: AI_TEMPERATURES.questions,
-    }));
+    }, { signal }));
     log('info', 'generateQuestionsFromProjectContext success', {
       model: response.model,
       durationMs: Date.now() - startTime,

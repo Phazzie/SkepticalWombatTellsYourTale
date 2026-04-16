@@ -8,11 +8,11 @@ export async function transcribeAudio(audioBuffer: Buffer, filename: string): Pr
   log('info', 'transcribeAudio start', { model: AI_MODELS.transcription, filename });
   const startTime = Date.now();
   try {
-    const response = await withRetry(() => openai.audio.transcriptions.create({
+    const response = await withRetry((signal) => openai.audio.transcriptions.create({
       file,
       model: AI_MODELS.transcription,
       response_format: 'text',
-    }));
+    }, { signal }));
     log('info', 'transcribeAudio success', { durationMs: Date.now() - startTime });
     return response;
   } catch (err) {

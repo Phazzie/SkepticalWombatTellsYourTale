@@ -40,6 +40,6 @@ export async function PATCH(
       throw notFound('Contradiction not found');
     }
 
-    return contradictionsRepository.updateStatus(body.contradictionId, body.status);
+    return contradictionsRepository.updateStatus(body.contradictionId, projectId, body.status);
   }, { request, operation: 'projects.contradictions.patch' });
 }

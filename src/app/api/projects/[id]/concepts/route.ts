@@ -29,7 +29,7 @@ export async function PATCH(
       throw notFound('Concept not found');
     }
 
-    return conceptsRepository.update(body.conceptId, {
+    return conceptsRepository.update(body.conceptId, projectId, {
       ...(typeof body.approved === 'boolean' ? { approved: body.approved } : {}),
       ...(typeof body.status === 'string' ? { status: body.status } : {}),
     });

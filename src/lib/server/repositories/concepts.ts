@@ -12,10 +12,22 @@ export const conceptsRepository = {
     return prisma.concept.findFirst({ where: { id: conceptId, projectId } });
   },
 
-  update(conceptId: string, data: { approved?: boolean; status?: string }) {
-    return prisma.concept.update({
-      where: { id: conceptId },
+  async update(
+    conceptId: string,
+    projectId: string,
+    data: { approved?: boolean; status?: string }
+  ) {
+    const result = await prisma.concept.updateMany({
+      where: { id: conceptId, projectId },
       data,
+    });
+
+    if (result.count !== 1) {
+      throw new Error('Concept not found in project');
+    }
+
+    return prisma.concept.findFirst({
+      where: { id: conceptId, projectId },
     });
   },
 };

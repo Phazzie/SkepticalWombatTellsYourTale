@@ -25,14 +25,14 @@ export async function generateVoicePreservedDraft(
   const startTime = Date.now();
   let response: Awaited<ReturnType<typeof openai.chat.completions.create>>;
   try {
-    response = await withRetry(() => openai.chat.completions.create({
+    response = await withRetry((signal) => openai.chat.completions.create({
       model: AI_MODELS.chat,
       messages: [
         { role: 'system', content: VOICE_DRAFT_SYSTEM_PROMPT },
         { role: 'user', content: buildVoiceDraftUserPrompt({ voiceSamples: safeVoiceSamples, documentContext: safeDocContext, prompt: safePrompt }) },
       ],
       temperature: AI_TEMPERATURES.voiceDraft,
-    }));
+    }, { signal }));
     log('info', 'generateVoicePreservedDraft success', {
       model: response.model,
       durationMs: Date.now() - startTime,
@@ -41,7 +41,7 @@ export async function generateVoicePreservedDraft(
     });
   } catch (err) {
     log('error', 'generateVoicePreservedDraft failed', { error: String(err), durationMs: Date.now() - startTime });
-    return '';
+    throw err;
   }
 
   return response.choices[0].message.content || '';
@@ -70,7 +70,7 @@ export async function detectVoiceDrift(
   const driftStartTime = Date.now();
   let driftResponse: Awaited<ReturnType<typeof openai.chat.completions.create>>;
   try {
-    driftResponse = await withRetry(() => openai.chat.completions.create({
+    driftResponse = await withRetry((signal) => openai.chat.completions.create({
       model: AI_MODELS.chat,
       messages: [
         {
@@ -84,7 +84,7 @@ export async function detectVoiceDrift(
       ],
       response_format: { type: 'json_object' },
       temperature: AI_TEMPERATURES.voiceDrift,
-    }));
+    }, { signal }));
     log('info', 'detectVoiceDrift success', {
       model: driftResponse.model,
       durationMs: Date.now() - driftStartTime,
@@ -93,7 +93,7 @@ export async function detectVoiceDrift(
     });
   } catch (err) {
     log('error', 'detectVoiceDrift failed', { error: String(err), durationMs: Date.now() - driftStartTime });
-    return { hasDrift: false, details: '', rewriteSuggestion: undefined };
+    return { hasDrift: false, details: 'drift detection unavailable', rewriteSuggestion: undefined };
   }
 
   const parsed = parseAiJsonObjectStrict({
