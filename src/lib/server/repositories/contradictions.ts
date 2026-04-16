@@ -22,7 +22,7 @@ export const contradictionsRepository = {
     });
 
     if (result.count !== 1) {
-      throw new Error('Contradiction not found in project');
+      throw new Error('Contradiction not found or does not belong to project');
     }
 
     return prisma.contradiction.findFirst({

@@ -23,7 +23,7 @@ function isTransientError(err: unknown): boolean {
  * withRetry((signal) => openai.chat.completions.create({...}, { signal }))
  */
 export async function withRetry<T>(
-  fn: (signal?: AbortSignal) => Promise<T>,
+  fn: (signal: AbortSignal) => Promise<T>,
   options?: { maxAttempts?: number; timeoutMs?: number }
 ): Promise<T> {
   const maxAttempts = options?.maxAttempts ?? DEFAULT_MAX_ATTEMPTS;

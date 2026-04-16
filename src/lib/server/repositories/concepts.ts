@@ -23,7 +23,7 @@ export const conceptsRepository = {
     });
 
     if (result.count !== 1) {
-      throw new Error('Concept not found in project');
+      throw new Error('Concept not found or does not belong to project');
     }
 
     return prisma.concept.findFirst({
