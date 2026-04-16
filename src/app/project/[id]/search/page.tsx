@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { AppHeader } from '@/components/layout/app-header';
 import { AppBackLink, Card, Container, PrimaryButton, Shell, TextInput } from '@/components/ui/primitives';
@@ -17,13 +17,16 @@ export default function SearchPage() {
   const [results, setResults] = useState<SearchResponse['results']>([]);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const searchingRef = useRef(false);
 
   const runSearch = async () => {
     if (!query.trim()) {
       setResults([]);
       return;
     }
+    if (searchingRef.current) return;
     setSearching(true);
+    searchingRef.current = true;
     setError(null);
     try {
       const { ok, status, data } = await requestJson<SearchResponse>(
@@ -44,6 +47,7 @@ export default function SearchPage() {
       setError('Search failed. Please try again.');
       setResults([]);
     } finally {
+      searchingRef.current = false;
       setSearching(false);
     }
   };
@@ -59,7 +63,7 @@ export default function SearchPage() {
           <TextInput
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && runSearch()}
+            onKeyDown={(e) => e.key === 'Enter' && !searchingRef.current && runSearch()}
             placeholder="Search project content..."
           />
           <PrimaryButton onClick={runSearch} disabled={searching}>

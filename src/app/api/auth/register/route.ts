@@ -21,6 +21,8 @@ export async function POST(request: Request) {
       throw badRequest('email must be a valid email address');
     }
 
+    enforceRateLimit(`register:email:${email}`, 5, 3_600_000);
+
     const existing = await usersRepository.findByEmail(email);
     if (existing) {
       throw badRequest('Unable to register with provided credentials');

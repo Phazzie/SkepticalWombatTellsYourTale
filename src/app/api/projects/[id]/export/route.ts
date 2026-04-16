@@ -27,7 +27,7 @@ export async function POST(
     }>(request);
     const normalizedLevel = typeof level === 'string' ? level : 'full';
     if (!isExportLevel(normalizedLevel)) {
-      throw badRequest('level must be one of: raw, structured, polished, full');
+      throw badRequest(`level must be one of: ${EXPORT_LEVELS.join(', ')}`);
     }
 
     const project = await exportRepository.getProjectForExport(projectId);
