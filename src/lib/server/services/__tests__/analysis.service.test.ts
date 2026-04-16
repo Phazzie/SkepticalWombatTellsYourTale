@@ -67,6 +67,7 @@ test('analyzeProjectSession orchestrates AI and persistence', async () => {
         gaps: [],
         contradictions: [],
         questions: [],
+        questionDetails: [],
         annotations: [],
       };
     },
@@ -110,6 +111,7 @@ test('analyzeProjectSession throws notFound when project context is missing', as
         gaps: [],
         contradictions: [],
         questions: [],
+        questionDetails: [],
         annotations: [],
       };
     },
@@ -165,6 +167,7 @@ test('analyzeProjectSession passes composed context and documents to ai port', a
         gaps: [],
         contradictions: [],
         questions: [],
+        questionDetails: [],
         annotations: [],
       };
     },

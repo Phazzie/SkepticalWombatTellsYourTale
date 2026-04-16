@@ -135,6 +135,7 @@ function normalizeAnalysisResult(value: unknown): AnalysisResult {
     gaps,
     contradictions,
     questions,
+    questionDetails: [],
     annotations,
     ...(documentSuggestion ? { documentSuggestion } : {}),
     ...(significance ? { significance } : {}),

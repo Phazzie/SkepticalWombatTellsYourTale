@@ -102,7 +102,7 @@ export interface AnalysisResult {
     reason: string;
   }>;
   questions: string[];
-  questionDetails?: Array<{
+  questionDetails: Array<{
     text: string;
     contextAnchor: string;
   }>;

@@ -1,10 +1,8 @@
-import { prisma } from '@/lib/db';
 import { handleRoute } from '@/lib/server/http';
-import { requireUser } from '@/lib/server/auth';
-import { requireProjectAccess } from '@/lib/server/services/project-access';
 import { badRequest, notFound } from '@/lib/server/errors';
-import { parseAiAnnotations } from '@/lib/server/mappers/ai-annotations';
-import { parseExportIncludeFlag } from '@/lib/server/routes/export';
+import { requireProjectHandler } from '@/lib/server/route-guard';
+import { exportRepository } from '@/lib/server/repositories/export';
+import { buildExportMarkdown } from '@/lib/server/export-renderer';
 import { parseJsonBody } from '@/lib/server/validation';
 import { EXPORT_LEVELS, type ExportLevel } from '@/lib/types';
 
@@ -19,9 +17,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   return handleRoute(async () => {
-    const { userId } = await requireUser();
-    const { id } = await params;
-    await requireProjectAccess(id, userId);
+    const { projectId } = await requireProjectHandler(params);
 
     const { level, includeTranscripts, includeAnnotations, includeGaps } = await parseJsonBody<{
       level?: unknown;
@@ -33,77 +29,18 @@ export async function POST(
     if (!isExportLevel(normalizedLevel)) {
       throw badRequest(`level must be one of: ${EXPORT_LEVELS.join(', ')}`);
     }
-    const shouldIncludeTranscripts = parseExportIncludeFlag(includeTranscripts, 'includeTranscripts');
-    const shouldIncludeAnnotations = parseExportIncludeFlag(includeAnnotations, 'includeAnnotations');
-    const shouldIncludeGaps = parseExportIncludeFlag(includeGaps, 'includeGaps');
 
-    const project = await prisma.project.findUnique({
-      where: { id },
-      include: {
-        documents: true,
-        sessions: { orderBy: { createdAt: 'asc' } },
-        tangents: true,
-        patterns: true,
-        gaps: true,
-      },
-    });
-
+    const project = await exportRepository.getProjectForExport(projectId);
     if (!project) {
       throw notFound('Project not found');
     }
 
-    let content = `# ${project.name}\n`;
-    if (project.description) content += `\n${project.description}\n`;
-    content += `\nExported: ${new Date().toLocaleString()}\nExport level: ${normalizedLevel}\n\n---\n\n`;
-
-    if (project.documents.length > 0) {
-      content += '# Documents\n\n';
-      for (const doc of project.documents) {
-        content += `## ${doc.name} [${doc.type}]\n\n`;
-        content += doc.content ? `${doc.content}\n\n` : '*No content yet*\n\n';
-        content += '---\n\n';
-      }
-    }
-
-    if ((normalizedLevel === 'raw' || normalizedLevel === 'full' || shouldIncludeTranscripts) && project.sessions.length > 0) {
-      content += '# Raw Voice Transcripts\n\n';
-      for (const session of project.sessions) {
-        content += `## Session — ${new Date(session.createdAt).toLocaleString()}\n\n`;
-        content += `${session.transcript}\n\n`;
-
-        if (shouldIncludeAnnotations) {
-          const annotations = parseAiAnnotations(session.aiAnnotations);
-          if (annotations.length > 0) {
-            content += '### AI Notes\n\n';
-            for (const ann of annotations) {
-              content += `- **[${ann.type}]** ${ann.text}\n`;
-            }
-            content += '\n';
-          }
-        }
-        content += '---\n\n';
-      }
-    }
-
-    if (shouldIncludeGaps || normalizedLevel === 'full') {
-      const openGaps = project.gaps.filter((g) => !g.resolved);
-      if (openGaps.length > 0) {
-        content += '# Open Gaps\n\n';
-        for (const gap of openGaps) {
-          content += `- ${gap.description}${gap.documentRef ? ` *(${gap.documentRef})*` : ''}\n`;
-        }
-        content += '\n';
-      }
-
-      const pendingTangents = project.tangents.filter((t) => t.status === 'pending');
-      if (pendingTangents.length > 0) {
-        content += '# Dropped Threads\n\n';
-        for (const t of pendingTangents) {
-          content += `- **${t.thread}**: "${t.context}"\n`;
-        }
-        content += '\n';
-      }
-    }
+    const content = buildExportMarkdown(project, {
+      level: normalizedLevel,
+      includeTranscripts: includeTranscripts === true,
+      includeAnnotations: includeAnnotations === true,
+      includeGaps: includeGaps === true,
+    });
 
     return new Response(content, {
       headers: {

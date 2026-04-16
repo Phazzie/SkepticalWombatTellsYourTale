@@ -25,8 +25,8 @@ export default function SearchPage() {
       return;
     }
     if (searchingRef.current) return;
-    searchingRef.current = true;
     setSearching(true);
+    searchingRef.current = true;
     setError(null);
     try {
       const { ok, status, data } = await requestJson<SearchResponse>(

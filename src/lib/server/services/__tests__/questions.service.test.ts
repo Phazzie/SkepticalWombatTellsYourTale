@@ -74,7 +74,7 @@ test('generateQuestions persists AI-generated questions', async () => {
 
   const ai: AiPort = {
     async analyzeTranscript() {
-      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
+      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], questionDetails: [], annotations: [] };
     },
     async generateQuestionsFromProjectContext() {
       return {
@@ -160,7 +160,7 @@ test('generateQuestions throws notFound when project context is missing', async 
 
   const ai: AiPort = {
     async analyzeTranscript() {
-      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
+      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], questionDetails: [], annotations: [] };
     },
     async generateQuestionsFromProjectContext() {
       return { questions: [], contractValidation: { isValid: true, issues: [] } };
@@ -202,7 +202,7 @@ test('generateQuestions returns empty list when ai returns no candidates', async
 
   const ai: AiPort = {
     async analyzeTranscript() {
-      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
+      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], questionDetails: [], annotations: [] };
     },
     async generateQuestionsFromProjectContext() {
       return { questions: [], contractValidation: { isValid: true, issues: [] } };
@@ -247,7 +247,7 @@ test('generateQuestions returns validation metadata and avoids persistence when 
 
   const ai: AiPort = {
     async analyzeTranscript() {
-      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
+      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], questionDetails: [], annotations: [] };
     },
     async generateQuestionsFromProjectContext() {
       return {

@@ -1,6 +1,5 @@
 import { handleRoute } from '@/lib/server/http';
-import { requireUser } from '@/lib/server/auth';
-import { requireProjectAccess } from '@/lib/server/services/project-access';
+import { requireProjectHandler } from '@/lib/server/route-guard';
 import { badRequest, notFound } from '@/lib/server/errors';
 import { analysisRepository } from '@/lib/server/repositories/analysis';
 import { parseJsonBody } from '@/lib/server/validation';
@@ -13,9 +12,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string; tangentId: string }> }
 ) {
   return handleRoute(async () => {
-    const { userId } = await requireUser();
-    const { id, tangentId } = await params;
-    await requireProjectAccess(id, userId);
+    const { projectId, tangentId } = await requireProjectHandler(params);
 
     const body = await parseJsonBody<{ status?: unknown }>(request);
     const status = body.status;
@@ -24,7 +21,7 @@ export async function PATCH(
       throw badRequest(`Invalid payload. \`status\` must be one of: ${VALID_STATUSES.join(', ')}`);
     }
 
-    const result = await analysisRepository.updateTangentStatus(id, tangentId, status as TangentStatus);
+    const result = await analysisRepository.updateTangentStatus(projectId, tangentId, status as TangentStatus);
     if (result.count === 0) {
       throw notFound('Tangent not found');
     }

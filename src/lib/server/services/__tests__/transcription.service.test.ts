@@ -21,7 +21,7 @@ test('transcribeAndCreateSession stores ai transcript and passes questionId', as
 
   const ai: AiPort = {
     async analyzeTranscript() {
-      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
+      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], questionDetails: [], annotations: [] };
     },
     async generateQuestionsFromProjectContext() {
       return { questions: [], contractValidation: { isValid: true, issues: [] } };
@@ -67,7 +67,7 @@ test('transcribeAndCreateSession falls back when ai transcription fails', async 
 
   const ai: AiPort = {
     async analyzeTranscript() {
-      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], annotations: [] };
+      return { tangents: [], patterns: [], gaps: [], contradictions: [], questions: [], questionDetails: [], annotations: [] };
     },
     async generateQuestionsFromProjectContext() {
       return { questions: [], contractValidation: { isValid: true, issues: [] } };
