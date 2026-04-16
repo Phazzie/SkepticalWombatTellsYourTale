@@ -70,3 +70,35 @@ test('questions body parser returns 400 on malformed JSON', async () => {
     (error: unknown) => error instanceof AppError && error.status === 400
   );
 });
+
+test('parseQuestionsPostBody defaults to generate action when action is absent', async () => {
+  const { body, action } = await parseQuestionsPostBody(
+    new Request('http://localhost/api/projects/p1/questions', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+  );
+  assert.equal(action, 'generate');
+  assert.equal(body.action, undefined);
+});
+
+test('parseQuestionsPostBody returns action and payload for update request', async () => {
+  const { body, action } = await parseQuestionsPostBody(
+    new Request('http://localhost/api/projects/p1/questions', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ action: 'update', questionId: 'q1', status: 'answered' }),
+    })
+  );
+  assert.equal(action, 'update');
+  assert.equal(body.questionId, 'q1');
+  assert.equal(body.status, 'answered');
+});
+
+test('questions schema rejects invalid status value', () => {
+  assert.throws(
+    () => validateSchema({ action: 'update', questionId: 'q1', status: 'unknown' }, questionsPostSchema),
+    /payload\.status must be one of: pending, answered, dismissed/
+  );
+});
