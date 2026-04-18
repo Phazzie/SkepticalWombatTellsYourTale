@@ -29,6 +29,7 @@
    - allows manual **production** deploy (`workflow_dispatch`) with explicit confirmation
    - waits for rollout using `DEPLOY_WAIT_SECONDS` repository variable (default `45`)
    - executes smoke checks after deploy
+   - note: rollout waiting is currently time-based (fixed sleep), so tune `DEPLOY_WAIT_SECONDS` to your platform behavior; add deployment-status polling as a follow-up hardening step
 
 ## Staging smoke-test scope
 

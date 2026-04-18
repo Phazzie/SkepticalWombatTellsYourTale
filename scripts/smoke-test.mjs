@@ -5,6 +5,7 @@ if (!baseUrl) {
   process.exit(1);
 }
 
+// expectedStatuses is intentionally an array so callers can expand checks that tolerate multiple valid outcomes.
 const checks = [
   { name: 'home page', path: '/', expectedStatuses: [200] },
   { name: 'sign-in page', path: '/sign-in', expectedStatuses: [200] },

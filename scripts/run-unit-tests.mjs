@@ -2,7 +2,7 @@ import { readdirSync, statSync } from 'node:fs';
 import { join, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
-const TEST_DIR_TOKEN = `${sep}__tests__${sep}`;
+const TEST_DIR_PATH_SEGMENT = `${sep}__tests__${sep}`;
 
 function collectTestFiles(root) {
   const stack = [root];
@@ -21,7 +21,7 @@ function collectTestFiles(root) {
         continue;
       }
 
-      if (fullPath.includes(TEST_DIR_TOKEN) && fullPath.endsWith('.test.ts')) {
+      if (fullPath.includes(TEST_DIR_PATH_SEGMENT) && fullPath.endsWith('.test.ts')) {
         tests.push(fullPath);
       }
     }
