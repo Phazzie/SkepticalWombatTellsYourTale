@@ -66,7 +66,7 @@ jobs:
   deploy-production:
     name: Deploy Production
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'production' && github.event.inputs.confirm_production == 'deploy'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.event.inputs.target == 'production' && github.event.inputs.confirm_production == 'deploy'
     environment: production
     steps:
       - name: Checkout
