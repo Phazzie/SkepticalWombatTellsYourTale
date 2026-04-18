@@ -41,7 +41,7 @@ jobs:
     name: Dependency Audit (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: file:./dev.db
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/skeptical_wombat?schema=public
     strategy:
       fail-fast: false
       matrix:

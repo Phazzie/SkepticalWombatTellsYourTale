@@ -21,7 +21,7 @@
 
 - **Framework**: Next.js 15 (App Router) + TypeScript
 - **Styling**: Tailwind CSS
-- **Database**: SQLite via Prisma
+- **Database**: PostgreSQL via Prisma (recommended for Vercel hosting)
 - **AI**: OpenAI GPT-4o (analysis) + Whisper (transcription)
 - **Voice**: MediaRecorder API + Web Speech API (live preview)
 
@@ -106,12 +106,21 @@ This repository includes `.github/workflows/deploy.yml`:
 
 Configure deployment secrets before enabling the workflow:
 
-- `DEPLOY_STAGING_WEBHOOK_URL`
+- `VERCEL_STAGING_DEPLOY_HOOK_URL`
 - `STAGING_APP_URL`
-- `DEPLOY_PRODUCTION_WEBHOOK_URL`
+- `VERCEL_PRODUCTION_DEPLOY_HOOK_URL`
 - `PRODUCTION_APP_URL`
 
 Runbook: `docs/deployment-runbook.md`
+
+### Vercel launch checklist
+
+- [x] Prisma provider switched to PostgreSQL.
+- [x] Deploy workflow wired to Vercel deploy hooks + smoke tests.
+- [ ] Create managed Postgres database and copy pooled `DATABASE_URL` into Vercel project envs.
+- [ ] Set Vercel env vars: `DATABASE_URL`, `OPENAI_API_KEY`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`.
+- [ ] Create deploy hooks and configure GitHub secrets listed above.
+- [ ] Run first staging deploy and rollback drill.
 
 ### CI failure triage flow
 

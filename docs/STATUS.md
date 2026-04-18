@@ -49,6 +49,23 @@
   - deployment/env ownership runbook: `docs/deployment-runbook.md`
   - expanded `.env.example` with `NEXTAUTH_SECRET` and `NEXTAUTH_URL`
 
+## Update — 2026-04-18 (Vercel hosting alignment + DB switch)
+- Hosting target locked to **Vercel**.
+- Prisma datasource migrated from **SQLite** to **PostgreSQL** to align with Vercel runtime constraints.
+- CI/security/release workflows updated to use PostgreSQL-style `DATABASE_URL` defaults for Prisma validation jobs.
+- Deploy workflow standardized around Vercel deploy hook secrets:
+  - `VERCEL_STAGING_DEPLOY_HOOK_URL`
+  - `VERCEL_PRODUCTION_DEPLOY_HOOK_URL`
+
+### Vercel rollout checklist (remaining + completed)
+- [x] Switch Prisma provider to PostgreSQL.
+- [x] Update env defaults/docs/scripts for PostgreSQL + NextAuth production variables.
+- [x] Wire deployment automation to Vercel deploy hooks + post-deploy smoke tests.
+- [ ] Provision managed Postgres instance and set `DATABASE_URL` in Vercel.
+- [ ] Configure all required Vercel project environment variables (`DATABASE_URL`, `OPENAI_API_KEY`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`).
+- [ ] Create Vercel deploy hooks and set GitHub secrets (`VERCEL_STAGING_DEPLOY_HOOK_URL`, `VERCEL_PRODUCTION_DEPLOY_HOOK_URL`, `STAGING_APP_URL`, `PRODUCTION_APP_URL`).
+- [ ] Execute first staging deploy + smoke + rollback drill.
+
 ### Phase verdicts (current)
 | Phase | Verdict | Notes |
 | --- | --- | --- |
@@ -165,9 +182,9 @@
   - `src/lib/server/mappers/session-refs.ts`
 
 ### Required release-gate commands (schema/data)
-- `DATABASE_URL='file:./dev.db' npx prisma validate`
-- `DATABASE_URL='file:./dev.db' npx prisma format --check`
-- `DATABASE_URL='file:./dev.db' npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > /tmp/prisma-schema.sql`
+- `DATABASE_URL='postgresql://postgres:postgres@localhost:5432/skeptical_wombat?schema=public' npx prisma validate`
+- `DATABASE_URL='postgresql://postgres:postgres@localhost:5432/skeptical_wombat?schema=public' npx prisma format --check`
+- `DATABASE_URL='postgresql://postgres:postgres@localhost:5432/skeptical_wombat?schema=public' npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > /tmp/prisma-schema.sql`
 
 ---
 
