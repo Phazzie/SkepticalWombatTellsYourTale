@@ -35,7 +35,7 @@ function collectTests(root) {
 const testFiles = collectTests('src');
 
 if (testFiles.length === 0) {
-  console.error('No unit tests found under src/**/__tests__/*.test.ts');
+  console.error('No unit tests found under src/**/__tests__/*.test.ts. Ensure test files follow that pattern.');
   process.exit(1);
 }
 

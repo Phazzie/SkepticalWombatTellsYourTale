@@ -40,6 +40,9 @@
   - replaced brittle unit test glob invocation with deterministic script runner (`scripts/run-unit-tests.mjs`)
   - updated `next` and `eslint-config-next` to `15.5.15` to clear current high advisory signal
   - updated `npm test` to run verify + unit tests so local and CI expectations are aligned
+- Resolution approach summary:
+  - CI quality failures were addressed by removing shell-dependent test discovery and replacing it with deterministic test file enumeration.
+  - Security dependency-audit failures were addressed with patch-level framework upgrades within the same major/minor release line.
 - Added deployment readiness artifacts:
   - new deploy automation workflow: `.github/workflows/deploy.yml`
   - post-deploy smoke suite: `scripts/smoke-test.mjs`

@@ -4,7 +4,7 @@
 
 - **Hosting mode:** single-instance deployment with persistent disk (compatible with SQLite).
 - **Database mode:** SQLite persisted on mounted storage for private-beta scale.
-- **Scale trigger:** if horizontal scaling or zero-downtime multi-instance deploys are required, migrate Prisma datasource to managed Postgres before scaling out.
+- **Scale trigger:** if horizontal scaling or zero-downtime multi-instance deployments are required, migrate Prisma datasource to managed Postgres before scaling out.
 
 ## Ownership and required environment variables
 

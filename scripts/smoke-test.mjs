@@ -1,7 +1,7 @@
 const baseUrl = process.env.APP_URL;
 
 if (!baseUrl) {
-  console.error('Missing APP_URL environment variable for smoke test run.');
+  console.error('Missing APP_URL. Example: APP_URL=https://staging.example.com node scripts/smoke-test.mjs');
   process.exit(1);
 }
 

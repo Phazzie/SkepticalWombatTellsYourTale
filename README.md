@@ -43,7 +43,7 @@ Copy `.env.example` to `.env` and set required values:
 
 ```bash
 cp .env.example .env
-# Required for production auth/session security:
+# Required in all environments:
 # - NEXTAUTH_SECRET
 # - NEXTAUTH_URL
 # Required for AI features:
@@ -51,6 +51,8 @@ cp .env.example .env
 # Required for persistence:
 # - DATABASE_URL
 ```
+
+Use a strong random value for `NEXTAUTH_SECRET` in production.
 
 ### Database
 
