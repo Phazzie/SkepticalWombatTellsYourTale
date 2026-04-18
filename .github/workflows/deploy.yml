@@ -1,0 +1,96 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows:
+      - Release Readiness
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Deployment target
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: staging
+      confirm_production:
+        description: Type "deploy" to confirm production release
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-staging:
+    name: Deploy Staging
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'staging')
+    environment: staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate staging deployment configuration
+        env:
+          DEPLOY_COMMAND: ${{ secrets.DEPLOY_STAGING_COMMAND }}
+          APP_URL: ${{ secrets.STAGING_APP_URL }}
+        run: |
+          test -n "$DEPLOY_COMMAND" || (echo "Missing DEPLOY_STAGING_COMMAND secret" && exit 1)
+          test -n "$APP_URL" || (echo "Missing STAGING_APP_URL secret" && exit 1)
+
+      - name: Run staging deployment command
+        env:
+          DEPLOY_COMMAND: ${{ secrets.DEPLOY_STAGING_COMMAND }}
+        run: bash -lc "$DEPLOY_COMMAND"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Run staging smoke tests
+        env:
+          APP_URL: ${{ secrets.STAGING_APP_URL }}
+        run: node scripts/smoke-test.mjs
+
+  deploy-production:
+    name: Deploy Production
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'production' && github.event.inputs.confirm_production == 'deploy'
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate production deployment configuration
+        env:
+          DEPLOY_COMMAND: ${{ secrets.DEPLOY_PRODUCTION_COMMAND }}
+          APP_URL: ${{ secrets.PRODUCTION_APP_URL }}
+        run: |
+          test -n "$DEPLOY_COMMAND" || (echo "Missing DEPLOY_PRODUCTION_COMMAND secret" && exit 1)
+          test -n "$APP_URL" || (echo "Missing PRODUCTION_APP_URL secret" && exit 1)
+
+      - name: Run production deployment command
+        env:
+          DEPLOY_COMMAND: ${{ secrets.DEPLOY_PRODUCTION_COMMAND }}
+        run: bash -lc "$DEPLOY_COMMAND"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Run production smoke tests
+        env:
+          APP_URL: ${{ secrets.PRODUCTION_APP_URL }}
+        run: node scripts/smoke-test.mjs

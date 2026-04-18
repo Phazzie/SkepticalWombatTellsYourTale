@@ -39,11 +39,17 @@ npm install
 
 ### Environment
 
-Copy `.env.example` to `.env` and fill in your OpenAI API key:
+Copy `.env.example` to `.env` and set required values:
 
 ```bash
 cp .env.example .env
-# Edit .env and set OPENAI_API_KEY=your-key-here
+# Required for production auth/session security:
+# - NEXTAUTH_SECRET
+# - NEXTAUTH_URL
+# Required for AI features:
+# - OPENAI_API_KEY
+# Required for persistence:
+# - DATABASE_URL
 ```
 
 ### Database
@@ -82,10 +88,28 @@ Set these checks as **required** in branch protection for `main` so merges are b
 npm ci
 npm run lint
 npm run build
+npm run test:unit
 npx prisma validate
 npx prisma format --check
 npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > /tmp/prisma-schema.sql
 ```
+
+## Deployment
+
+This repository includes `.github/workflows/deploy.yml`:
+
+- **Staging deploy** auto-triggers after a successful `Release Readiness` run on `main`.
+- **Production deploy** is manual via `workflow_dispatch` with explicit confirmation.
+- Both deployments run `npm run smoke:test` against the deployed URL.
+
+Configure deployment secrets before enabling the workflow:
+
+- `DEPLOY_STAGING_COMMAND`
+- `STAGING_APP_URL`
+- `DEPLOY_PRODUCTION_COMMAND`
+- `PRODUCTION_APP_URL`
+
+Runbook: `docs/deployment-runbook.md`
 
 ### CI failure triage flow
 

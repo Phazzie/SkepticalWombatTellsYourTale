@@ -31,6 +31,21 @@
   - moved Prisma checks earlier in `release-readiness.yml`,
   - added Prisma validate/format checks to `security.yml` dependency-audit job.
 
+## Update — 2026-04-18 (CI audit + deployability implementation)
+- Completed run-history audit using GitHub Actions runs/logs for latest 10 runs:
+  - `ci.yml`: 0/10 successful (failure cause: `npm run test:unit` glob path resolution in CI shell)
+  - `security.yml`: 2/10 successful (failure cause: `npm audit --audit-level=high` reporting a high advisory on `next@15.5.14`)
+  - `release-readiness.yml`: 10/10 successful
+- Implemented CI/security remediations:
+  - replaced brittle unit test glob invocation with deterministic script runner (`scripts/run-unit-tests.mjs`)
+  - updated `next` and `eslint-config-next` to `15.5.15` to clear current high advisory signal
+  - updated `npm test` to run verify + unit tests so local and CI expectations are aligned
+- Added deployment readiness artifacts:
+  - new deploy automation workflow: `.github/workflows/deploy.yml`
+  - post-deploy smoke suite: `scripts/smoke-test.mjs`
+  - deployment/env ownership runbook: `docs/deployment-runbook.md`
+  - expanded `.env.example` with `NEXTAUTH_SECRET` and `NEXTAUTH_URL`
+
 ### Phase verdicts (current)
 | Phase | Verdict | Notes |
 | --- | --- | --- |
@@ -38,13 +53,13 @@
 | Phase 7 — Security, privacy, risk register | **Pass (with monitoring follow-up)** | Identified route/API hardening blockers were remediated; continue CI security monitoring and risk-register upkeep. |
 
 ### Workflow-run evidence snapshot (GitHub Actions)
-- Latest 10 runs in each tracked workflow are all green at time of review:
-  - `ci.yml`: 10/10 successful
+- Latest 10 runs at 2026-04-18 audit time:
+  - `ci.yml`: 0/10 successful (all failing at unit-test command resolution)
   - `release-readiness.yml`: 10/10 successful
-  - `security.yml`: 10/10 successful
-- Latest known historical failure signatures reviewed:
-  - CI Node18 job failure signature: `crypto is not defined` in `request-context` test path (now remediated in current code path via `node:crypto` usage).
-  - Release-readiness failure signature: Prisma formatting check failure (`npx prisma format --check`) on unformatted schema (workflow now runs Prisma checks earlier in gate sequence).
+  - `security.yml`: 2/10 successful (dependency-audit failing due to Next.js advisory)
+- Remediation committed in this branch:
+  - `test:unit` execution path hardened for CI shell behavior
+  - Next.js patch-level upgrade applied to address audit failure root cause
 
 ## Readiness rubric
 
@@ -190,12 +205,14 @@
 - [x] `npm run build` passes locally
 - [x] `npm run test:unit` passes locally
 - [x] Prisma local checks re-run in this exact pass (`validate`, `format --check`, schema diff)
-- [ ] CI run-history pass-rate audit complete (phase 6 sustained-pass evidence still pending)
+- [x] CI run-history pass-rate audit complete (root causes identified and remediations implemented in-branch)
+- [ ] CI sustained-pass evidence post-remediation confirmed on default branch
 - [x] Security/risk gate sign-off complete for current P0 blockers (phase 7)
 - [ ] Staging deploy + smoke + rollback drill complete (phase 8+)
+- [ ] Production deployment rehearsal via `.github/workflows/deploy.yml` complete
 
 ## Next actions (phase 6+)
-1. Run CI run-history audit and flake remediation loop.
-2. Complete security/risk register gate and sign-off.
-3. Execute staging runbook + smoke test + rollback drill.
-4. Ship private beta with metric monitoring.
+1. Confirm sustained green trend in `ci.yml` and `security.yml` after current remediations merge.
+2. Configure deployment secrets and environments for `deploy.yml`.
+3. Execute staging deploy + smoke + rollback drill from `docs/deployment-runbook.md`.
+4. Run first production deployment rehearsal with explicit confirmation gate.
