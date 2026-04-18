@@ -3,7 +3,7 @@
 ## Target strategy (current)
 
 - **Hosting mode:** single-instance deployment with persistent disk (compatible with SQLite).
-- **Database mode:** SQLite persisted on mounted storage for private-beta scale.
+- **Database mode:** SQLite persisted on mounted storage for private beta scale.
 - **Scale trigger:** if horizontal scaling or zero-downtime multi-instance deployments are required, migrate Prisma datasource to managed Postgres before scaling out.
 
 ## Ownership and required environment variables
@@ -27,6 +27,7 @@
 4. `Deploy` workflow:
    - auto-deploys **staging** after successful `Release Readiness` on `main`
    - allows manual **production** deploy (`workflow_dispatch`) with explicit confirmation
+   - waits for rollout using `DEPLOY_WAIT_SECONDS` repository variable (default `45`)
    - executes smoke checks after deploy
 
 ## Staging smoke-test scope

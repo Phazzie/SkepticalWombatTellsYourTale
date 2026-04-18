@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 
 const TEST_DIR_TOKEN = `${sep}__tests__${sep}`;
 
-function collectTests(root) {
+function collectTestFiles(root) {
   const stack = [root];
   const tests = [];
 
@@ -30,7 +30,7 @@ function collectTests(root) {
   return tests.sort();
 }
 
-const testFiles = collectTests('src');
+const testFiles = collectTestFiles('src');
 
 if (testFiles.length === 0) {
   console.error('No unit tests found under src/**/__tests__/*.test.ts. Ensure test files follow that pattern.');
