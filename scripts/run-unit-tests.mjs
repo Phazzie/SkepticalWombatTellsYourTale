@@ -42,4 +42,17 @@ const result = spawnSync('npx', ['tsx', '--test', ...testFiles], {
   shell: process.platform === 'win32',
 });
 
-process.exit(result.status ?? 1);
+if (result.error) {
+  console.error(`Failed to execute unit test runner: ${result.error.message}`);
+  process.exit(1);
+}
+
+if (typeof result.status === 'number') {
+  process.exit(result.status);
+}
+
+if (result.signal) {
+  console.error(`Unit test runner terminated by signal: ${result.signal}`);
+}
+
+process.exit(1);

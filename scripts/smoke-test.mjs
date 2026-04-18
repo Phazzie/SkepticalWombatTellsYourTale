@@ -34,8 +34,8 @@ for (const check of checks) {
 
     console.log(`✓ ${check.name} (${response.status})`);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    failures.push(`${check.name}: request failed (${url}) :: ${message}`);
+    const details = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    failures.push(`${check.name}: request failed (${url}) :: ${details}`);
   }
 }
 
