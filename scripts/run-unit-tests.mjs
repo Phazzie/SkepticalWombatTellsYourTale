@@ -19,10 +19,6 @@ function collectTests(root) {
         continue;
       }
 
-      if (!fullPath.includes(`${join('src', '')}`)) {
-        continue;
-      }
-
       if (fullPath.includes(`${join('__tests__', '')}`) && fullPath.endsWith('.test.ts')) {
         tests.push(fullPath);
       }

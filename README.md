@@ -106,9 +106,9 @@ This repository includes `.github/workflows/deploy.yml`:
 
 Configure deployment secrets before enabling the workflow:
 
-- `DEPLOY_STAGING_COMMAND`
+- `DEPLOY_STAGING_WEBHOOK_URL`
 - `STAGING_APP_URL`
-- `DEPLOY_PRODUCTION_COMMAND`
+- `DEPLOY_PRODUCTION_WEBHOOK_URL`
 - `PRODUCTION_APP_URL`
 
 Runbook: `docs/deployment-runbook.md`

@@ -42,16 +42,16 @@ jobs:
 
       - name: Validate staging deployment configuration
         env:
-          DEPLOY_COMMAND: ${{ secrets.DEPLOY_STAGING_COMMAND }}
+          DEPLOY_WEBHOOK_URL: ${{ secrets.DEPLOY_STAGING_WEBHOOK_URL }}
           APP_URL: ${{ secrets.STAGING_APP_URL }}
         run: |
-          test -n "$DEPLOY_COMMAND" || (echo "Missing DEPLOY_STAGING_COMMAND secret" && exit 1)
+          test -n "$DEPLOY_WEBHOOK_URL" || (echo "Missing DEPLOY_STAGING_WEBHOOK_URL secret" && exit 1)
           test -n "$APP_URL" || (echo "Missing STAGING_APP_URL secret" && exit 1)
 
-      - name: Run staging deployment command
+      - name: Trigger staging deployment webhook
         env:
-          DEPLOY_COMMAND: ${{ secrets.DEPLOY_STAGING_COMMAND }}
-        run: bash -lc "$DEPLOY_COMMAND"
+          DEPLOY_WEBHOOK_URL: ${{ secrets.DEPLOY_STAGING_WEBHOOK_URL }}
+        run: curl -fsS -X POST "$DEPLOY_WEBHOOK_URL"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -74,16 +74,16 @@ jobs:
 
       - name: Validate production deployment configuration
         env:
-          DEPLOY_COMMAND: ${{ secrets.DEPLOY_PRODUCTION_COMMAND }}
+          DEPLOY_WEBHOOK_URL: ${{ secrets.DEPLOY_PRODUCTION_WEBHOOK_URL }}
           APP_URL: ${{ secrets.PRODUCTION_APP_URL }}
         run: |
-          test -n "$DEPLOY_COMMAND" || (echo "Missing DEPLOY_PRODUCTION_COMMAND secret" && exit 1)
+          test -n "$DEPLOY_WEBHOOK_URL" || (echo "Missing DEPLOY_PRODUCTION_WEBHOOK_URL secret" && exit 1)
           test -n "$APP_URL" || (echo "Missing PRODUCTION_APP_URL secret" && exit 1)
 
-      - name: Run production deployment command
+      - name: Trigger production deployment webhook
         env:
-          DEPLOY_COMMAND: ${{ secrets.DEPLOY_PRODUCTION_COMMAND }}
-        run: bash -lc "$DEPLOY_COMMAND"
+          DEPLOY_WEBHOOK_URL: ${{ secrets.DEPLOY_PRODUCTION_WEBHOOK_URL }}
+        run: curl -fsS -X POST "$DEPLOY_WEBHOOK_URL"
 
       - name: Setup Node
         uses: actions/setup-node@v4

@@ -14,9 +14,9 @@
 | `OPENAI_API_KEY` | app runtime | Engineering | AI analysis/transcription features |
 | `NEXTAUTH_SECRET` | app runtime | Engineering/Security | Session/JWT signing |
 | `NEXTAUTH_URL` | app runtime | Engineering | Canonical auth callback URL |
-| `DEPLOY_STAGING_COMMAND` | GitHub Actions secret | Platform/DevOps | Staging deployment command |
+| `DEPLOY_STAGING_WEBHOOK_URL` | GitHub Actions secret | Platform/DevOps | Staging deployment webhook endpoint |
 | `STAGING_APP_URL` | GitHub Actions secret | Platform/DevOps | Smoke-test target for staging |
-| `DEPLOY_PRODUCTION_COMMAND` | GitHub Actions secret | Platform/DevOps | Production deployment command |
+| `DEPLOY_PRODUCTION_WEBHOOK_URL` | GitHub Actions secret | Platform/DevOps | Production deployment webhook endpoint |
 | `PRODUCTION_APP_URL` | GitHub Actions secret | Platform/DevOps | Smoke-test target for production |
 
 ## CI/CD path
