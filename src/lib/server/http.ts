@@ -46,28 +46,24 @@ export function fail(error: unknown, context?: { request?: Request; operation?: 
 
 export async function handleRoute<T>(fn: () => Promise<T>, context?: { request?: Request; operation?: string }) {
   const correlationId = getCorrelationId(context?.request);
-  try {
-    const data = await runWithRequestContext(
-      {
-        correlationId,
-        path: context?.request ? new URL(context.request.url).pathname : undefined,
-      },
-      () => fn()
-    );
-    if (data instanceof Response) {
-      data.headers.set('X-Correlation-Id', correlationId);
-      return data;
+  return runWithRequestContext(
+    {
+      correlationId,
+      path: context?.request ? new URL(context.request.url).pathname : undefined,
+    },
+    async () => {
+      try {
+        const data = await fn();
+        if (data instanceof Response) {
+          data.headers.set('X-Correlation-Id', correlationId);
+          return data;
+        }
+        const response = ok(data);
+        response.headers.set('X-Correlation-Id', correlationId);
+        return response;
+      } catch (error) {
+        return fail(error, context);
+      }
     }
-    const response = ok(data);
-    response.headers.set('X-Correlation-Id', correlationId);
-    return response;
-  } catch (error) {
-    return runWithRequestContext(
-      {
-        correlationId,
-        path: context?.request ? new URL(context.request.url).pathname : undefined,
-      },
-      () => fail(error, context)
-    );
-  }
+  );
 }
