@@ -3,7 +3,8 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from '@/lib/db';
 import { verifyPassword } from '@/lib/auth/password';
 
-if (process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_SECRET) {
+const isProductionBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
+if (process.env.NODE_ENV === 'production' && !isProductionBuildPhase && !process.env.NEXTAUTH_SECRET) {
   throw new Error('NEXTAUTH_SECRET must be set in production');
 }
 
