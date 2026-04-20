@@ -54,6 +54,14 @@ cp .env.example .env
 
 Use a strong random value for `NEXTAUTH_SECRET` in production.
 
+Generate one with either:
+
+```bash
+openssl rand -base64 32
+# or
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
 ### Database
 
 For local development, run the initial migration:
