@@ -363,5 +363,6 @@ export function useProjectDashboard(projectId: string) {
     updateConcept,
     updateContradiction,
     searchProject,
+    setProject,
   };
 }

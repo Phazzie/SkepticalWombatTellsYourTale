@@ -39,11 +39,27 @@ npm install
 
 ### Environment
 
-Copy `.env.example` to `.env` and fill in your OpenAI API key:
+Copy `.env.example` to `.env` and fill in the required values:
 
 ```bash
 cp .env.example .env
-# Edit .env and set OPENAI_API_KEY=your-key-here
+```
+
+Required variables:
+
+| Variable | Required | Description |
+|---|---|---|
+| `DATABASE_URL` | Yes | SQLite path, e.g. `file:./dev.db` |
+| `OPENAI_API_KEY` | Yes | OpenAI key for Whisper + GPT-4o |
+| `NEXTAUTH_SECRET` | **Yes (production)** | Signs JWT session tokens — must be a strong random secret |
+| `NEXTAUTH_URL` | **Yes (production)** | Canonical app URL, e.g. `https://yourapp.vercel.app` |
+
+Generate `NEXTAUTH_SECRET`:
+
+```bash
+openssl rand -base64 32
+# or with Node:
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
 
 ### Database

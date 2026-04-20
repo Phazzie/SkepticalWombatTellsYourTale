@@ -189,6 +189,8 @@ function AnalysisPanels({ analysis }: { analysis: AnalysisResult }) {
   );
 }
 
+const getHintDismissalKey = (projectId: string) => `hint-dismissed-${projectId}`;
+
 export default function RecordPage() {
   const { id } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
@@ -199,6 +201,15 @@ export default function RecordPage() {
   const [duration, setDuration] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [liveTranscript, setLiveTranscript] = useState('');
+  const [showFirstVisitHint, setShowFirstVisitHint] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(getHintDismissalKey(id)) !== 'true';
+  });
+
+  const dismissFirstVisitHint = () => {
+    localStorage.setItem(getHintDismissalKey(id), 'true');
+    setShowFirstVisitHint(false);
+  };
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -328,6 +339,21 @@ export default function RecordPage() {
         <AppHeader title="Voice Session" subtitle={toneCopy.recordHeaderSubtitle} />
 
         {error && <StatusMessage state="error" title="Recording error" description={error} />}
+
+        {showFirstVisitHint && (
+          <Card className="mb-6 border-neon-lime/30 bg-app-surface-muted flex items-start justify-between gap-4">
+            <p className="text-sm text-app-fg-muted">
+              Just talk. Tell a story, any story. The Wombat will do the rest.
+            </p>
+            <button
+              onClick={dismissFirstVisitHint}
+              aria-label="Dismiss hint"
+              className="shrink-0 text-app-fg-muted hover:text-white transition text-xs"
+            >
+              ✕
+            </button>
+          </Card>
+        )}
 
         {questionId && (
           <div className="bg-indigo-900/30 border border-indigo-700 rounded-xl p-4 mb-6">
