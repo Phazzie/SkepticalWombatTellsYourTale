@@ -1,0 +1,110 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows:
+      - Release Readiness
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Deployment target
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+        default: staging
+      confirm_production:
+        description: Type "deploy" to confirm production release
+        required: false
+        type: string
+
+concurrency:
+  group: deploy-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-staging:
+    name: Deploy Staging
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.target == 'staging')
+    environment: staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate staging deployment configuration
+        env:
+          DEPLOY_WEBHOOK_URL: ${{ secrets.VERCEL_STAGING_DEPLOY_HOOK_URL }}
+          APP_URL: ${{ secrets.STAGING_APP_URL }}
+        run: |
+          test -n "$DEPLOY_WEBHOOK_URL" || (echo "Missing VERCEL_STAGING_DEPLOY_HOOK_URL secret" && exit 1)
+          test -n "$APP_URL" || (echo "Missing STAGING_APP_URL secret" && exit 1)
+
+      - name: Trigger staging deployment webhook
+        env:
+          DEPLOY_WEBHOOK_URL: ${{ secrets.VERCEL_STAGING_DEPLOY_HOOK_URL }}
+        run: curl -fsS --retry 3 --retry-delay 5 --max-time 30 -X POST "$DEPLOY_WEBHOOK_URL"
+
+      - name: Wait for staging deployment rollout
+        env:
+          DEPLOY_WAIT_SECONDS: ${{ vars.DEPLOY_WAIT_SECONDS || '45' }}
+        run: |
+          # Temporary time-based rollout wait; follow-up is tracked in docs/STATUS.md Vercel rollout checklist.
+          sleep "$DEPLOY_WAIT_SECONDS"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Run staging smoke tests
+        env:
+          APP_URL: ${{ secrets.STAGING_APP_URL }}
+        run: node scripts/smoke-test.mjs
+
+  deploy-production:
+    name: Deploy Production
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.event.inputs.target == 'production' && github.event.inputs.confirm_production == 'deploy'
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate production deployment configuration
+        env:
+          DEPLOY_WEBHOOK_URL: ${{ secrets.VERCEL_PRODUCTION_DEPLOY_HOOK_URL }}
+          APP_URL: ${{ secrets.PRODUCTION_APP_URL }}
+        run: |
+          test -n "$DEPLOY_WEBHOOK_URL" || (echo "Missing VERCEL_PRODUCTION_DEPLOY_HOOK_URL secret" && exit 1)
+          test -n "$APP_URL" || (echo "Missing PRODUCTION_APP_URL secret" && exit 1)
+
+      - name: Trigger production deployment webhook
+        env:
+          DEPLOY_WEBHOOK_URL: ${{ secrets.VERCEL_PRODUCTION_DEPLOY_HOOK_URL }}
+        run: curl -fsS --retry 3 --retry-delay 5 --max-time 30 -X POST "$DEPLOY_WEBHOOK_URL"
+
+      - name: Wait for production deployment rollout
+        env:
+          DEPLOY_WAIT_SECONDS: ${{ vars.DEPLOY_WAIT_SECONDS || '45' }}
+        run: |
+          # Temporary time-based rollout wait; follow-up is tracked in docs/STATUS.md Vercel rollout checklist.
+          sleep "$DEPLOY_WAIT_SECONDS"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Run production smoke tests
+        env:
+          APP_URL: ${{ secrets.PRODUCTION_APP_URL }}
+        run: node scripts/smoke-test.mjs

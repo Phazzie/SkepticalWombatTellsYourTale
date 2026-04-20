@@ -21,7 +21,7 @@
 
 - **Framework**: Next.js 15 (App Router) + TypeScript
 - **Styling**: Tailwind CSS
-- **Database**: SQLite via Prisma
+- **Database**: PostgreSQL via Prisma (recommended for Vercel hosting)
 - **AI**: OpenAI GPT-4o (analysis) + Whisper (transcription)
 - **Voice**: MediaRecorder API + Web Speech API (live preview)
 
@@ -39,12 +39,20 @@ npm install
 
 ### Environment
 
-Copy `.env.example` to `.env` and fill in your OpenAI API key:
+Copy `.env.example` to `.env` and set required values:
 
 ```bash
 cp .env.example .env
-# Edit .env and set OPENAI_API_KEY=your-key-here
+# Required in all environments:
+# - NEXTAUTH_SECRET
+# - NEXTAUTH_URL
+# Required for AI features:
+# - OPENAI_API_KEY
+# Required for persistence:
+# - DATABASE_URL
 ```
+
+Use a strong random value for `NEXTAUTH_SECRET` in production.
 
 ### Database
 
@@ -82,10 +90,37 @@ Set these checks as **required** in branch protection for `main` so merges are b
 npm ci
 npm run lint
 npm run build
+npm run test:unit
 npx prisma validate
 npx prisma format --check
 npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > /tmp/prisma-schema.sql
 ```
+
+## Deployment
+
+This repository includes `.github/workflows/deploy.yml`:
+
+- **Staging deploy** auto-triggers after a successful `Release Readiness` run on `main`.
+- **Production deploy** is manual via `workflow_dispatch` with explicit confirmation.
+- Both deployments run `npm run smoke:test` against the deployed URL.
+
+Configure deployment secrets before enabling the workflow:
+
+- `VERCEL_STAGING_DEPLOY_HOOK_URL`
+- `STAGING_APP_URL`
+- `VERCEL_PRODUCTION_DEPLOY_HOOK_URL`
+- `PRODUCTION_APP_URL`
+
+Runbook: `docs/deployment-runbook.md`
+
+### Vercel launch checklist
+
+- [x] Prisma provider switched to PostgreSQL.
+- [x] Deploy workflow wired to Vercel deploy hooks + smoke tests.
+- [ ] Create managed Postgres database and copy pooled `DATABASE_URL` into Vercel project envs.
+- [ ] Set Vercel env vars: `DATABASE_URL`, `OPENAI_API_KEY`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`.
+- [ ] Create deploy hooks and configure GitHub secrets listed above.
+- [ ] Run first staging deploy and rollback drill.
 
 ### CI failure triage flow
 
