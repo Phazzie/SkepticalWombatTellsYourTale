@@ -41,6 +41,17 @@ Checks:
 - `GET /sign-in` returns `200`
 - `GET /register` returns `200`
 - `GET /api/projects` returns `401` (auth boundary intact)
+- `GET /api/health` returns `200` or `503` (health check endpoint; 503 means a critical dependency — database or auth — is unavailable; `openai` shows as `warning` when key is unset but does not cause degraded status)
+
+### AI endpoint behavior without `OPENAI_API_KEY`
+
+When `OPENAI_API_KEY` is unset, the following responses are expected (not errors):
+
+- `POST /api/projects/[id]/analyze` — returns **400** (fail-fast via `badRequest(...)`)
+- `POST /api/projects/[id]/questions` — returns **400** (fail-fast via `badRequest(...)`)
+- `POST /api/projects/[id]/voice-draft` — returns **400** (fail-fast via `badRequest(...)`)
+- `GET /api/projects/[id]/concepts` — returns **200** (not key-dependent; pure data route)
+- `GET /api/projects/[id]/contradictions` — returns **200** (not key-dependent; pure data route)
 
 ## Rollback drill (minimum)
 
