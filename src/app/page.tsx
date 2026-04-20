@@ -165,7 +165,7 @@ export default function HomePage() {
     }
   };
 
-  const focusNewProjectForm = () => {
+  const showAndScrollToNewProjectForm = () => {
     setShowNew(true);
     setTimeout(() => newProjectFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
@@ -238,7 +238,7 @@ export default function HomePage() {
             <p className="text-app-fg-muted mb-8 max-w-md mx-auto text-sm">
               Create a project to begin. Everything else follows from recording.
             </p>
-            <PrimaryButton onClick={focusNewProjectForm} className="px-6 py-3 text-base">
+            <PrimaryButton onClick={showAndScrollToNewProjectForm} className="px-6 py-3 text-base">
               Create your first project
             </PrimaryButton>
           </GlassCard>

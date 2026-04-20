@@ -189,6 +189,8 @@ function AnalysisPanels({ analysis }: { analysis: AnalysisResult }) {
   );
 }
 
+const getHintDismissalKey = (projectId: string) => `hint-dismissed-${projectId}`;
+
 export default function RecordPage() {
   const { id } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
@@ -201,11 +203,11 @@ export default function RecordPage() {
   const [liveTranscript, setLiveTranscript] = useState('');
   const [showFirstVisitHint, setShowFirstVisitHint] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return localStorage.getItem(`hint-dismissed-${id}`) !== 'true';
+    return localStorage.getItem(getHintDismissalKey(id)) !== 'true';
   });
 
   const dismissFirstVisitHint = () => {
-    localStorage.setItem(`hint-dismissed-${id}`, 'true');
+    localStorage.setItem(getHintDismissalKey(id), 'true');
     setShowFirstVisitHint(false);
   };
 
