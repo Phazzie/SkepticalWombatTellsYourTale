@@ -2,7 +2,7 @@ import { badRequest } from '@/lib/server/errors';
 
 const MAX_AUDIO_BYTES = 15 * 1024 * 1024;
 const MAX_AUDIO_MB = Math.floor(MAX_AUDIO_BYTES / (1024 * 1024));
-export const ALLOWED_AUDIO_MIME_TYPES = new Set([
+export const ALLOWED_AUDIO_MIME_TYPES: ReadonlySet<string> = new Set([
   'audio/mpeg',
   'audio/mp3',
   'audio/mp4',

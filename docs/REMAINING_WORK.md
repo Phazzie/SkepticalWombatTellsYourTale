@@ -30,35 +30,22 @@ export const ALLOWED_AUDIO_MIME_TYPES: ReadonlySet<string> = new Set([...]);
 
 ---
 
-### B2 · Fix export checkbox accessibility
-**File:** `src/app/project/[id]/export/page.tsx`
-**Problem:** The native `<input type="checkbox">` is hidden with `sr-only` but has no `id` or `aria-labelledby` linking it to its visible label. Screen readers and keyboard users cannot identify what the checkbox controls.
-**Fix:** Add an `id` to each checkbox `<input>` and a matching `htmlFor` on the visible label element (or wrap both in a `<label>`).
-**Verify:** `npm run lint && npm run build`
+### B2 · Export checkbox accessibility
+**Status:** ✅ Already resolved. `src/app/project/[id]/export/page.tsx` wraps each `<input type="checkbox">` inside a `<label>` element that also contains visible text, giving each checkbox an accessible name via the native label association. No further changes needed; issue #22 can be closed.
 
 ---
 
-### B3 · Verify `parseAiJsonObjectStrict` null branch is covered
-**File:** `src/lib/ai/__tests__/parsing.test.ts`
-**Problem:** `parseAiJsonObjectStrict` has a distinct code path when the AI returns a `null` body (not invalid JSON, but literal `null`). This path is untested; a production AI response returning `null` could surface an unhandled edge case.
-**Fix:** Add one test:
-```ts
-it('returns fallback when AI response body is null', () => {
-  const result = parseAiJsonObjectStrict(null, defaultFallback, { normalize: (v) => v });
-  assert.deepStrictEqual(result.value, defaultFallback);
-  assert.ok(result.contractIssues.length > 0);
-});
-```
-Adjust the exact API signature to match the current function signature.
-**Verify:** `npm run test:unit`
+### B3 · `parseAiJsonObjectStrict` null branch coverage
+**Status:** ✅ Already resolved. `src/lib/ai/__tests__/parsing.test.ts` already contains:
+- A test asserting `parseError: 'missing_content'` when `content` is `null`.
+- A test asserting `parseError` is set and `contractIssues` contains `'AI response JSON parse failed'` when `normalize` throws.
+
+No additional tests are needed; issue #52 can be closed.
 
 ---
 
 ### B4 · Address remaining PR #21 review feedback (issue #31)
-**Context:** Issue #31 was auto-filed from a Copilot review of PR #21 ("Gold" listening-room UX). The feedback was marked as non-blocking at the time but was never resolved or explicitly dismissed.
-**Action:** Read issue #31 on GitHub, determine if the feedback is still applicable to current code, and either apply the fix or close the issue as `not_planned` with a comment explaining why it no longer applies.
-**File(s):** Likely in `src/app/project/[id]/record/` or `src/components/`.
-**Verify:** `npm run lint && npm run build`
+**Status:** ✅ Outdated — safe to close. The review comment on PR #21 concerned orbit placement math in `dashboard-insights-grid.tsx`, where `total` (all items combined) was used to compute angle steps but the orbit rendered only up to 12 items. That component has since been rewritten as a simple three-column grid with no orbit layout; the problematic code no longer exists. Issue #31 should be closed as `not_planned` with a note that the component was redesigned.
 
 ---
 
@@ -84,7 +71,11 @@ These cannot be committed — they must be set in the hosting platform's environ
 ### C4 · Set `OPENAI_API_KEY`
 **Where:** Hosting platform env vars.
 **Value:** Your OpenAI API key.
-**Note:** The app gracefully degrades (returns 400) when this is missing, so startup will succeed without it — but transcription and AI features will be unavailable.
+**Note:** Behaviour when this key is missing or invalid varies by endpoint:
+- **`/api/transcribe`** — catches the OpenAI error, stores a placeholder transcript (`[Transcription unavailable — configure OpenAI API key]`), and returns **200** with the session ID. The app continues to function.
+- **`/api/projects/[id]/analyze`, `/questions`, `/voice-draft`, `/concepts`, `/contradictions`** — the OpenAI call is not caught at the service layer; an unhandled error propagates to the global handler and returns **500**. These features will be broken without the key.
+
+Set the key before enabling any AI features in production.
 
 ---
 
@@ -117,23 +108,25 @@ Before releasing to real users, deploy to a staging environment and manually ver
 - [ ] Generate questions
 - [ ] Export at each level (raw / structured / polished / full)
 - [ ] Search within a project
-- [ ] Verify AI degraded mode: temporarily unset `OPENAI_API_KEY` and confirm the app returns a 400 (not a 500) for AI endpoints
+- [ ] Verify AI degraded mode: temporarily unset `OPENAI_API_KEY` and confirm:
+  - `/api/transcribe` still returns **200** with a placeholder transcript (expected graceful degradation).
+  - `/api/projects/[id]/analyze`, `/questions`, `/voice-draft`, `/concepts`, and `/contradictions` return **500** (expected — these endpoints require the key).
 
 ### D5 · Rollback drill
 Before go-live, confirm you can roll back:
 - Know which deployment version to revert to
-- Confirm `DATABASE_URL` points to a database that is compatible with the previous schema (SQLite with `db push` is append-only; rollback is safe)
+- Confirm `DATABASE_URL` points to a database that is compatible with the previous schema (**caution**: `db push` is not append-only — schema changes can be destructive on SQLite; take a backup of the `.db` file before applying any schema change)
 - Document the one-liner to revert the deployment
 
 ---
 
-## Remaining open GitHub issues (4)
+## Remaining open GitHub issues
 
-| # | Title (short) | Section above |
-|---|---|---|
-| #22 | Export checkbox accessibility | B2 |
-| #31 | PR #21 Copilot review feedback | B4 |
-| #52 | `parseAiJsonObjectStrict` null path | B3 |
-| #59 | `ALLOWED_AUDIO_MIME_TYPES` mutable | B1 |
+| # | Title (short) | Section above | Status |
+|---|---|---|---|
+| #31 | PR #21 Copilot review feedback | B4 | Close as `not_planned` — component rewritten |
+| #22 | Export checkbox accessibility | B2 | Close as `not_planned` — already resolved |
+| #52 | `parseAiJsonObjectStrict` null/normalize-throws paths | B3 | Close as `not_planned` — already tested |
+| #59 | `ALLOWED_AUDIO_MIME_TYPES` mutable | B1 | Fixed in this PR |
 
 All other issues (25 total) were confirmed fixed by merged PRs and have been closed.
