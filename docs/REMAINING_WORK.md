@@ -32,24 +32,16 @@ export const ALLOWED_AUDIO_MIME_TYPES: ReadonlySet<string> = new Set([...]);
 
 ### B2 · Fix export checkbox accessibility
 **File:** `src/app/project/[id]/export/page.tsx`
-**Problem:** The native `<input type="checkbox">` is hidden with `sr-only` but has no `id` or `aria-labelledby` linking it to its visible label. Screen readers and keyboard users cannot identify what the checkbox controls.
-**Fix:** Add an `id` to each checkbox `<input>` and a matching `htmlFor` on the visible label element (or wrap both in a `<label>`).
+**Status:** Already resolved — each checkbox input is wrapped in a visible `<label>`, so the control has an accessible name.
+**Action:** Keep this as a periodic a11y regression check only.
 **Verify:** `npm run lint && npm run build`
 
 ---
 
 ### B3 · Verify `parseAiJsonObjectStrict` null branch is covered
 **File:** `src/lib/ai/__tests__/parsing.test.ts`
-**Problem:** `parseAiJsonObjectStrict` has a distinct code path when the AI returns a `null` body (not invalid JSON, but literal `null`). This path is untested; a production AI response returning `null` could surface an unhandled edge case.
-**Fix:** Add one test:
-```ts
-it('returns fallback when AI response body is null', () => {
-  const result = parseAiJsonObjectStrict(null, defaultFallback, { normalize: (v) => v });
-  assert.deepStrictEqual(result.value, defaultFallback);
-  assert.ok(result.contractIssues.length > 0);
-});
-```
-Adjust the exact API signature to match the current function signature.
+**Status:** Already covered — current tests include both `content: null` handling and the `normalize`-throws path.
+**Action:** Keep this as regression coverage verification, no new test needed right now.
 **Verify:** `npm run test:unit`
 
 ---
@@ -84,7 +76,7 @@ These cannot be committed — they must be set in the hosting platform's environ
 ### C4 · Set `OPENAI_API_KEY`
 **Where:** Hosting platform env vars.
 **Value:** Your OpenAI API key.
-**Note:** The app gracefully degrades (returns 400) when this is missing, so startup will succeed without it — but transcription and AI features will be unavailable.
+**Note:** Startup succeeds without this key. Behavior is endpoint-specific: some AI endpoints return `400`, while transcription currently falls back gracefully instead of hard-failing.
 
 ---
 
@@ -117,23 +109,21 @@ Before releasing to real users, deploy to a staging environment and manually ver
 - [ ] Generate questions
 - [ ] Export at each level (raw / structured / polished / full)
 - [ ] Search within a project
-- [ ] Verify AI degraded mode: temporarily unset `OPENAI_API_KEY` and confirm the app returns a 400 (not a 500) for AI endpoints
+- [ ] Verify AI degraded mode: temporarily unset `OPENAI_API_KEY` and confirm analysis/questions/voice-draft endpoints return controlled `400` responses, while transcription still returns its fallback behavior (no `500`)
 
 ### D5 · Rollback drill
 Before go-live, confirm you can roll back:
 - Know which deployment version to revert to
-- Confirm `DATABASE_URL` points to a database that is compatible with the previous schema (SQLite with `db push` is append-only; rollback is safe)
+- Take a database snapshot/backup before applying schema changes and confirm `DATABASE_URL` points to a database compatible with the target rollback version (schema rollbacks can be destructive)
 - Document the one-liner to revert the deployment
 
 ---
 
-## Remaining open GitHub issues (4)
+## Remaining open GitHub issues (2)
 
 | # | Title (short) | Section above |
 |---|---|---|
-| #22 | Export checkbox accessibility | B2 |
 | #31 | PR #21 Copilot review feedback | B4 |
-| #52 | `parseAiJsonObjectStrict` null path | B3 |
 | #59 | `ALLOWED_AUDIO_MIME_TYPES` mutable | B1 |
 
-All other issues (25 total) were confirmed fixed by merged PRs and have been closed.
+This table tracks only issues directly mapped to this checklist; see GitHub Issues for the complete live backlog.

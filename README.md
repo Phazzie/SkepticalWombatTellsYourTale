@@ -39,20 +39,20 @@ npm install
 
 ### Environment
 
-Copy `.env.example` to `.env` and set required values:
+Copy `.env.example` to `.env` and set all required values:
 
 ```bash
 cp .env.example .env
-# Required in all environments:
-# - NEXTAUTH_SECRET
-# - NEXTAUTH_URL
-# Required for AI features:
-# - OPENAI_API_KEY
-# Required for persistence:
-# - DATABASE_URL
+# Edit .env and set OPENAI_API_KEY, NEXTAUTH_SECRET, NEXTAUTH_URL, and DATABASE_URL
 ```
 
-Use a strong random value for `NEXTAUTH_SECRET` in production.
+Required in all environments:
+- `NEXTAUTH_SECRET` (generate with `openssl rand -base64 32` for production)
+- `NEXTAUTH_URL` (canonical app URL, for example `https://your-app.example`)
+- `DATABASE_URL` (PostgreSQL connection string for production; file-based for local dev)
+
+Required for AI features:
+- `OPENAI_API_KEY` (your OpenAI API key)
 
 ### Database
 

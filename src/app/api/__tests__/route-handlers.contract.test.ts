@@ -6,6 +6,7 @@ import { POST as transcribePOST } from '@/app/api/transcribe/route';
 import { GET as sessionsGET, POST as sessionsPOST } from '@/app/api/projects/[id]/sessions/route';
 import { GET as documentsGET, POST as documentsPOST } from '@/app/api/projects/[id]/documents/route';
 import { POST as exportPOST } from '@/app/api/projects/[id]/export/route';
+import { GET as healthGET } from '@/app/api/health/route';
 
 test('auth/register returns 400 error shape for malformed JSON', async () => {
   const response = await registerPOST(new Request('http://localhost/api/auth/register', {
@@ -176,4 +177,16 @@ test('projects/export POST returns 401 with standard error payload when unauthen
   assert.equal(response.status, 401);
   assert.equal(payload.error, 'Unauthorized');
   assert.equal(payload.correlationId, 'export-post-unauthorized');
+});
+
+test('health endpoint is publicly accessible and returns status/check shape', async () => {
+  const response = await healthGET();
+  const payload = await response.json();
+
+  assert.ok(response.status === 200 || response.status === 503);
+  assert.ok(payload.status === 'ok' || payload.status === 'degraded');
+  assert.equal(typeof payload.timestamp, 'string');
+  assert.equal(typeof payload.checks?.database, 'string');
+  assert.equal(typeof payload.checks?.auth, 'string');
+  assert.equal(typeof payload.checks?.openai, 'string');
 });
