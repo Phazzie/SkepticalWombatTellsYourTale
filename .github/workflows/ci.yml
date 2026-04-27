@@ -21,7 +21,6 @@ jobs:
       fail-fast: false
       matrix:
         node:
-          - 18.x
           - 20.x
     steps:
       - name: Checkout
@@ -45,7 +44,6 @@ jobs:
       fail-fast: false
       matrix:
         node:
-          - 18.x
           - 20.x
     steps:
       - name: Checkout
@@ -69,7 +67,6 @@ jobs:
       fail-fast: false
       matrix:
         node:
-          - 18.x
           - 20.x
     services:
       postgres:
