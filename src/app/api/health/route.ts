@@ -12,8 +12,10 @@ export async function GET() {
     checks.database = 'error';
   }
 
-  // Optional service checks (only in development for debugging)
+  // Optional service checks (environment-specific)
   if (process.env.NODE_ENV === 'development') {
+    checks.openai = process.env.OPENAI_API_KEY ? 'ok' : 'error';
+  } else if (process.env.NODE_ENV === 'production') {
     checks.auth = process.env.NEXTAUTH_SECRET ? 'ok' : 'error';
     checks.openai = process.env.OPENAI_API_KEY ? 'ok' : 'error';
   }
