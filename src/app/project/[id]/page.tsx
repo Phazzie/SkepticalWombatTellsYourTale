@@ -8,6 +8,17 @@ import { AppBackLink, Card, Container, PrimaryButton, SecondaryButton, Shell, St
 import { useProjectDashboard } from '@/components/project/dashboard/use-project-dashboard';
 import { requestJson } from '@/lib/client/request';
 import { Project } from '@/lib/types';
+
+function isProjectPayload(value: unknown): value is Project {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'id' in value &&
+    typeof value.id === 'string' &&
+    'name' in value &&
+    typeof value.name === 'string'
+  );
+}
 import { DashboardActionCards } from '@/components/project/dashboard/dashboard-action-cards';
 import { DashboardInsightsGrid } from '@/components/project/dashboard/dashboard-insights-grid';
 import { DashboardQuestionsCard } from '@/components/project/dashboard/dashboard-questions-card';
@@ -68,8 +79,12 @@ export default function ProjectPage() {
         throw new Error(failure?.error || 'Could not rename project');
       }
 
-      const updated = res.data as Project;
-      setProject(updated);
+      if (!isProjectPayload(res.data)) {
+        throw new Error('Could not rename project');
+      }
+
+      const updated = res.data;
+      setProject((prev) => (prev ? { ...prev, ...updated } : updated));
       setShowRename(false);
     } catch (err) {
       setRenameError(err instanceof Error ? err.message : 'Could not rename project');

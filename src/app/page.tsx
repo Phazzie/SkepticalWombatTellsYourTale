@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type MouseEvent } from 'react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 import { Project } from '@/lib/types';
@@ -99,7 +99,7 @@ export default function HomePage() {
     }
   };
 
-  const startRename = (project: Project, e: React.MouseEvent) => {
+  const startRename = (project: Project, e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setRenamingId(project.id);
@@ -135,7 +135,7 @@ export default function HomePage() {
       }
 
       const updated = res.data;
-      setProjects((prev) => prev.map((p) => (p.id === projectId ? updated : p)));
+      setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, ...updated } : p)));
       cancelRename();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not rename project');
@@ -144,7 +144,7 @@ export default function HomePage() {
     }
   };
 
-  const startDelete = (projectId: string, e: React.MouseEvent) => {
+  const startDelete = (projectId: string, e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setDeletingId(projectId);
