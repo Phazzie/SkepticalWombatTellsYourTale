@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { AnalysisResult } from '@/lib/types';
@@ -202,28 +202,23 @@ export default function RecordPage() {
   const [error, setError] = useState<string | null>(null);
   const [liveTranscript, setLiveTranscript] = useState('');
 
-  const getShouldShowFirstVisitHint = () => {
-    if (typeof window === 'undefined') return false;
+  const [showFirstVisitHint, setShowFirstVisitHint] = useState(false);
 
+  useEffect(() => {
     try {
-      return localStorage.getItem(getHintDismissalKey(id)) !== 'true';
+      const isDismissed = localStorage.getItem(getHintDismissalKey(id)) === 'true';
+      setShowFirstVisitHint(!isDismissed);
     } catch {
-      return true;
+      setShowFirstVisitHint(true);
     }
-  };
+  }, [id]);
 
-  const persistFirstVisitHintDismissal = () => {
+  const dismissFirstVisitHint = () => {
     try {
       localStorage.setItem(getHintDismissalKey(id), 'true');
     } catch {
       // Ignore storage failures and still dismiss the hint for the current render.
     }
-  };
-
-  const [showFirstVisitHint, setShowFirstVisitHint] = useState(() => getShouldShowFirstVisitHint());
-
-  const dismissFirstVisitHint = () => {
-    persistFirstVisitHintDismissal();
     setShowFirstVisitHint(false);
   };
 

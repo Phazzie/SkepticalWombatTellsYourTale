@@ -54,6 +54,19 @@ export default function HomePage() {
       });
   }, []);
 
+  useEffect(() => {
+    if (!showNew) return;
+
+    const frameId = requestAnimationFrame(() => {
+      newProjectFormRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    });
+
+    return () => cancelAnimationFrame(frameId);
+  }, [showNew]);
+
   const createProject = async () => {
     if (!newName.trim()) return;
     setCreating(true);
@@ -165,7 +178,6 @@ export default function HomePage() {
 
   const showAndScrollToNewProjectForm = () => {
     setShowNew(true);
-    setTimeout(() => newProjectFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
 
   return (
@@ -306,7 +318,7 @@ export default function HomePage() {
                           Created {new Date(project.createdAt).toLocaleDateString()}
                         </p>
                       </div>
-                      <div className="flex items-center gap-1 ml-3 shrink-0" onClick={(e) => e.preventDefault()}>
+                      <div className="flex items-center gap-1 ml-3 shrink-0">
                         <button
                           onClick={(e) => startRename(project, e)}
                           aria-label={`Rename ${project.name}`}
