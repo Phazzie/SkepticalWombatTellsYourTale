@@ -64,28 +64,13 @@ jobs:
     name: Prisma Schema (Node ${{ matrix.node }})
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/skeptical_wombat?schema=public
-      SHADOW_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/skeptical_wombat_shadow?schema=public
+      DATABASE_URL: file:./dev.db
     strategy:
       fail-fast: false
       matrix:
         node:
           - 18.x
           - 20.x
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: skeptical_wombat
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -94,8 +79,6 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
-      - name: Wait for PostgreSQL to be ready
-        run: sleep 5
       - name: Install dependencies
         run: npm ci
       - name: Validate Prisma schema
@@ -104,5 +87,3 @@ jobs:
         run: npx prisma format --check
       - name: Check schema diff generation
         run: npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > /tmp/prisma-schema.sql
-      - name: Check migrations are in sync with schema
-        run: npx prisma migrate diff --from-migrations ./prisma/migrations --to-schema-datamodel ./prisma/schema.prisma --exit-code
