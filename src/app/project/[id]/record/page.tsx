@@ -201,13 +201,29 @@ export default function RecordPage() {
   const [duration, setDuration] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [liveTranscript, setLiveTranscript] = useState('');
-  const [showFirstVisitHint, setShowFirstVisitHint] = useState(() => {
+
+  const getShouldShowFirstVisitHint = () => {
     if (typeof window === 'undefined') return false;
-    return localStorage.getItem(getHintDismissalKey(id)) !== 'true';
-  });
+
+    try {
+      return localStorage.getItem(getHintDismissalKey(id)) !== 'true';
+    } catch {
+      return true;
+    }
+  };
+
+  const persistFirstVisitHintDismissal = () => {
+    try {
+      localStorage.setItem(getHintDismissalKey(id), 'true');
+    } catch {
+      // Ignore storage failures and still dismiss the hint for the current render.
+    }
+  };
+
+  const [showFirstVisitHint, setShowFirstVisitHint] = useState(() => getShouldShowFirstVisitHint());
 
   const dismissFirstVisitHint = () => {
-    localStorage.setItem(getHintDismissalKey(id), 'true');
+    persistFirstVisitHintDismissal();
     setShowFirstVisitHint(false);
   };
 
