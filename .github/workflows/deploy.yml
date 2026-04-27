@@ -58,6 +58,10 @@ jobs:
           DEPLOY_WAIT_SECONDS: ${{ vars.DEPLOY_WAIT_SECONDS || '45' }}
         run: |
           # Temporary time-based rollout wait; follow-up is tracked in docs/STATUS.md Vercel rollout checklist.
+          if ! [[ "$DEPLOY_WAIT_SECONDS" =~ ^[1-9][0-9]*$ ]]; then
+            echo "Invalid DEPLOY_WAIT_SECONDS value: '$DEPLOY_WAIT_SECONDS'. Expected a positive integer number of seconds." >&2
+            exit 1
+          fi
           sleep "$DEPLOY_WAIT_SECONDS"
 
       - name: Setup Node
@@ -97,6 +101,10 @@ jobs:
           DEPLOY_WAIT_SECONDS: ${{ vars.DEPLOY_WAIT_SECONDS || '45' }}
         run: |
           # Temporary time-based rollout wait; follow-up is tracked in docs/STATUS.md Vercel rollout checklist.
+          if ! [[ "$DEPLOY_WAIT_SECONDS" =~ ^[1-9][0-9]*$ ]]; then
+            echo "Invalid DEPLOY_WAIT_SECONDS value: '$DEPLOY_WAIT_SECONDS'. Expected a positive integer number of seconds." >&2
+            exit 1
+          fi
           sleep "$DEPLOY_WAIT_SECONDS"
 
       - name: Setup Node

@@ -54,10 +54,26 @@ cp .env.example .env
 
 Use a strong random value for `NEXTAUTH_SECRET` in production.
 
-### Database
+Generate one with either:
 
 ```bash
-npx prisma db push
+openssl rand -base64 32
+# or
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
+### Database
+
+For local development, run the initial migration:
+
+```bash
+npm run db:migrate:dev
+```
+
+For production deployments, apply pending migrations before starting the server:
+
+```bash
+npm run db:migrate:deploy
 ```
 
 ### Run
@@ -78,7 +94,7 @@ The CI workflow uses a Node matrix (`18.x`, `20.x`), so each check appears once 
 
 - **CI / Quality (Node 18.x)** and **CI / Quality (Node 20.x)** — `npm ci` + `npm run lint`
 - **CI / Build (Node 18.x)** and **CI / Build (Node 20.x)** — `npm ci` + `npm run build`
-- **CI / Prisma Schema (Node 18.x)** and **CI / Prisma Schema (Node 20.x)** — `npx prisma validate`, `npx prisma format --check`, and schema diff generation check
+- **CI / Prisma Schema (Node 18.x)** and **CI / Prisma Schema (Node 20.x)** — `npx prisma validate`, `npx prisma format --check`, schema diff generation check, and migration sync check
 - **Security / CodeQL**
 - **Security / Dependency Audit (Node 18.x)** and **Security / Dependency Audit (Node 20.x)**
 

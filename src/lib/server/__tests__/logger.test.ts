@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { log } from '@/lib/server/logger';
+import { runWithRequestContext } from '@/lib/server/request-context';
 
 function captureConsole(method: 'error' | 'warn' | 'log', fn: () => void): string[] {
   const messages: string[] = [];
@@ -100,4 +101,15 @@ test('log does not route error to console.warn or console.log', () => {
     console.warn = originalWarn;
     console.log = originalLog;
   }
+});
+
+test('log includes correlationId from async request context', () => {
+  const messages = captureConsole('log', () => {
+    runWithRequestContext({ correlationId: 'req-ctx-1' }, () => {
+      log('info', 'with request context');
+    });
+  });
+
+  const entry = JSON.parse(messages[0]) as { correlationId?: string };
+  assert.equal(entry.correlationId, 'req-ctx-1');
 });
