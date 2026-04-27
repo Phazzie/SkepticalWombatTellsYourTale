@@ -8,7 +8,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data:",
   "media-src 'self' blob: mediastream:",
-  "connect-src 'self' https://api.openai.com",
+  `connect-src 'self' https://api.openai.com wss:${isDev ? " ws:" : ''}`,
   "frame-ancestors 'none'",
 ].join('; ');
 
