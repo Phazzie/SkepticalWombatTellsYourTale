@@ -109,7 +109,11 @@ export default function ProjectPage() {
               value={renameValue}
               onChange={(e) => setRenameValue(e.target.value)}
               className="mb-3"
-              onKeyDown={(e) => e.key === 'Enter' && submitRename()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !renaming && renameValue.trim()) {
+                  submitRename();
+                }
+              }}
               autoFocus
             />
             <TextArea
