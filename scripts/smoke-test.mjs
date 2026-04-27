@@ -25,6 +25,7 @@ const checks = [
   { name: 'home page', path: '/', expectedStatuses: [200] },
   { name: 'sign-in page', path: '/sign-in', expectedStatuses: [200] },
   { name: 'register page', path: '/register', expectedStatuses: [200] },
+  { name: 'health check', path: '/api/health', expectedStatuses: [200, 503] },
   { name: 'projects auth boundary', path: '/api/projects', expectedStatuses: [401] },
 ];
 
