@@ -49,7 +49,7 @@ Required variables:
 
 | Variable | Required | Description |
 |---|---|---|
-| `DATABASE_URL` | Yes | SQLite path, e.g. `file:./dev.db` |
+| DATABASE_URL | Yes | PostgreSQL connection string |
 | `OPENAI_API_KEY` | Yes | OpenAI key for Whisper + GPT-4o |
 | `NEXTAUTH_SECRET` | **Yes (production)** | Signs JWT session tokens — must be a strong random secret |
 | `NEXTAUTH_URL` | **Yes (production)** | Canonical app URL, e.g. `https://yourapp.vercel.app` |
