@@ -1,10 +1,18 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 
-export async function GET() {
-  const checks: Record<string, 'ok' | 'error'> = {};
+type HealthCheckStatus = 'ok' | 'error' | 'warning';
 
-  // Database check (critical service)
+interface HealthResponse {
+  status: 'ok' | 'degraded';
+  checks: Record<string, HealthCheckStatus>;
+  timestamp: string;
+}
+
+export async function GET(): Promise<NextResponse<HealthResponse>> {
+  const checks: Record<string, HealthCheckStatus> = {};
+
+  // Critical check: database
   try {
     await prisma.$queryRaw`SELECT 1`;
     checks.database = 'ok';
@@ -12,15 +20,14 @@ export async function GET() {
     checks.database = 'error';
   }
 
-  // Optional service checks (environment-specific)
-  if (process.env.NODE_ENV === 'development') {
-    checks.openai = process.env.OPENAI_API_KEY ? 'ok' : 'error';
-  } else if (process.env.NODE_ENV === 'production') {
-    checks.auth = process.env.NEXTAUTH_SECRET ? 'ok' : 'error';
-    checks.openai = process.env.OPENAI_API_KEY ? 'ok' : 'error';
-  }
+  // Critical check: auth configuration
+  checks.auth = process.env.NEXTAUTH_SECRET ? 'ok' : 'error';
 
-  const healthy = checks.database === 'ok';
+  // Optional feature check: OpenAI integration (missing key degrades AI features but not core app)
+  checks.openai = process.env.OPENAI_API_KEY ? 'ok' : 'warning';
+
+  // Overall health determined by critical checks only
+  const healthy = checks.database === 'ok' && checks.auth === 'ok';
 
   return NextResponse.json(
     { status: healthy ? 'ok' : 'degraded', checks, timestamp: new Date().toISOString() },
