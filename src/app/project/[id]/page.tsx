@@ -6,8 +6,6 @@ import Link from 'next/link';
 import { AppHeader } from '@/components/layout/app-header';
 import { AppBackLink, Card, Container, PrimaryButton, SecondaryButton, Shell, StatusMessage, TextArea, TextInput } from '@/components/ui/primitives';
 import { useProjectDashboard } from '@/components/project/dashboard/use-project-dashboard';
-import { requestJson } from '@/lib/client/request';
-import { Project } from '@/lib/types';
 import { updateProjectName } from '@/lib/client/project-operations';
 import { DashboardActionCards } from '@/components/project/dashboard/dashboard-action-cards';
 import { DashboardInsightsGrid } from '@/components/project/dashboard/dashboard-insights-grid';
