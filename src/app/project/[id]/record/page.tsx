@@ -205,12 +205,32 @@ export default function RecordPage() {
   const [showFirstVisitHint, setShowFirstVisitHint] = useState(false);
 
   useEffect(() => {
-    try {
-      const isDismissed = localStorage.getItem(getHintDismissalKey(id)) === 'true';
-      setShowFirstVisitHint(!isDismissed);
-    } catch {
-      setShowFirstVisitHint(true);
-    }
+    const checkAndShowHint = async () => {
+      try {
+        const isDismissed = localStorage.getItem(getHintDismissalKey(id)) === 'true';
+        if (isDismissed) {
+          setShowFirstVisitHint(false);
+          return;
+        }
+
+        // Fetch project to check sessionCount
+        const res = await fetch(`/api/projects/${id}`);
+        if (!res.ok) {
+          setShowFirstVisitHint(true);
+          return;
+        }
+
+        const project = await res.json();
+        const sessionCount = project.sessions?.length || 0;
+        // Only show hint on first visit (no sessions yet)
+        setShowFirstVisitHint(sessionCount === 0);
+      } catch {
+        // If we can't verify, show the hint as a fallback
+        setShowFirstVisitHint(true);
+      }
+    };
+
+    checkAndShowHint();
   }, [id]);
 
   const dismissFirstVisitHint = () => {

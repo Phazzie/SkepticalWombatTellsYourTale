@@ -8,17 +8,7 @@ import { AppBackLink, Card, Container, PrimaryButton, SecondaryButton, Shell, St
 import { useProjectDashboard } from '@/components/project/dashboard/use-project-dashboard';
 import { requestJson } from '@/lib/client/request';
 import { Project } from '@/lib/types';
-
-function isProjectPayload(value: unknown): value is Project {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'id' in value &&
-    typeof value.id === 'string' &&
-    'name' in value &&
-    typeof value.name === 'string'
-  );
-}
+import { updateProjectName } from '@/lib/client/project-operations';
 import { DashboardActionCards } from '@/components/project/dashboard/dashboard-action-cards';
 import { DashboardInsightsGrid } from '@/components/project/dashboard/dashboard-insights-grid';
 import { DashboardQuestionsCard } from '@/components/project/dashboard/dashboard-questions-card';
@@ -69,21 +59,7 @@ export default function ProjectPage() {
     setRenaming(true);
     setRenameError(null);
     try {
-      const res = await requestJson<Project | { error?: string }>(`/api/projects/${id}`, {
-        method: 'PATCH',
-        body: { name: renameValue.trim(), description: renameDesc },
-      });
-
-      if (!res.ok || !res.data) {
-        const failure = res.data as { error?: string } | null;
-        throw new Error(failure?.error || 'Could not rename project');
-      }
-
-      if (!isProjectPayload(res.data)) {
-        throw new Error('Could not rename project');
-      }
-
-      const updated = res.data;
+      const updated = await updateProjectName(id, renameValue, renameDesc);
       setProject((prev) => (prev ? { ...prev, ...updated } : updated));
       setShowRename(false);
     } catch (err) {

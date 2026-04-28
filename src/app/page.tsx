@@ -8,17 +8,7 @@ import { AppHeader } from '@/components/layout/app-header';
 import { Card, Container, GlassCard, PrimaryButton, SecondaryButton, Shell, StatusMessage, TextArea, TextInput, WombatMark } from '@/components/ui/primitives';
 import { toneCopy } from '@/lib/copy/tone';
 import { requestJson } from '@/lib/client/request';
-
-function isProjectPayload(value: unknown): value is Project {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'id' in value &&
-    typeof value.id === 'string' &&
-    'name' in value &&
-    typeof value.name === 'string'
-  );
-}
+import { isProjectPayload, updateProjectName, deleteProject } from '@/lib/client/project-operations';
 
 export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -120,21 +110,7 @@ export default function HomePage() {
     setRenaming(true);
     setError(null);
     try {
-      const res = await requestJson<Project | { error?: string }>(`/api/projects/${projectId}`, {
-        method: 'PATCH',
-        body: { name: renameValue.trim(), description: renameDesc },
-      });
-
-      if (!res.ok || !res.data) {
-        const failure = res.data as { error?: string } | null;
-        throw new Error(failure?.error || 'Could not rename project');
-      }
-
-      if (!isProjectPayload(res.data)) {
-        throw new Error('Could not rename project');
-      }
-
-      const updated = res.data;
+      const updated = await updateProjectName(projectId, renameValue, renameDesc);
       setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, ...updated } : p)));
       cancelRename();
     } catch (err) {
@@ -158,15 +134,7 @@ export default function HomePage() {
     setDeleting(true);
     setError(null);
     try {
-      const res = await requestJson<{ success?: boolean; error?: string }>(`/api/projects/${projectId}`, {
-        method: 'DELETE',
-      });
-
-      if (!res.ok) {
-        const failure = res.data as { error?: string } | null;
-        throw new Error(failure?.error || 'Could not delete project');
-      }
-
+      await deleteProject(projectId);
       setProjects((prev) => prev.filter((p) => p.id !== projectId));
       setDeletingId(null);
     } catch (err) {
@@ -265,7 +233,7 @@ export default function HomePage() {
                       value={renameValue}
                       onChange={(e) => setRenameValue(e.target.value)}
                       className="mb-3"
-                      onKeyDown={(e) => e.key === 'Enter' && submitRename(project.id)}
+                      onKeyDown={(e) => e.key === 'Enter' && !renaming && submitRename(project.id)}
                       autoFocus
                     />
                     <TextArea
