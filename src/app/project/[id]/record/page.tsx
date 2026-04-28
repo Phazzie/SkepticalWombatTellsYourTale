@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { AnalysisResult } from '@/lib/types';
@@ -90,6 +90,8 @@ function RecordingControlCard({
     </Card>
   );
 }
+
+const getHintDismissalKey = (projectId: string) => `hint-dismissed-${projectId}`;
 
 function AnalysisPanels({ analysis }: { analysis: AnalysisResult }) {
   return (
@@ -199,6 +201,46 @@ export default function RecordPage() {
   const [duration, setDuration] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [liveTranscript, setLiveTranscript] = useState('');
+
+  const [showFirstVisitHint, setShowFirstVisitHint] = useState(false);
+
+  useEffect(() => {
+    const checkAndShowHint = async () => {
+      try {
+        const isDismissed = localStorage.getItem(getHintDismissalKey(id)) === 'true';
+        if (isDismissed) {
+          setShowFirstVisitHint(false);
+          return;
+        }
+
+        // Fetch project to check sessionCount
+        const res = await fetch(`/api/projects/${id}`);
+        if (!res.ok) {
+          setShowFirstVisitHint(true);
+          return;
+        }
+
+        const project = await res.json();
+        const sessionCount = project.sessions?.length || 0;
+        // Only show hint on first visit (no sessions yet)
+        setShowFirstVisitHint(sessionCount === 0);
+      } catch {
+        // If we can't verify, show the hint as a fallback
+        setShowFirstVisitHint(true);
+      }
+    };
+
+    checkAndShowHint();
+  }, [id]);
+
+  const dismissFirstVisitHint = () => {
+    try {
+      localStorage.setItem(getHintDismissalKey(id), 'true');
+    } catch {
+      // Ignore storage failures and still dismiss the hint for the current render.
+    }
+    setShowFirstVisitHint(false);
+  };
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -328,6 +370,21 @@ export default function RecordPage() {
         <AppHeader title="Voice Session" subtitle={toneCopy.recordHeaderSubtitle} />
 
         {error && <StatusMessage state="error" title="Recording error" description={error} />}
+
+        {showFirstVisitHint && (
+          <Card className="mb-6 border-neon-lime/30 bg-app-surface-muted flex items-start justify-between gap-4">
+            <p className="text-sm text-app-fg-muted">
+              Just talk. Tell a story, any story. The Wombat will do the rest.
+            </p>
+            <button
+              onClick={dismissFirstVisitHint}
+              aria-label="Dismiss hint"
+              className="shrink-0 text-app-fg-muted hover:text-white transition text-xs"
+            >
+              ✕
+            </button>
+          </Card>
+        )}
 
         {questionId && (
           <div className="bg-indigo-900/30 border border-indigo-700 rounded-xl p-4 mb-6">
