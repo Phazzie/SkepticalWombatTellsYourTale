@@ -1,0 +1,4 @@
+model = "codex-mini-latest"
+approval_policy = "suggest"
+sandbox = true
+project_doc_fallback_filenames = ["CLAUDE.md"]
