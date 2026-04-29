@@ -24,8 +24,64 @@ Run these from repo root before handing work off:
 
 1. `npm run lint`
 2. `npm run build`
+3. `npm run test:unit`
 
 If dependencies are missing, run `npm ci` first.
+
+**Important**: `npm test` and `npm run verify` run lint + build **only**. They do NOT
+run unit tests. Always run `npm run test:unit` separately to validate behavior.
+
+## Periodic Review (Every 5 Commits or Before Any PR)
+
+### Correctness
+- [ ] `npm run lint` passes with no errors
+- [ ] `npm run build` passes
+- [ ] `npm run test:unit` passes (no new failures)
+- [ ] `npx prisma validate` passes
+
+### Security
+- [ ] No secrets committed (`.env`, API keys, credentials)
+- [ ] All new API routes call `requireUser` and appropriate access checks
+- [ ] User-controlled strings are bounds-checked before being forwarded to external services
+- [ ] No `prisma db push` used outside local dev bootstrap
+
+### Quality
+- [ ] No `any` types introduced without justification
+- [ ] No new npm packages added without necessity
+- [ ] No half-finished implementations
+- [ ] No unrelated files modified
+
+### Integration
+- [ ] API shapes unchanged (or all callers updated in the same commit)
+- [ ] Prisma schema changes include migration + app update
+- [ ] No regressions to existing pages or routes
+
+## Validation and Error Handling Standards
+
+### At Route Boundaries (Required)
+- Validate all request body fields before using them: required fields present, correct
+  types, non-empty strings, reasonable length limits.
+- Maximum transcript length: 50,000 characters. Maximum audio file size: 25 MB.
+  Reject with `badRequest` if exceeded.
+- Validate all URL params (`id`, `docId`, `tangentId`, etc.) are non-empty strings.
+- Do not pass raw user input directly to Prisma queries or AI prompts without validation.
+
+### Error Responses
+- All errors must flow through `handleRoute` → structured JSON response.
+- Never expose stack traces, internal file paths, or raw exception messages to clients.
+- Use the correct HTTP status: 400 bad input, 401 unauthenticated, 403 unauthorized,
+  404 not found, 429 rate limited, 500 unexpected.
+
+### AI Calls
+- Validate that transcript/content fields are non-empty and within length limits before
+  calling OpenAI. An empty or whitespace-only transcript must return `badRequest`.
+- User transcripts go to OpenAI. Never include user content in the system prompt role —
+  only in the user/content role.
+
+### Rate Limiting
+- Rate limiting (`enforceRateLimit`) is in-memory and process-local. In serverless
+  deployments with multiple instances it provides best-effort single-instance defense only.
+- Do not remove it; it is still a meaningful guard against single-instance abuse.
 
 ## Multi-Agent Integration Rules
 
