@@ -187,6 +187,5 @@ test('health endpoint is publicly accessible and returns status/check shape', as
   assert.ok(payload.status === 'ok' || payload.status === 'degraded');
   assert.equal(typeof payload.timestamp, 'string');
   assert.equal(typeof payload.checks?.database, 'string');
-  assert.equal(typeof payload.checks?.auth, 'string');
-  assert.equal(typeof payload.checks?.openai, 'string');
+  assert.equal(typeof payload.checks?.dependencies, 'string');
 });
