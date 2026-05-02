@@ -34,11 +34,11 @@ Run all four checks before every commit.
 
 ## Architecture
 
-```
+```text
 route handler (src/app/api/)
-  └─ handleRoute + requireUser + ensureProjectAccess
+  └─ handleRoute + requireProjectHandler (project routes) / requireUser (other)
        └─ service (src/lib/server/services/)
-            └─ port interface (src/lib/server/ports/)
+            └─ port interface (src/lib/server/ports/) [AI-dependent services]
                  └─ adapter (src/lib/server/adapters/)
                       └─ Prisma / OpenAI
 ```
@@ -49,7 +49,9 @@ Use primitives from `src/components/ui/primitives.tsx`:
 `Shell`, `Container`, `Card`, `GlassCard`, `PrimaryButton`, `SecondaryButton`,
 `TextInput`, `TextArea`, `AppBackLink`, `StatusMessage`, `WombatMark`.
 
-Never use raw Tailwind color utility classes (`bg-gray-950`, `text-zinc-900`, etc.).
+Prefer primitives over raw Tailwind color utility classes (`bg-gray-950`, `text-zinc-900`, etc.)
+in new code. Existing pages and components still use raw colors — refactoring is a tracked
+follow-up, not a blocker.
 
 ## Critical Known Risks
 
@@ -84,7 +86,8 @@ Before any PR:
 
 ### Do
 - Use `handleRoute` for every API route
-- Call `requireUser` + `ensureProjectAccess` for all project-scoped routes
+- Use `requireProjectHandler(params)` for all routes under `/api/projects/[id]/**`
+- Call `requireUser` directly for routes outside that subtree
 - Use `badRequest` / `notFound` / `unauthorized` from `src/lib/server/errors.ts`
 - Validate inputs at route boundaries (type, presence, length)
 - Add unit tests for new service functions

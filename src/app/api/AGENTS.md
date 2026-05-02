@@ -3,7 +3,9 @@
 This file extends `/AGENTS.md` and `/src/app/AGENTS.md`.
 
 - All routes must use `handleRoute` and return `{ error: string }` on failures.
-- Enforce `requireUser` and `ensureProjectAccess` for protected resources.
+- For routes under `src/app/api/projects/[id]/**`, use `requireProjectHandler(params)`
+  from `src/lib/server/route-guard.ts` (bundles auth + project membership). For other
+  protected routes (e.g., `/api/transcribe`), call `requireUser` directly.
 - Validate all request body fields: presence, type, non-empty strings, and length limits.
   Transcripts ≤ 40 000 chars (see `AI_TOKEN_BUDGETS.transcriptMaxChars` in `src/lib/ai/config.ts`);
   audio files ≤ 15 MB. Use `badRequest` for violations.
