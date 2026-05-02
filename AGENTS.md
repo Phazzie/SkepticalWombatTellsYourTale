@@ -61,8 +61,8 @@ run unit tests. Always run `npm run test:unit` separately to validate behavior.
 ### At Route Boundaries (Required)
 - Validate all request body fields before using them: required fields present, correct
   types, non-empty strings, reasonable length limits.
-- Maximum transcript length: 50,000 characters. Maximum audio file size: 25 MB.
-  Reject with `badRequest` if exceeded.
+- Maximum transcript length: 40,000 characters (matches `AI_TOKEN_BUDGETS.transcriptMaxChars`
+  in `src/lib/ai/config.ts`). Maximum audio file size: 15 MB. Reject with `badRequest` if exceeded.
 - Validate all URL params (`id`, `docId`, `tangentId`, etc.) are non-empty strings.
 - Do not pass raw user input directly to Prisma queries or AI prompts without validation.
 
