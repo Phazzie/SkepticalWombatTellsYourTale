@@ -19,13 +19,21 @@ export async function POST(request: Request) {
 
     enforceRateLimit(`transcribe:${userId}:${projectId}`, 10, 60 * 60_000);
 
-    const audioBuffer = Buffer.from(await audioFile.arrayBuffer());
-
-    return transcribeAndCreateSession({
+    // Avoid Buffer.from() which spikes memory on serverless for large 15MB files.
+    // OpenAI v4 SDK accepts the Web File object directly.
+    try {
+      return await transcribeAndCreateSession({
       projectId,
-      audioBuffer,
+      audioFile,
       filename: audioFile.name,
       questionId,
     });
+    } catch (error: unknown) {
+      const errMessage = error instanceof Error ? error.message : String(error);
+      if (errMessage.includes('API key') || errMessage.includes('Missing credentials') || !process.env.OPENAI_API_KEY) {
+        throw new Error('AI_CONFIG_MISSING: The OpenAI API key is missing. Please configure it in your environment variables.');
+      }
+      throw error;
+    }
   }, { request, operation: 'transcribe' });
 }

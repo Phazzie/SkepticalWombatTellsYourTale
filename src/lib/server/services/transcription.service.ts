@@ -6,7 +6,7 @@ import { log } from '@/lib/server/logger';
 export async function transcribeAndCreateSession(
   input: {
     projectId: string;
-    audioBuffer: Buffer;
+    audioFile: File | Buffer;
     filename: string;
     questionId?: string;
   },
@@ -29,10 +29,10 @@ export async function transcribeAndCreateSession(
 
   let transcript = '';
   try {
-    transcript = await ai.transcribeAudio(input.audioBuffer, input.filename);
+    transcript = await ai.transcribeAudio(input.audioFile, input.filename);
   } catch (error) {
-    log('error', 'Transcription failed, storing fallback transcript', { error: String(error) });
-    transcript = '[Transcription unavailable — configure OpenAI API key]';
+    log('error', 'Transcription failed', { error: String(error) });
+    throw error; // Throw instead of saving a fallback string so the DB is not polluted.
   }
 
   const session = await createTranscribedSession(
