@@ -7,8 +7,13 @@ Scope: App Router UI pages, layouts, and route handlers in `src/app`.
 UI guidance
 - Keep `page.tsx` files focused; extract large sections into components under `src/components`.
 - Prefer shared primitives from `src/components/ui/primitives.tsx`.
+  Prefer primitives over raw Tailwind color utilities in new code; existing pages still
+  use raw colors.
 - Keep client components minimal and isolate stateful logic.
 - Preserve existing route paths and dynamic param names.
+- List routes (sessions, tangents, gaps, concepts, etc.) currently have no pagination.
+  When adding new list routes, document the missing limit/offset as a follow-up rather
+  than silently returning unbounded data.
 
 Route handler guidance
 - Use `handleRoute` for consistent error handling.
