@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, memo } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { AnalysisResult } from '@/lib/types';
@@ -93,7 +93,7 @@ function RecordingControlCard({
 
 const getHintDismissalKey = (projectId: string) => `hint-dismissed-${projectId}`;
 
-function AnalysisPanels({ analysis }: { analysis: AnalysisResult }) {
+const AnalysisPanels = memo(function AnalysisPanels({ analysis }: { analysis: AnalysisResult }) {
   return (
     <>
       {analysis.documentSuggestion && (
@@ -189,7 +189,7 @@ function AnalysisPanels({ analysis }: { analysis: AnalysisResult }) {
       )}
     </>
   );
-}
+});
 
 export default function RecordPage() {
   const { id } = useParams<{ id: string }>();

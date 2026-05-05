@@ -71,8 +71,7 @@ export const projectsService = {
       };
     }
 
-    const projects = await projectsRepository.listForUser(userId);
-    const project = projects.find((p) => p.id === projectId);
+    const project = await projectsRepository.getProjectForUser(userId, projectId);
     if (!project) throw notFound('Project not found');
     return project;
   },
