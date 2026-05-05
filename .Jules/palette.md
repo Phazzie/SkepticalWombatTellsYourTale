@@ -1,0 +1,3 @@
+## 2024-05-05 - Contextual ARIA labels for inline list buttons
+**Learning:** When rendering lists of items (like "Concepts", "Contradictions", or "Dropped Threads") that each have an inline action button labeled just "✓ Approve" or "✓ Resolved", screen reader users hear repeated, indistinguishable actions. Focus states also sometimes look awkward without slight padding and negative margin adjustments (`px-1 -ml-1`).
+**Action:** Always add contextual `aria-label`s (e.g., `aria-label={\`Resolve dropped thread: \${tangent.thread}\`}`) to inline list action buttons. Include `focus-visible` rings with padding/margins to ensure keyboard navigators can visually distinguish the active item without layout shift.
