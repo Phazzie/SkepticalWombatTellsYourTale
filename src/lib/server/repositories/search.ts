@@ -8,31 +8,37 @@ export const searchRepository = {
     const [documents, sessions, questions, concepts, gaps, tangents, contradictions] = await Promise.all([
       prisma.document.findMany({
         where: { projectId, OR: [{ name: contains }, { content: contains }, { type: contains }] },
+        select: { id: true, name: true, content: true, createdAt: true },
         orderBy: { updatedAt: 'desc' },
         take: 30,
       }),
       prisma.voiceSession.findMany({
         where: { projectId, transcript: contains },
+        select: { id: true, transcript: true, createdAt: true },
         orderBy: { createdAt: 'desc' },
         take: 30,
       }),
       prisma.question.findMany({
         where: { projectId, text: contains },
+        select: { id: true, text: true, status: true, createdAt: true },
         orderBy: { createdAt: 'desc' },
         take: 30,
       }),
       prisma.concept.findMany({
         where: { projectId, OR: [{ name: contains }, { definition: contains }] },
+        select: { id: true, name: true, definition: true, createdAt: true },
         orderBy: { updatedAt: 'desc' },
         take: 30,
       }),
       prisma.gap.findMany({
         where: { projectId, OR: [{ description: contains }, { documentRef: contains }] },
+        select: { id: true, description: true, documentRef: true, createdAt: true },
         orderBy: { createdAt: 'desc' },
         take: 30,
       }),
       prisma.tangent.findMany({
         where: { projectId, OR: [{ thread: contains }, { context: contains }] },
+        select: { id: true, thread: true, context: true, createdAt: true },
         orderBy: { createdAt: 'desc' },
         take: 30,
       }),
@@ -41,6 +47,7 @@ export const searchRepository = {
           projectId,
           OR: [{ description: contains }, { existing: contains }, { new: contains }],
         },
+        select: { id: true, description: true, existing: true, new: true, createdAt: true },
         orderBy: { createdAt: 'desc' },
         take: 30,
       }),
