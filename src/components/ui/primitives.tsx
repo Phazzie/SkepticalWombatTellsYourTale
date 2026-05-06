@@ -95,7 +95,7 @@ export function StatusMessage({
   } as const;
 
   const dots = state === 'loading' ? (
-    <span className="inline-flex gap-1 ml-2">
+    <span className="inline-flex gap-1 ml-2" aria-hidden="true">
       {[0, 1, 2].map((i) => (
         <span
           key={i}
@@ -108,10 +108,12 @@ export function StatusMessage({
 
   return (
     <Card className="text-center">
-      <p className={`text-lg font-semibold ${styles[state]}`}>
-        {title}{dots}
-      </p>
-      {description && <p className="mt-2 text-sm text-app-fg-muted">{description}</p>}
+      <div role={state === 'error' ? 'alert' : 'status'} aria-live={state === 'error' ? 'assertive' : 'polite'}>
+        <p className={`text-lg font-semibold ${styles[state]}`}>
+          {title}{dots}
+        </p>
+        {description && <p className="mt-2 text-sm text-app-fg-muted">{description}</p>}
+      </div>
     </Card>
   );
 }
