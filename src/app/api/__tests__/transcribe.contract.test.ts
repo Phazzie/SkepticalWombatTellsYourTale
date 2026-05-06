@@ -4,6 +4,19 @@ import { handleRoute } from '@/lib/server/http';
 import { AppError, badRequest } from '@/lib/server/errors';
 import { parseTranscribeRequest, validateTranscribeAudioFile, ALLOWED_AUDIO_MIME_TYPES } from '@/lib/server/routes/transcribe';
 
+// Polyfill File for Node.js environments (like Node 18 in CI)
+if (typeof File === 'undefined') {
+  global.File = class File extends Blob {
+    name: string;
+    lastModified: number;
+    constructor(fileBits: BlobPart[], fileName: string, options?: FilePropertyBag) {
+      super(fileBits, options);
+      this.name = fileName;
+      this.lastModified = options?.lastModified ?? Date.now();
+    }
+  } as typeof File;
+}
+
 function normalizeQuestionId(value: FormDataEntryValue | null) {
   return typeof value === 'string' && value ? value : undefined;
 }

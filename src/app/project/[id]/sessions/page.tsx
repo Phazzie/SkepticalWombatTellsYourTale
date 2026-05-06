@@ -69,6 +69,8 @@ export default function SessionsPage() {
                   <button
                     onClick={() => setExpandedId(expandedId === session.id ? null : session.id)}
                     className="w-full px-5 py-4 text-left transition hover:bg-app-surface-muted"
+                    aria-expanded={expandedId === session.id}
+                    aria-controls={`session-content-${session.id}`}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div>
@@ -80,7 +82,7 @@ export default function SessionsPage() {
                   </button>
 
                   {expandedId === session.id && (
-                    <div className="border-t border-app-border px-5 py-4">
+                    <div id={`session-content-${session.id}`} className="border-t border-app-border px-5 py-4">
                       <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-app-fg-muted">Raw Transcript</h3>
                       <p className="whitespace-pre-wrap text-sm leading-relaxed text-app-fg">{session.transcript}</p>
 

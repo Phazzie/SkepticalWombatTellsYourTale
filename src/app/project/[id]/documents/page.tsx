@@ -11,6 +11,7 @@ export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [newType, setNewType] = useState('general');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -31,7 +32,8 @@ export default function DocumentsPage() {
   }, [id]);
 
   const createDocument = async () => {
-    if (!newName.trim()) return;
+    if (!newName.trim() || creating) return;
+    setCreating(true);
     setActionError(null);
     try {
       const res = await requestJson<Document>(`/api/projects/${id}/documents`, {
@@ -48,6 +50,8 @@ export default function DocumentsPage() {
       setShowNew(false);
     } catch {
       setActionError('Failed to create document');
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -153,6 +157,7 @@ export default function DocumentsPage() {
               placeholder="Document name..."
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !creating && newName.trim() && createDocument()}
               className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 mb-3 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
               autoFocus
             />
@@ -166,10 +171,10 @@ export default function DocumentsPage() {
               ))}
             </select>
             <div className="flex gap-3">
-              <button onClick={createDocument} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium">
-                Create
+              <button onClick={createDocument} disabled={creating || !newName.trim()} className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-6 py-2 rounded-lg font-medium">
+                {creating ? 'Creating...' : 'Create'}
               </button>
-              <button onClick={() => setShowNew(false)} className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium">
+              <button onClick={() => setShowNew(false)} disabled={creating} className="bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-white px-6 py-2 rounded-lg font-medium">
                 Cancel
               </button>
             </div>
