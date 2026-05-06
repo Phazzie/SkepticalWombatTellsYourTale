@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:unit": "node scripts/run-unit-tests.mjs",
+    "test:unit": "DATABASE_URL=\"postgresql://dummy:dummy@localhost:5432/dummy\" NEXTAUTH_SECRET=\"dummy\" node scripts/run-unit-tests.mjs",
     "smoke:test": "node scripts/smoke-test.mjs",
     "verify": "npm run lint && npm run build",
     "test": "npm run verify && npm run test:unit",
