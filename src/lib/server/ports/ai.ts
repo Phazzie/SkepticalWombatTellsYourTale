@@ -18,5 +18,5 @@ export interface AiPort {
     draft: string,
     transcripts: string[]
   ): Promise<{ hasDrift: boolean; details: string; rewriteSuggestion?: string }>;
-  transcribeAudio(audioBuffer: Buffer, filename: string): Promise<string>;
+  transcribeAudio(audioFile: File | Buffer, filename: string): Promise<string>;
 }

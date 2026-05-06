@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:unit": "node scripts/run-unit-tests.mjs",
+    "test:unit": "DATABASE_URL=\"postgresql://dummy:dummy@localhost:5432/dummy\" NEXTAUTH_SECRET=\"dummy\" node scripts/run-unit-tests.mjs",
     "smoke:test": "node scripts/smoke-test.mjs",
     "verify": "npm run lint && npm run build",
     "test": "npm run verify && npm run test:unit",
@@ -15,7 +15,8 @@
     "preflight": "npm ci && npm run db:bootstrap",
     "verify:postchange": "npm run verify",
     "security:audit": "npm audit --audit-level=high",
-    "agent:run": "npm run preflight && npm run verify:postchange"
+    "agent:run": "npm run preflight && npm run verify:postchange",
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",
@@ -25,17 +26,23 @@
     "openai": "^6.33.0",
     "prisma": "^5.22.0",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@vitejs/plugin-react": "^6.0.1",
     "dotenv": "^17.4.0",
     "eslint": "^8",
     "eslint-config-next": "15.5.15",
+    "jsdom": "^29.1.1",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.5"
   }
 }
