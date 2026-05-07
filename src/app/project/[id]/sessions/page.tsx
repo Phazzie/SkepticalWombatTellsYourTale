@@ -68,19 +68,21 @@ export default function SessionsPage() {
                 <Card key={session.id} className="overflow-hidden p-0">
                   <button
                     onClick={() => setExpandedId(expandedId === session.id ? null : session.id)}
-                    className="w-full px-5 py-4 text-left transition hover:bg-app-surface-muted"
+                    aria-expanded={expandedId === session.id}
+                    aria-controls={`session-content-${session.id}`}
+                    className="w-full px-5 py-4 text-left transition hover:bg-app-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-app-accent"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="font-medium text-white">Session — {new Date(session.createdAt).toLocaleString()}</p>
                         <p className="mt-0.5 text-sm text-app-fg-muted">{session.transcript.slice(0, 100)}...</p>
                       </div>
-                      <span className="text-app-fg-muted">{expandedId === session.id ? '▲' : '▼'}</span>
+                      <span className="text-app-fg-muted" aria-hidden="true">{expandedId === session.id ? '▲' : '▼'}</span>
                     </div>
                   </button>
 
                   {expandedId === session.id && (
-                    <div className="border-t border-app-border px-5 py-4">
+                    <div id={`session-content-${session.id}`} className="border-t border-app-border px-5 py-4">
                       <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-app-fg-muted">Raw Transcript</h3>
                       <p className="whitespace-pre-wrap text-sm leading-relaxed text-app-fg">{session.transcript}</p>
 
