@@ -6,7 +6,13 @@ import { POST as transcribePOST } from '@/app/api/transcribe/route';
 import { GET as sessionsGET, POST as sessionsPOST } from '@/app/api/projects/[id]/sessions/route';
 import { GET as documentsGET, POST as documentsPOST } from '@/app/api/projects/[id]/documents/route';
 import { POST as exportPOST } from '@/app/api/projects/[id]/export/route';
+import { File as NodeFile } from 'node:buffer';
 import { GET as healthGET } from '@/app/api/health/route';
+
+if (typeof globalThis.File === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  globalThis.File = NodeFile as any;
+}
 
 test('auth/register returns 400 error shape for malformed JSON', async () => {
   const response = await registerPOST(new Request('http://localhost/api/auth/register', {
