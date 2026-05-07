@@ -132,14 +132,16 @@ export default function ExportPage() {
         </GlassCard>
 
         {/* Export level selector */}
-        <div className="mb-6 space-y-2.5">
+        <div className="mb-6 space-y-2.5" role="radiogroup" aria-label="Export Level">
           {exportLevels.map((level) => {
             const active = exportLevel === level.value;
             return (
               <button
                 key={level.value}
+                role="radio"
+                aria-checked={active}
                 onClick={() => setExportLevel(level.value)}
-                className={`w-full rounded-2xl border p-5 text-left transition-all duration-150 ${
+                className={`w-full rounded-2xl border p-5 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon-purple ${
                   active
                     ? 'border-neon-purple/50 bg-neon-purple-dim glow-purple'
                     : 'border-app-border bg-app-surface hover:border-app-border-strong hover:bg-app-surface-muted'
