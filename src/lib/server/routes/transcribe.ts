@@ -1,4 +1,8 @@
 import { badRequest } from '@/lib/server/errors';
+import { File as NodeFile } from 'node:buffer';
+
+// Polyfill File for environments where it isn't globally available (like Node 18 test runners)
+const GlobalFile = typeof File !== 'undefined' ? File : NodeFile;
 
 const MAX_AUDIO_BYTES = 15 * 1024 * 1024;
 const MAX_AUDIO_MB = Math.floor(MAX_AUDIO_BYTES / (1024 * 1024));
@@ -21,7 +25,7 @@ export function parseTranscribeRequest(formData: FormData) {
   const projectId = formData.get('projectId');
   const questionId = formData.get('questionId');
 
-  if (!(audioFile instanceof File) || typeof projectId !== 'string' || !projectId) {
+  if (!(audioFile instanceof GlobalFile) || typeof projectId !== 'string' || !projectId) {
     throw badRequest('Missing or invalid audio or projectId');
   }
 
