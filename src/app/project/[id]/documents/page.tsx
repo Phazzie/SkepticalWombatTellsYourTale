@@ -150,6 +150,7 @@ export default function DocumentsPage() {
             <h3 className="font-semibold mb-3">New Document</h3>
             <input
               type="text"
+              aria-label="New document name"
               placeholder="Document name..."
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
@@ -158,6 +159,7 @@ export default function DocumentsPage() {
             />
             <select
               value={newType}
+              aria-label="Document type"
               onChange={(e) => setNewType(e.target.value)}
               className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 mb-4 text-white focus:outline-none focus:border-indigo-500"
             >
@@ -205,6 +207,7 @@ export default function DocumentsPage() {
                   <div className="p-5">
                     <textarea
                       value={editContent}
+                      aria-label="Document content"
                       onChange={(e) => setEditContent(e.target.value)}
                       rows={12}
                       className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 resize-none font-mono text-sm"
@@ -214,6 +217,7 @@ export default function DocumentsPage() {
                       <p className="text-xs text-green-400 mb-2">✍️ Generate in your voice</p>
                       <input
                         type="text"
+                        aria-label="Voice generation prompt"
                         placeholder="What do you want written? (e.g., 'the story about my father')"
                         value={voicePrompt}
                         onChange={(e) => setVoicePrompt(e.target.value)}
