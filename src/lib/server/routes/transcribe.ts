@@ -36,7 +36,7 @@ export function parseTranscribeRequest(formData: FormData) {
   };
 }
 
-export function validateTranscribeAudioFile(audioFile: File) {
+export function validateTranscribeAudioFile(audioFile: File | typeof NodeFile["prototype"]) {
   const mimeType = audioFile.type?.toLowerCase() || '';
   if (!ALLOWED_AUDIO_MIME_TYPES.has(mimeType)) {
     throw badRequest('Unsupported audio format');
