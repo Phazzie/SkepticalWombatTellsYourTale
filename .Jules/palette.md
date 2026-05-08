@@ -1,0 +1,3 @@
+## 2024-05-08 - Context-aware ARIA labels for inline actions
+**Learning:** Inline action buttons like "✓ Resolved" or "✓ Approve" across dashboard elements (e.g., in Insights Grid and Concepts & Contradictions) present a pattern of poor accessibility for screen readers, as their generic text lacks item-specific context. Furthermore, they often miss focus indicators for keyboard users.
+**Action:** Always verify that repeating inline action buttons contain a dynamic `aria-label` (e.g., `aria-label={"Resolve tangent: " + tangent.thread}`) and use `focus-visible` utility classes for keyboard accessibility.
