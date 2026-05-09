@@ -57,14 +57,15 @@ function RecordingControlCard({
   return (
     <Card className="mb-6 text-center">
       <button
-        className={`mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full transition-all ${
+        aria-label={state === 'recording' ? 'Stop recording' : 'Start recording'}
+        className={`mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-neon-lime focus-visible:ring-offset-2 focus-visible:ring-offset-app-bg ${
           state === 'recording'
             ? 'recording-pulse bg-red-600 shadow-lg shadow-red-900'
             : 'bg-app-accent hover:brightness-110'
         }`}
         onClick={onToggle}
       >
-        <span className="text-4xl">{state === 'recording' ? '⏹' : '🎙️'}</span>
+        <span aria-hidden="true" className="text-4xl">{state === 'recording' ? '⏹' : '🎙️'}</span>
       </button>
 
       {state === 'recording' ? (
