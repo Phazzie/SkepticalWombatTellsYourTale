@@ -21,7 +21,10 @@ export function parseTranscribeRequest(formData: FormData) {
   const projectId = formData.get('projectId');
   const questionId = formData.get('questionId');
 
-  if (!(audioFile instanceof File) || typeof projectId !== 'string' || !projectId) {
+  // Note: FormDataEntryValue from 'audioFile' in Node 18/20 environments might be recognized
+  // as a Blob rather than a File. Checking size and type acts as a universal fallback.
+  const isFileLike = audioFile !== null && typeof audioFile === 'object' && 'size' in audioFile && 'type' in audioFile;
+  if (!isFileLike || typeof projectId !== 'string' || !projectId) {
     throw badRequest('Missing or invalid audio or projectId');
   }
 
