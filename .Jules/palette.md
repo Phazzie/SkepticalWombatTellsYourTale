@@ -1,0 +1,3 @@
+## 2024-05-18 - Missing context on repeating inline action buttons
+**Learning:** Found a recurring pattern in dashboard grids (Concepts, Contradictions, Tangents, Gaps) where repeated inline action buttons (like "Approve" or "Resolved") lacked context-aware `aria-label`s and `focus-visible` styles. To a screen reader, these sounded like a confusing list of identical "Approve" buttons without specifying *what* was being approved. They were also hard to navigate via keyboard due to missing focus states.
+**Action:** When implementing lists or grids with repeated inline actions, always use dynamic, context-aware `aria-label`s (e.g., `aria-label={`Approve concept: ${concept.name}`}`) and ensure clear `focus-visible` utility classes are applied for keyboard accessibility.
