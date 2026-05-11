@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { handleRoute } from '@/lib/server/http';
 import { AppError, badRequest } from '@/lib/server/errors';
 import { parseTranscribeRequest, validateTranscribeAudioFile, ALLOWED_AUDIO_MIME_TYPES } from '@/lib/server/routes/transcribe';
+import { File } from 'buffer';
 
 function normalizeQuestionId(value: FormDataEntryValue | null) {
   return typeof value === 'string' && value ? value : undefined;
