@@ -57,7 +57,8 @@ function RecordingControlCard({
   return (
     <Card className="mb-6 text-center">
       <button
-        className={`mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full transition-all ${
+        aria-label={state === 'recording' ? 'Stop recording' : 'Start recording'}
+        className={`mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-neon-lime ${
           state === 'recording'
             ? 'recording-pulse bg-red-600 shadow-lg shadow-red-900'
             : 'bg-app-accent hover:brightness-110'
