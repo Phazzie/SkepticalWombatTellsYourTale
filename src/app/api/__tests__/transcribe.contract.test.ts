@@ -1,3 +1,7 @@
+if (typeof globalThis.File === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
+  globalThis.File = require('node:buffer').File as any;
+}
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { handleRoute } from '@/lib/server/http';
