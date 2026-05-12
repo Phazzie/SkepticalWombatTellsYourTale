@@ -139,7 +139,7 @@ export default function ExportPage() {
               <button
                 key={level.value}
                 onClick={() => setExportLevel(level.value)}
-                className={`w-full rounded-2xl border p-5 text-left transition-all duration-150 ${
+                className={`w-full rounded-2xl border p-5 text-left transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon-purple focus-visible:ring-offset-2 ${
                   active
                     ? 'border-neon-purple/50 bg-neon-purple-dim glow-purple'
                     : 'border-app-border bg-app-surface hover:border-app-border-strong hover:bg-app-surface-muted'
