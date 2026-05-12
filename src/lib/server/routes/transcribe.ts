@@ -1,4 +1,7 @@
-import { File } from 'node:buffer';
+if (typeof globalThis.File === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-require-imports
+  globalThis.File = require('node:buffer').File as any;
+}
 import { badRequest } from '@/lib/server/errors';
 
 const MAX_AUDIO_BYTES = 15 * 1024 * 1024;
