@@ -1,0 +1,3 @@
+## 2024-05-13 - Context-Aware ARIA Labels for Repeating Action Buttons
+**Learning:** Repeating inline action buttons (like '✓ Resolved' or '✓ Approve') in mapped lists create a highly redundant and confusing experience for screen reader users when generic labels are used. Screen readers will just read "Resolved, button" repeatedly.
+**Action:** Always provide dynamic, context-aware `aria-label`s for repeating action buttons inside mapped lists. Ensure you include the unique identifier or relevant content in the `aria-label` (e.g., ``aria-label={`Mark gap "${gap.description}" as resolved`}``) and add visible focus styles (`focus-visible:outline-none focus-visible:ring-2 ...`) for keyboard accessibility.

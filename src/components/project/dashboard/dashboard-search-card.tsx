@@ -29,13 +29,13 @@ export function DashboardSearchCard({
           aria-label="Search project content"
           aria-busy={searching}
           placeholder="Search sessions, docs, concepts, questions..."
-          className="flex-1 bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-500"
+          className="flex-1 bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
         />
         <button
           onClick={onSearch}
           disabled={searching}
           aria-busy={searching}
-          className="rounded bg-indigo-600 px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60 hover:bg-indigo-700"
+          className="rounded bg-indigo-600 px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60 hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
         >
           {searching ? 'Searching...' : 'Search'}
         </button>
