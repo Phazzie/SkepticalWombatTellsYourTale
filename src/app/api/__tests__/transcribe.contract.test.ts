@@ -1,3 +1,4 @@
+import { File } from "node:buffer";
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { handleRoute } from '@/lib/server/http';
