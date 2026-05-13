@@ -1,4 +1,0 @@
-🎨 Palette: Fix ReferenceError when using File in node < 20 tests
-
-* Added import { File } from "node:buffer" to test files that construct `File` objects.
-* Fixes CI failures running on Node 18 environments where File is not globally available.
