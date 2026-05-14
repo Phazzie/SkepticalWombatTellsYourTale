@@ -1,3 +1,14 @@
+
+if (typeof File === 'undefined') {
+  global.File = class File {
+    constructor(parts, name, options) {
+      this.parts = parts;
+      this.name = name;
+      this.type = options && options.type || '';
+      this.size = parts.reduce((acc, part) => acc + (part.length || part.byteLength || 0), 0);
+    }
+  };
+}
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { handleRoute } from '@/lib/server/http';
