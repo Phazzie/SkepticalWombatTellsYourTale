@@ -34,7 +34,8 @@ export function DashboardInsightsGrid({
                 <div className="flex gap-2 mt-2">
                   <button
                     onClick={() => onResolveTangent(tangent.id)}
-                    className="text-xs text-green-400 hover:text-green-300"
+                    aria-label={`Mark thread as resolved: ${tangent.thread}`}
+                    className="text-xs text-green-400 hover:text-green-300 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-1 focus-visible:ring-offset-gray-800"
                   >
                     ✓ Resolved
                   </button>
@@ -70,7 +71,8 @@ export function DashboardInsightsGrid({
                 )}
                 <button
                   onClick={() => onResolveGap(gap.id)}
-                  className="text-xs text-green-400 hover:text-green-300 mt-2"
+                  aria-label={`Mark gap as resolved: ${gap.description}`}
+                  className="text-xs text-green-400 hover:text-green-300 mt-2 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 focus-visible:ring-offset-1 focus-visible:ring-offset-gray-800"
                 >
                   ✓ Resolved
                 </button>

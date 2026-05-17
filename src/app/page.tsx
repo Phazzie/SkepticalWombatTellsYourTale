@@ -290,14 +290,14 @@ export default function HomePage() {
                         <button
                           onClick={(e) => startRename(project, e)}
                           aria-label={`Rename ${project.name}`}
-                          className="rounded-lg p-1.5 text-app-fg-muted transition hover:bg-app-surface-strong hover:text-white"
+                          className="rounded-lg p-1.5 text-app-fg-muted transition hover:bg-app-surface-strong hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon-lime focus-visible:ring-offset-1 focus-visible:ring-offset-app-surface"
                         >
                           ✏️
                         </button>
                         <button
                           onClick={(e) => startDelete(project.id, e)}
                           aria-label={`Delete ${project.name}`}
-                          className="rounded-lg p-1.5 text-app-fg-muted transition hover:bg-red-900/30 hover:text-red-400"
+                          className="rounded-lg p-1.5 text-app-fg-muted transition hover:bg-red-900/30 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 focus-visible:ring-offset-app-surface"
                         >
                           🗑️
                         </button>
