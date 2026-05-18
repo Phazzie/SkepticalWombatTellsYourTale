@@ -23,13 +23,14 @@ export function DashboardConceptsContradictions({
                 <p className="text-xs text-app-fg-muted mt-1">{concept.definition}</p>
                 <button
                   onClick={() => onApproveConcept(concept.id)}
-                  className="text-xs text-neon-lime/70 hover:text-neon-lime mt-2 transition-colors"
+                  aria-label={`Approve concept: ${concept.name}`}
+                  className="text-xs text-neon-lime/70 hover:text-neon-lime mt-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon-lime rounded"
                 >
                   ✓ Approve
                 </button>
               </div>
             ))}
-            <Link href={`/project/${id}/concepts`} className="text-xs text-app-fg-muted hover:text-neon-lime transition-colors">
+            <Link href={`/project/${id}/concepts`} className="text-xs text-app-fg-muted hover:text-neon-lime transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon-lime rounded">
               View all →
             </Link>
           </div>
@@ -48,13 +49,14 @@ export function DashboardConceptsContradictions({
                 <p className="text-sm text-neon-pink">{item.description}</p>
                 <button
                   onClick={() => onMarkContradictionExplored(item.id)}
-                  className="text-xs text-neon-lime/70 hover:text-neon-lime mt-2 transition-colors"
+                  aria-label={`Mark contradiction explored: ${item.description}`}
+                  className="text-xs text-neon-lime/70 hover:text-neon-lime mt-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon-lime rounded"
                 >
                   ✓ Mark explored
                 </button>
               </div>
             ))}
-            <Link href={`/project/${id}/contradictions`} className="text-xs text-app-fg-muted hover:text-neon-lime transition-colors">
+            <Link href={`/project/${id}/contradictions`} className="text-xs text-app-fg-muted hover:text-neon-lime transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon-lime rounded">
               View all →
             </Link>
           </div>
