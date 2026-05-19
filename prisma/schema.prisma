@@ -35,8 +35,6 @@ model Document {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
 }
 
 model VoiceSession {
@@ -52,7 +50,6 @@ model VoiceSession {
   updatedAt     DateTime  @updatedAt
   project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  @@index([projectId])
   @@map("Session")
 }
 
@@ -67,8 +64,6 @@ model Tangent {
   updatedAt DateTime     @updatedAt
   project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   session   VoiceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
 }
 
 model Pattern {
@@ -79,8 +74,6 @@ model Pattern {
   acknowledged Boolean  @default(false)
   createdAt    DateTime @default(now())
   project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
 }
 
 model Gap {
@@ -91,8 +84,6 @@ model Gap {
   resolved    Boolean  @default(false)
   createdAt   DateTime @default(now())
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
 }
 
 model Question {
@@ -105,8 +96,6 @@ model Question {
   updatedAt  DateTime       @updatedAt
   project    Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   responses  VoiceSession[]
-
-  @@index([projectId])
 }
 
 model Concept {
@@ -121,8 +110,6 @@ model Concept {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
 }
 
 model Contradiction {
@@ -135,8 +122,6 @@ model Contradiction {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
 }
 
 model User {

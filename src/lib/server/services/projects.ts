@@ -71,6 +71,7 @@ export const projectsService = {
       };
     }
 
+    // ⚡ Bolt: Replaced O(N) memory find on listForUser with a direct O(1) database lookup
     const project = await projectsRepository.getProjectForUser(userId, projectId);
     if (!project) throw notFound('Project not found');
     return project;

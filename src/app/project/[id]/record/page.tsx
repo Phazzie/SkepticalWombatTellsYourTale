@@ -93,6 +93,8 @@ function RecordingControlCard({
 
 const getHintDismissalKey = (projectId: string) => `hint-dismissed-${projectId}`;
 
+// ⚡ Bolt: Wrapped AnalysisPanels in React.memo to prevent expensive re-renders
+// during high-frequency updates (e.g. liveTranscript and duration state changes).
 const AnalysisPanels = memo(function AnalysisPanels({ analysis }: { analysis: AnalysisResult }) {
   return (
     <>

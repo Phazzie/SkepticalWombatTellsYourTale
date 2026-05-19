@@ -19,6 +19,9 @@ test('createProject delegates to repository with same payload', async () => {
     async deleteProject() {
       throw new Error('not used');
     },
+    async getProjectForUser() {
+      throw new Error('not used');
+    },
   };
 
   const result = await projectsService.createProject('u1', 'Test', 'Desc', { repository });
@@ -39,6 +42,9 @@ test('updateProject requires access check before updating', async () => {
       return { id, ...data } as Project;
     },
     async deleteProject() {
+      throw new Error('not used');
+    },
+    async getProjectForUser() {
       throw new Error('not used');
     },
   };
@@ -65,6 +71,9 @@ test('deleteProject forbids non-owner users', async () => {
     async deleteProject() {
       deleted = true;
     },
+    async getProjectForUser() {
+      throw new Error('not used');
+    },
   };
 
   const ensureOwnership = async () => {
@@ -89,6 +98,9 @@ test('deleteProject allows owner users', async () => {
     },
     async deleteProject(projectId: string) {
       deletedId = projectId;
+    },
+    async getProjectForUser() {
+      throw new Error('not used');
     },
   };
 

@@ -6,6 +6,7 @@ export const sessionsRepository = {
     return prisma.voiceSession.findMany({
       where: { projectId },
       orderBy: { createdAt: 'desc' },
+      include: { tangents: true },
     });
   },
 

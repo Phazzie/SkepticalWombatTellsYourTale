@@ -27,7 +27,7 @@ test('analyzeTranscript reports contract issues when required fields are missing
           },
         },
       ],
-    }) as unknown as OpenAiResponse) as unknown as typeof openai.chat.completions.create;
+    }) as OpenAiResponse) as typeof openai.chat.completions.create;
 
   try {
     const result = await analyzeTranscript('transcript', 'project', 'history', [], 's1');
@@ -51,7 +51,7 @@ test('generateQuestionsFromProjectContext reports invalid contract for missing c
           },
         },
       ],
-    }) as unknown as OpenAiResponse) as unknown as typeof openai.chat.completions.create;
+    }) as OpenAiResponse) as typeof openai.chat.completions.create;
 
   try {
     const result = await generateQuestionsFromProjectContext('recent', 'docs');
