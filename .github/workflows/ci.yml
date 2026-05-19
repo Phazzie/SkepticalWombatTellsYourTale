@@ -37,6 +37,9 @@ jobs:
         run: npm run lint
       - name: Unit tests
         run: npm run test:unit
+        env:
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
+          NEXTAUTH_SECRET: "dummy"
 
   build:
     name: Build (Node ${{ matrix.node }})
