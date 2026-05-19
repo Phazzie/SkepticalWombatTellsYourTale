@@ -2,11 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { projectsService } from '@/lib/server/services/projects';
 import { AppError } from '@/lib/server/errors';
+import type { Project } from '@prisma/client';
 
 test('createProject delegates to repository with same payload', async () => {
   let received: { userId: string; name: string; description: string | null } | null = null;
 
-  const created = { id: 'p1', name: 'Test' };
+  const created = { id: 'p1', name: 'Test' } as Project;
   const repository = {
     async createForUser(userId: string, name: string, description: string | null) {
       received = { userId, name, description };
@@ -16,6 +17,9 @@ test('createProject delegates to repository with same payload', async () => {
       throw new Error('not used');
     },
     async deleteProject() {
+      throw new Error('not used');
+    },
+    async getProjectForUser() {
       throw new Error('not used');
     },
   };
@@ -35,9 +39,12 @@ test('updateProject requires access check before updating', async () => {
     },
     async updateProject(id: string, data: { name?: string; description?: string | null }) {
       updated = { id, data };
-      return { id, ...data };
+      return { id, ...data } as Project;
     },
     async deleteProject() {
+      throw new Error('not used');
+    },
+    async getProjectForUser() {
       throw new Error('not used');
     },
   };
@@ -64,6 +71,9 @@ test('deleteProject forbids non-owner users', async () => {
     async deleteProject() {
       deleted = true;
     },
+    async getProjectForUser() {
+      throw new Error('not used');
+    },
   };
 
   const ensureOwnership = async () => {
@@ -88,6 +98,9 @@ test('deleteProject allows owner users', async () => {
     },
     async deleteProject(projectId: string) {
       deletedId = projectId;
+    },
+    async getProjectForUser() {
+      throw new Error('not used');
     },
   };
 

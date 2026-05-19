@@ -10,6 +10,15 @@ export const projectsRepository = {
     });
   },
 
+  getProjectForUser(userId: string, projectId: string) {
+    return prisma.project.findFirst({
+      where: {
+        id: projectId,
+        OR: [{ userId }, { members: { some: { userId } } }],
+      },
+    });
+  },
+
   createForUser(userId: string, name: string, description: string | null) {
     return prisma.project.create({
       data: {
