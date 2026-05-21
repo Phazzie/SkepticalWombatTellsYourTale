@@ -195,7 +195,7 @@ export default function DocumentsPage() {
                       setEditingId(editingId === doc.id ? null : doc.id);
                       setEditContent(doc.content);
                     }}
-                    className="text-sm text-indigo-400 hover:text-indigo-300"
+                    className="text-sm text-indigo-400 hover:text-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded px-1"
                   >
                     {editingId === doc.id ? 'Cancel' : 'Edit'}
                   </button>
