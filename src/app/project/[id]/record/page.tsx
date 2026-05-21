@@ -57,14 +57,15 @@ function RecordingControlCard({
   return (
     <Card className="mb-6 text-center">
       <button
-        className={`mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full transition-all ${
+        className={`mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-app-surface ${
           state === 'recording'
             ? 'recording-pulse bg-red-600 shadow-lg shadow-red-900'
             : 'bg-app-accent hover:brightness-110'
         }`}
         onClick={onToggle}
+        aria-label={state === 'recording' ? 'Stop recording' : 'Start recording'}
       >
-        <span className="text-4xl">{state === 'recording' ? '⏹' : '🎙️'}</span>
+        <span className="text-4xl" aria-hidden="true">{state === 'recording' ? '⏹' : '🎙️'}</span>
       </button>
 
       {state === 'recording' ? (
@@ -379,9 +380,9 @@ export default function RecordPage() {
             <button
               onClick={dismissFirstVisitHint}
               aria-label="Dismiss hint"
-              className="shrink-0 text-app-fg-muted hover:text-white transition text-xs"
+              className="shrink-0 text-app-fg-muted hover:text-white transition text-xs rounded-full p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon-lime"
             >
-              ✕
+              <span aria-hidden="true">✕</span>
             </button>
           </Card>
         )}

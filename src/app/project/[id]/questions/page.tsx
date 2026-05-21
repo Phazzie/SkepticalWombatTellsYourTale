@@ -164,7 +164,7 @@ export default function QuestionsPage() {
                   {q.status !== 'dismissed' && (
                     <button
                       onClick={() => setQuestionStatus(q.id, 'dismissed')}
-                      className="text-[11px] text-gray-500 hover:text-gray-300"
+                      className="text-[11px] text-gray-500 hover:text-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded px-1"
                     >
                       Dismiss
                     </button>
@@ -172,7 +172,7 @@ export default function QuestionsPage() {
                   {q.status !== 'pending' && (
                     <button
                       onClick={() => setQuestionStatus(q.id, 'pending')}
-                      className="text-[11px] text-gray-500 hover:text-gray-300"
+                      className="text-[11px] text-gray-500 hover:text-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded px-1"
                     >
                       Re-open
                     </button>
