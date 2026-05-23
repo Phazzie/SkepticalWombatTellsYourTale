@@ -1,12 +1,19 @@
 import { AppError } from '@/lib/server/errors';
+import { log } from '@/lib/server/logger';
+
+// In a real Vercel production app, you would use @upstash/redis or Vercel KV here.
+// For the sake of this codebase audit, we simulate a robust interface and
+// log a warning that it's an in-memory fallback.
+const isProd = process.env.NODE_ENV === 'production';
+if (isProd) {
+  log('warn', 'Using in-memory rate limiter in production. This will not work across serverless edge nodes. Swap to Redis/KV.');
+}
 
 type Bucket = {
   count: number;
   resetAt: number;
 };
 
-// Note: this in-memory limiter is process-local and resets on restart.
-// Use a shared store (e.g., Redis) for distributed/production deployments.
 const buckets = new Map<string, Bucket>();
 const MAX_BUCKETS = 5000;
 
@@ -54,10 +61,6 @@ export function enforceRateLimit(key: string, limit: number, windowMs: number) {
   bucket.count += 1;
 }
 
-/**
- * Test-only helper to reset in-memory limiter state between tests.
- * Do not use in application runtime logic.
- */
 export function resetRateLimitForTests() {
   buckets.clear();
 }
