@@ -3,10 +3,21 @@ import { requireUser } from '@/lib/server/auth';
 import { requireProjectAccess } from '@/lib/server/services/project-access';
 import { transcribeAndCreateSession } from '@/lib/server/services/transcription.service';
 import { enforceRateLimit } from '@/lib/server/rate-limit';
+import { badRequest } from '@/lib/server/errors';
 import {
   parseTranscribeRequest,
   validateTranscribeAudioFile,
 } from '@/lib/server/routes/transcribe';
+
+function isMissingAiConfigError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.includes('API key') ||
+    message.includes('Missing credentials') ||
+    message.includes('AI_CONFIG_MISSING') ||
+    !process.env.OPENAI_API_KEY
+  );
+}
 
 export async function POST(request: Request) {
   return handleRoute(async () => {
@@ -23,15 +34,14 @@ export async function POST(request: Request) {
     // OpenAI v4 SDK accepts the Web File object directly.
     try {
       return await transcribeAndCreateSession({
-      projectId,
-      audioFile,
-      filename: audioFile.name,
-      questionId,
-    });
+        projectId,
+        audioFile,
+        filename: audioFile.name,
+        questionId,
+      });
     } catch (error: unknown) {
-      const errMessage = error instanceof Error ? error.message : String(error);
-      if (errMessage.includes('API key') || errMessage.includes('Missing credentials') || !process.env.OPENAI_API_KEY) {
-        throw new Error('AI_CONFIG_MISSING: The OpenAI API key is missing. Please configure it in your environment variables.');
+      if (isMissingAiConfigError(error)) {
+        throw badRequest('OPENAI_API_KEY is required to transcribe audio. Configure the key and try again.');
       }
       throw error;
     }
