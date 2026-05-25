@@ -116,7 +116,8 @@ export default function QuestionsPage() {
               <button
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
-                className={`text-xs px-3 py-1 rounded-full border ${
+                aria-pressed={activeFilter === filter}
+                className={`text-xs px-3 py-1 rounded-full border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 ${
                   activeFilter === filter
                     ? 'bg-indigo-600 border-indigo-500 text-white'
                     : 'bg-gray-800 border-gray-700 text-gray-300'
