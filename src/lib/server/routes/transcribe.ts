@@ -16,23 +16,28 @@ export const ALLOWED_AUDIO_MIME_TYPES: ReadonlySet<string> = new Set([
   'audio/m4a',
 ]);
 
+// Polyfill File for Node 18
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const globalFile = typeof File !== 'undefined' ? File : require('node:buffer').File;
+
 export function parseTranscribeRequest(formData: FormData) {
   const audioFile = formData.get('audio');
   const projectId = formData.get('projectId');
   const questionId = formData.get('questionId');
 
-  if (!(audioFile instanceof File) || typeof projectId !== 'string' || !projectId) {
+  if (!(audioFile instanceof globalFile) || typeof projectId !== 'string' || !projectId) {
     throw badRequest('Missing or invalid audio or projectId');
   }
 
   return {
-    audioFile,
+    audioFile: audioFile as File,
     projectId,
     questionId: typeof questionId === 'string' && questionId ? questionId : undefined,
   };
 }
 
-export function validateTranscribeAudioFile(audioFile: File) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function validateTranscribeAudioFile(audioFile: any) {
   const mimeType = audioFile.type?.toLowerCase() || '';
   if (!ALLOWED_AUDIO_MIME_TYPES.has(mimeType)) {
     throw badRequest('Unsupported audio format');
