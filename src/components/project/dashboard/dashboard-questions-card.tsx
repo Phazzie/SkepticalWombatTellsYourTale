@@ -9,7 +9,7 @@ export function DashboardQuestionsCard({ id, pendingQuestionsCount }: { id: stri
       </div>
       <Link
         href={`/project/${id}/questions`}
-        className="text-indigo-400 hover:text-indigo-300 text-sm"
+        className="text-indigo-400 hover:text-indigo-300 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded px-1 -ml-1 inline-block"
       >
         View all questions →
       </Link>
