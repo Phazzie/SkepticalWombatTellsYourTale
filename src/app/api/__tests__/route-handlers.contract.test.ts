@@ -8,6 +8,10 @@ import { GET as documentsGET, POST as documentsPOST } from '@/app/api/projects/[
 import { POST as exportPOST } from '@/app/api/projects/[id]/export/route';
 import { GET as healthGET } from '@/app/api/health/route';
 
+// Polyfill File for Node 18
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const globalFile = globalThis.File || require('node:buffer').File;
+
 test('auth/register returns 400 error shape for malformed JSON', async () => {
   const response = await registerPOST(new Request('http://localhost/api/auth/register', {
     method: 'POST',
@@ -61,7 +65,7 @@ test('transcribe returns 401 when unauthenticated (even if upload fields are mis
 test('transcribe enforces auth boundary before MIME validation for non-empty uploads', async () => {
   const formData = new FormData();
   formData.set('projectId', 'p1');
-  formData.set('audio', new File(['hello'], 'audio.txt', { type: 'text/plain' }));
+  formData.set('audio', new globalFile(['hello'], 'audio.txt', { type: 'text/plain' }));
 
   const response = await transcribePOST(new Request('http://localhost/api/transcribe', {
     method: 'POST',
@@ -78,7 +82,7 @@ test('transcribe enforces auth boundary before MIME validation for non-empty upl
 test('transcribe returns 401 with standard error payload when upload is valid but user is unauthenticated', async () => {
   const formData = new FormData();
   formData.set('projectId', 'p1');
-  formData.set('audio', new File(['hello'], 'audio.webm', { type: 'audio/webm' }));
+  formData.set('audio', new globalFile(['hello'], 'audio.webm', { type: 'audio/webm' }));
 
   const response = await transcribePOST(new Request('http://localhost/api/transcribe', {
     method: 'POST',

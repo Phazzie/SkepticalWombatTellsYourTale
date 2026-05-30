@@ -4,6 +4,10 @@ import { handleRoute } from '@/lib/server/http';
 import { AppError, badRequest } from '@/lib/server/errors';
 import { parseTranscribeRequest, validateTranscribeAudioFile, ALLOWED_AUDIO_MIME_TYPES } from '@/lib/server/routes/transcribe';
 
+// Polyfill File for Node 18
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const globalFile = globalThis.File || require('node:buffer').File;
+
 function normalizeQuestionId(value: FormDataEntryValue | null) {
   return typeof value === 'string' && value ? value : undefined;
 }
@@ -52,7 +56,7 @@ test('transcribe request parser rejects missing audio/project fields with 400', 
 });
 
 test('transcribe audio validator rejects unsupported MIME type with 400', () => {
-  const file = new File(['hello'], 'audio.txt', { type: 'text/plain' });
+  const file = new globalFile(['hello'], 'audio.txt', { type: 'text/plain' });
   assert.throws(
     () => validateTranscribeAudioFile(file),
     (error: unknown) => error instanceof AppError && error.status === 400
@@ -61,7 +65,7 @@ test('transcribe audio validator rejects unsupported MIME type with 400', () => 
 
 test('parseTranscribeRequest succeeds with valid audio file and projectId', () => {
   const formData = new FormData();
-  const file = new File(['audio-bytes'], 'voice.webm', { type: 'audio/webm' });
+  const file = new globalFile(['audio-bytes'], 'voice.webm', { type: 'audio/webm' });
   formData.set('audio', file);
   formData.set('projectId', 'proj-1');
 
@@ -73,7 +77,7 @@ test('parseTranscribeRequest succeeds with valid audio file and projectId', () =
 
 test('parseTranscribeRequest returns questionId when provided', () => {
   const formData = new FormData();
-  formData.set('audio', new File(['data'], 'voice.webm', { type: 'audio/webm' }));
+  formData.set('audio', new globalFile(['data'], 'voice.webm', { type: 'audio/webm' }));
   formData.set('projectId', 'proj-2');
   formData.set('questionId', 'q-99');
 
@@ -83,7 +87,7 @@ test('parseTranscribeRequest returns questionId when provided', () => {
 
 test('parseTranscribeRequest treats empty questionId string as absent', () => {
   const formData = new FormData();
-  formData.set('audio', new File(['data'], 'voice.webm', { type: 'audio/webm' }));
+  formData.set('audio', new globalFile(['data'], 'voice.webm', { type: 'audio/webm' }));
   formData.set('projectId', 'proj-3');
   formData.set('questionId', '');
 
@@ -93,7 +97,7 @@ test('parseTranscribeRequest treats empty questionId string as absent', () => {
 
 test('parseTranscribeRequest rejects empty projectId with 400', () => {
   const formData = new FormData();
-  formData.set('audio', new File(['data'], 'voice.webm', { type: 'audio/webm' }));
+  formData.set('audio', new globalFile(['data'], 'voice.webm', { type: 'audio/webm' }));
   formData.set('projectId', '');
 
   assert.throws(
@@ -104,7 +108,7 @@ test('parseTranscribeRequest rejects empty projectId with 400', () => {
 
 test('validateTranscribeAudioFile accepts all supported audio MIME types', () => {
   for (const mimeType of ALLOWED_AUDIO_MIME_TYPES) {
-    const file = new File(['audio-content'], 'audio', { type: mimeType });
+    const file = new globalFile(['audio-content'], 'audio', { type: mimeType });
     assert.doesNotThrow(
       () => validateTranscribeAudioFile(file),
       `Expected ${mimeType} to be accepted`
@@ -113,7 +117,7 @@ test('validateTranscribeAudioFile accepts all supported audio MIME types', () =>
 });
 
 test('validateTranscribeAudioFile rejects empty file (size 0) with 400', () => {
-  const emptyFile = new File([], 'silent.webm', { type: 'audio/webm' });
+  const emptyFile = new globalFile([], 'silent.webm', { type: 'audio/webm' });
   assert.throws(
     () => validateTranscribeAudioFile(emptyFile),
     (error: unknown) => error instanceof AppError && error.status === 400
@@ -122,7 +126,7 @@ test('validateTranscribeAudioFile rejects empty file (size 0) with 400', () => {
 
 test('validateTranscribeAudioFile rejects oversized file with 400', () => {
   const bigData = new Uint8Array(16 * 1024 * 1024); // 16 MB of zeros
-  const oversized = new File([bigData], 'big.webm', { type: 'audio/webm' });
+  const oversized = new globalFile([bigData], 'big.webm', { type: 'audio/webm' });
 
   assert.throws(
     () => validateTranscribeAudioFile(oversized),
