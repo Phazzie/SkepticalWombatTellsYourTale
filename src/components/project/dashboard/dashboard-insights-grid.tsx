@@ -34,15 +34,14 @@ export function DashboardInsightsGrid({
                 <div className="flex gap-2 mt-2">
                   <button
                     onClick={() => onResolveTangent(tangent.id)}
-                    aria-label={`Resolve tangent: ${tangent.thread}`}
-                    className="text-xs text-green-400 hover:text-green-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 rounded-sm"
+                    className="text-xs text-green-400 hover:text-green-300"
                   >
                     ✓ Resolved
                   </button>
                 </div>
               </div>
             ))}
-            <Link href={`/project/${id}/tangents`} className="inline-block text-xs text-indigo-400 hover:text-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded-sm">
+            <Link href={`/project/${id}/tangents`} className="text-xs text-indigo-400 hover:text-indigo-300">
               View all tangents →
             </Link>
           </div>
@@ -71,14 +70,13 @@ export function DashboardInsightsGrid({
                 )}
                 <button
                   onClick={() => onResolveGap(gap.id)}
-                  aria-label={`Resolve gap: ${gap.description}`}
-                  className="text-xs text-green-400 hover:text-green-300 mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-400 rounded-sm"
+                  className="text-xs text-green-400 hover:text-green-300 mt-2"
                 >
                   ✓ Resolved
                 </button>
               </div>
             ))}
-            <Link href={`/project/${id}/gaps`} className="inline-block text-xs text-indigo-400 hover:text-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded-sm">
+            <Link href={`/project/${id}/gaps`} className="text-xs text-indigo-400 hover:text-indigo-300">
               View all gaps →
             </Link>
           </div>
@@ -107,7 +105,7 @@ export function DashboardInsightsGrid({
                 </p>
               </div>
             ))}
-            <Link href={`/project/${id}/patterns`} className="inline-block text-xs text-indigo-400 hover:text-indigo-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded-sm">
+            <Link href={`/project/${id}/patterns`} className="text-xs text-indigo-400 hover:text-indigo-300">
               View all patterns →
             </Link>
           </div>

@@ -21,12 +21,13 @@ export function parseTranscribeRequest(formData: FormData) {
   const projectId = formData.get('projectId');
   const questionId = formData.get('questionId');
 
-  if (!(audioFile instanceof File) || typeof projectId !== 'string' || !projectId) {
+  const isFile = audioFile !== null && typeof audioFile === 'object' && 'name' in audioFile;
+  if (!isFile || typeof projectId !== 'string' || !projectId) {
     throw badRequest('Missing or invalid audio or projectId');
   }
 
   return {
-    audioFile,
+    audioFile: audioFile as File,
     projectId,
     questionId: typeof questionId === 'string' && questionId ? questionId : undefined,
   };
