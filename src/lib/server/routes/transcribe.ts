@@ -1,4 +1,5 @@
 import { badRequest } from '@/lib/server/errors';
+import { File } from 'node:buffer';
 
 const MAX_AUDIO_BYTES = 15 * 1024 * 1024;
 const MAX_AUDIO_MB = Math.floor(MAX_AUDIO_BYTES / (1024 * 1024));
