@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { File } from 'node:buffer';
 import { POST as registerPOST } from '@/app/api/auth/register/route';
 import { POST as questionsPOST } from '@/app/api/projects/[id]/questions/route';
 import { POST as transcribePOST } from '@/app/api/transcribe/route';
