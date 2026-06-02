@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { File } from 'buffer';
 import { handleRoute } from '@/lib/server/http';
 import { AppError, badRequest } from '@/lib/server/errors';
 import { parseTranscribeRequest, validateTranscribeAudioFile, ALLOWED_AUDIO_MIME_TYPES } from '@/lib/server/routes/transcribe';
