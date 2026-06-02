@@ -128,15 +128,15 @@ export default function ProjectPage() {
             <button
               onClick={openRename}
               aria-label="Rename project"
-              className="mt-1 rounded-lg p-1.5 text-app-fg-muted transition hover:bg-app-surface-strong hover:text-white shrink-0"
+              className="mt-1 rounded-lg p-1.5 text-app-fg-muted transition hover:bg-app-surface-strong hover:text-white shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon-lime"
             >
-              ✏️
+              <span aria-hidden="true">✏️</span>
             </button>
           </div>
         )}
 
         {actionError && (
-          <div role="alert">
+          <div role="alert" aria-live="polite">
             <Card className="mb-6 border-red-700 bg-red-900/20 text-sm text-red-300">
               {actionError}
             </Card>
