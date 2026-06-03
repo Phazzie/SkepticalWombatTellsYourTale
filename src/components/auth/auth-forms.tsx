@@ -54,7 +54,7 @@ export function SignInForm() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        {error && <p className="text-sm text-red-300">{error}</p>}
+        {error && <p className="text-sm text-red-300" role="alert" aria-live="polite">{error}</p>}
         <div className="flex gap-3">
           <PrimaryButton type="submit" disabled={loading} className="flex-1">
             {loading ? 'Signing in...' : 'Sign in'}
@@ -141,7 +141,7 @@ export function RegisterForm() {
           minLength={8}
           required
         />
-        {error && <p className="text-sm text-red-300">{error}</p>}
+        {error && <p className="text-sm text-red-300" role="alert" aria-live="polite">{error}</p>}
         <div className="flex gap-3">
           <PrimaryButton type="submit" disabled={loading} className="flex-1">
             {loading ? 'Creating...' : 'Create account'}
