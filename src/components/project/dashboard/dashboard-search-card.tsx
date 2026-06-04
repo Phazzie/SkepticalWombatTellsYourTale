@@ -35,13 +35,13 @@ export function DashboardSearchCard({
           onClick={onSearch}
           disabled={searching}
           aria-busy={searching}
-          className="rounded bg-indigo-600 px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60 hover:bg-indigo-700"
+          className="rounded bg-indigo-600 px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60 hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
         >
           {searching ? 'Searching...' : 'Search'}
         </button>
       </div>
       {searchResults.length > 0 && (
-        <div className="mt-3 space-y-2">
+        <div className="mt-3 space-y-2" aria-live="polite">
           {searchResults.slice(0, 10).map((r) => (
             <div key={`${r.kind}:${r.id}`} className="bg-gray-800 rounded p-3">
               <p className="text-xs text-gray-500 uppercase">{r.kind}</p>
