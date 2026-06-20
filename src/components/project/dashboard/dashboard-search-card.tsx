@@ -1,4 +1,5 @@
 import { ProjectSearchResult } from '@/components/project/dashboard/types';
+import { Card, PrimaryButton, TextInput } from '@/components/ui/primitives';
 
 export function DashboardSearchCard({
   searchTerm,
@@ -14,13 +15,13 @@ export function DashboardSearchCard({
   onSearch: () => Promise<void>;
 }) {
   return (
-    <div className="mt-6 bg-gray-900 border border-gray-700 rounded-xl p-5">
-      <div className="flex items-center gap-2 mb-3">
+    <Card className="mt-6">
+      <div className="mb-3 flex items-center gap-2">
         <span className="text-xl">🔎</span>
-        <h2 className="font-semibold text-white">Search Across Everything</h2>
+        <h2 className="font-semibold text-app-fg">Search Across Everything</h2>
       </div>
-      <div className="flex gap-2">
-        <input
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <TextInput
           type="text"
           value={searchTerm}
           onChange={(e) => onSearchTermChange(e.target.value)}
@@ -29,28 +30,28 @@ export function DashboardSearchCard({
           aria-label="Search project content"
           aria-busy={searching}
           placeholder="Search sessions, docs, concepts, questions..."
-          className="flex-1 bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-500"
+          className="flex-1"
         />
-        <button
+        <PrimaryButton
           onClick={onSearch}
           disabled={searching}
           aria-busy={searching}
-          className="rounded bg-indigo-600 px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60 hover:bg-indigo-700"
+          className="disabled:cursor-not-allowed"
         >
           {searching ? 'Searching...' : 'Search'}
-        </button>
+        </PrimaryButton>
       </div>
       {searchResults.length > 0 && (
         <div className="mt-3 space-y-2">
           {searchResults.slice(0, 10).map((r) => (
-            <div key={`${r.kind}:${r.id}`} className="bg-gray-800 rounded p-3">
-              <p className="text-xs text-gray-500 uppercase">{r.kind}</p>
-              <p className="text-sm text-gray-200">{r.title}</p>
-              {r.snippet && <p className="text-xs text-gray-400 mt-1">{r.snippet}</p>}
+            <div key={`${r.kind}:${r.id}`} className="rounded-xl border border-app-border bg-app-surface-muted p-3">
+              <p className="text-xs uppercase text-app-fg-muted">{r.kind}</p>
+              <p className="text-sm text-app-fg">{r.title}</p>
+              {r.snippet && <p className="mt-1 text-xs text-app-fg-muted">{r.snippet}</p>}
             </div>
           ))}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

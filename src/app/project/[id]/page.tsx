@@ -90,7 +90,7 @@ export default function ProjectPage() {
         <div className="mt-4" />
 
         {showRename ? (
-          <Card className="mb-6 border-indigo-700">
+          <Card className="mb-6 border-neon-lime-border">
             <h3 className="text-sm font-semibold text-app-fg-muted mb-3">Rename project</h3>
             <TextInput
               type="text"
@@ -112,7 +112,7 @@ export default function ProjectPage() {
               rows={2}
               className="mb-4 resize-none"
             />
-            {renameError && <p className="text-sm text-red-400 mb-3">{renameError}</p>}
+            {renameError && <p className="mb-3 text-sm text-neon-pink">{renameError}</p>}
             <div className="flex gap-3">
               <PrimaryButton onClick={submitRename} disabled={renaming || !renameValue.trim()}>
                 {renaming ? 'Saving...' : 'Save'}
@@ -137,7 +137,7 @@ export default function ProjectPage() {
 
         {actionError && (
           <div role="alert">
-            <Card className="mb-6 border-red-700 bg-red-900/20 text-sm text-red-300">
+            <Card className="mb-6 border-neon-pink-border bg-neon-pink-dim text-sm text-neon-pink">
               {actionError}
             </Card>
           </div>

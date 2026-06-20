@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
+import { AppHeader } from '@/components/layout/app-header';
+import { AppBackLink, Card, Container, PrimaryButton, SecondaryButton, Shell, StatusMessage, TextArea, TextInput } from '@/components/ui/primitives';
 import { Document } from '@/lib/types';
 import { requestJson } from '@/lib/client/request';
 
@@ -114,88 +115,77 @@ export default function DocumentsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-gray-500">Loading documents...</div>
-      </div>
+      <Shell>
+        <Container wide>
+          <StatusMessage state="loading" title="Loading documents..." />
+        </Container>
+      </Shell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
-      <div className="max-w-5xl mx-auto px-6 py-8">
-        <div className="flex items-center gap-4 mb-6">
-          <Link href={`/project/${id}`} className="text-gray-500 hover:text-gray-300 text-sm">
-            ← Back
-          </Link>
-          <h1 className="text-2xl font-bold">Documents</h1>
-          <button
-            onClick={() => setShowNew(true)}
-            className="ml-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
-          >
-            + New Document
-          </button>
-        </div>
+    <Shell>
+      <Container wide>
+        <AppBackLink href={`/project/${id}`} />
+        <div className="mt-4" />
+        <AppHeader
+          title="Documents"
+          actions={<PrimaryButton onClick={() => setShowNew(true)}>+ New Document</PrimaryButton>}
+        />
         {actionError && (
-          <div
-            role="alert"
-            aria-live="assertive"
-            className="mb-6 rounded-xl border border-red-700 bg-red-900/20 p-4 text-sm text-red-300"
-          >
-            {actionError}
+          <div role="alert" aria-live="assertive" className="mb-6">
+            <StatusMessage state="error" title={actionError} />
           </div>
         )}
 
         {showNew && (
-          <div className="bg-gray-900 border border-gray-700 rounded-xl p-5 mb-6">
-            <h3 className="font-semibold mb-3">New Document</h3>
-            <input
+          <Card className="mb-6">
+            <h3 className="mb-3 font-semibold text-app-fg">New Document</h3>
+            <TextInput
               type="text"
               placeholder="Document name..."
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 mb-3 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+              className="mb-3"
               autoFocus
             />
             <select
               value={newType}
               onChange={(e) => setNewType(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-2 mb-4 text-white focus:outline-none focus:border-indigo-500"
+              className="mb-4 w-full rounded-xl border border-app-border bg-app-surface-muted px-4 py-2.5 text-sm text-app-fg transition focus-visible:border-neon-lime/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon-lime"
             >
               {documentTypes.map((t) => (
                 <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
               ))}
             </select>
             <div className="flex gap-3">
-              <button onClick={createDocument} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium">
+              <PrimaryButton onClick={createDocument} className="px-6">
                 Create
-              </button>
-              <button onClick={() => setShowNew(false)} className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium">
+              </PrimaryButton>
+              <SecondaryButton onClick={() => setShowNew(false)} className="px-6">
                 Cancel
-              </button>
+              </SecondaryButton>
             </div>
-          </div>
+          </Card>
         )}
 
         {documents.length === 0 ? (
-          <div className="text-center py-16 text-gray-500">
-            <div className="text-5xl mb-4">📄</div>
-            <p>No documents yet. Create your first working document.</p>
-          </div>
+          <StatusMessage state="empty" title="No documents yet." description="Create your first working document." />
         ) : (
           <div className="space-y-4">
             {documents.map((doc) => (
-              <div key={doc.id} className="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-700">
+              <Card key={doc.id} className="overflow-hidden p-0">
+                <div className="flex items-center justify-between gap-3 border-b border-app-border px-5 py-4">
                   <div>
-                    <span className="font-semibold text-white">{doc.name}</span>
-                    <span className="ml-2 text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded">{doc.type}</span>
+                    <span className="font-semibold text-app-fg">{doc.name}</span>
+                    <span className="ml-2 rounded bg-app-surface-muted px-2 py-0.5 text-xs text-app-fg-muted">{doc.type}</span>
                   </div>
                   <button
                     onClick={() => {
                       setEditingId(editingId === doc.id ? null : doc.id);
                       setEditContent(doc.content);
                     }}
-                    className="text-sm text-indigo-400 hover:text-indigo-300"
+                    className="text-sm text-neon-lime transition hover:text-neon-lime/80"
                   >
                     {editingId === doc.id ? 'Cancel' : 'Edit'}
                   </button>
@@ -203,26 +193,26 @@ export default function DocumentsPage() {
 
                 {editingId === doc.id ? (
                   <div className="p-5">
-                    <textarea
+                    <TextArea
                       value={editContent}
                       onChange={(e) => setEditContent(e.target.value)}
                       rows={12}
-                      className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 resize-none font-mono text-sm"
+                      className="resize-none font-mono"
                       placeholder="Document content..."
                     />
-                    <div className="mt-4 p-4 bg-gray-800 rounded-lg">
-                      <p className="text-xs text-green-400 mb-2">✍️ Generate in your voice</p>
-                      <input
+                    <div className="mt-4 rounded-xl border border-app-border bg-app-surface-muted p-4">
+                      <p className="mb-2 text-xs text-neon-lime">✍️ Generate in your voice</p>
+                      <TextInput
                         type="text"
                         placeholder="What do you want written? (e.g., 'the story about my father')"
                         value={voicePrompt}
                         onChange={(e) => setVoicePrompt(e.target.value)}
-                        className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none mb-2"
+                        className="mb-2"
                       />
                       <button
                         onClick={() => generateDraft(doc.id)}
                         disabled={generatingDraft || !voicePrompt.trim()}
-                        className="text-xs bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white px-4 py-1.5 rounded"
+                        className="rounded-lg border border-neon-lime/30 bg-neon-lime-dim px-4 py-1.5 text-xs font-medium text-neon-lime transition hover:border-neon-lime disabled:opacity-50"
                       >
                         {generatingDraft ? 'Writing in your voice...' : 'Generate Draft'}
                       </button>
@@ -230,44 +220,44 @@ export default function DocumentsPage() {
                         <div
                           className={`mt-3 border rounded p-3 text-xs ${
                             driftFeedback.hasDrift
-                              ? 'border-amber-700 bg-amber-900/20 text-amber-300'
-                              : 'border-green-700 bg-green-900/20 text-green-300'
+                              ? 'border-neon-purple-border bg-neon-purple-dim text-neon-purple'
+                              : 'border-neon-lime-border bg-neon-lime-dim text-neon-lime'
                           }`}
                         >
                           <p>{driftFeedback.hasDrift ? 'Voice drift detected.' : 'Voice match looks strong.'}</p>
-                          {driftFeedback.details && <p className="mt-1 text-gray-300">{driftFeedback.details}</p>}
+                          {driftFeedback.details && <p className="mt-1 text-app-fg">{driftFeedback.details}</p>}
                           {driftFeedback.rewriteSuggestion && (
-                            <p className="mt-1 text-gray-400">Suggestion: {driftFeedback.rewriteSuggestion}</p>
+                            <p className="mt-1 text-app-fg-muted">Suggestion: {driftFeedback.rewriteSuggestion}</p>
                           )}
                         </div>
                       )}
                     </div>
                     <div className="flex gap-3 mt-3">
-                      <button
+                      <PrimaryButton
                         onClick={() => saveDocument(doc.id)}
                         disabled={saving}
-                        className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-6 py-2 rounded-lg font-medium text-sm"
+                        className="px-6"
                       >
                         {saving ? 'Saving...' : 'Save'}
-                      </button>
+                      </PrimaryButton>
                     </div>
                   </div>
                 ) : (
                   <div className="px-5 py-4">
                     {doc.content ? (
-                      <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap line-clamp-6">
+                      <p className="line-clamp-6 whitespace-pre-wrap text-sm leading-relaxed text-app-fg">
                         {doc.content}
                       </p>
                     ) : (
-                      <p className="text-gray-600 text-sm italic">Empty document</p>
+                      <p className="text-sm italic text-app-fg-muted">Empty document</p>
                     )}
                   </div>
                 )}
-              </div>
+              </Card>
             ))}
           </div>
         )}
-      </div>
-    </div>
+      </Container>
+    </Shell>
   );
 }
