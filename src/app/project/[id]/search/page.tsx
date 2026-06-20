@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { AppHeader } from '@/components/layout/app-header';
-import { AppBackLink, Card, Container, PrimaryButton, Shell, TextInput } from '@/components/ui/primitives';
+import { AppBackLink, Card, Container, PrimaryButton, Shell, StatusMessage, TextInput } from '@/components/ui/primitives';
 import { requestJson } from '@/lib/client/request';
 
 type SearchResponse = {
@@ -69,7 +69,7 @@ export default function SearchPage() {
           <PrimaryButton onClick={runSearch} disabled={searching}>
             {searching ? 'Searching...' : 'Search'}
           </PrimaryButton>
-          {error && <p className="text-sm text-red-300">{error}</p>}
+          {error && <StatusMessage state="error" title={error} />}
         </Card>
 
         <div className="mt-4 space-y-2">

@@ -69,7 +69,7 @@ export function ProjectInsightsPage<TItem>({
         )}
 
         <div className="mt-6">
-          <Link href={`/project/${id}/record`} className="text-sm text-indigo-400 hover:text-indigo-300">
+          <Link href={`/project/${id}/record`} className="text-sm text-neon-lime transition hover:text-neon-lime/80">
             Record a new session →
           </Link>
         </div>

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { GlassCard } from '@/components/ui/primitives';
 
 export function DashboardActionCards({
   id,
@@ -9,40 +10,28 @@ export function DashboardActionCards({
   documentCount: number;
   sessionCount: number;
 }) {
+  const cards = [
+    { href: `/project/${id}/record`, icon: '🎙️', label: 'Record', detail: 'Voice session', featured: true },
+    { href: `/project/${id}/documents`, icon: '📄', label: 'Documents', detail: `${documentCount} ${documentCount === 1 ? 'doc' : 'docs'}` },
+    { href: `/project/${id}/sessions`, icon: '📼', label: 'Sessions', detail: `${sessionCount} ${sessionCount === 1 ? 'session' : 'sessions'}` },
+    { href: `/project/${id}/export`, icon: '📤', label: 'Export', detail: 'Export work' },
+  ];
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-      <Link
-        href={`/project/${id}/record`}
-        className="bg-indigo-600 hover:bg-indigo-700 rounded-xl p-5 text-center transition-colors"
-      >
-        <div className="text-3xl mb-2">🎙️</div>
-        <div className="font-semibold">Record</div>
-        <div className="text-indigo-300 text-xs mt-1">Voice session</div>
-      </Link>
-      <Link
-        href={`/project/${id}/documents`}
-        className="bg-gray-800 hover:bg-gray-700 rounded-xl p-5 text-center transition-colors"
-      >
-        <div className="text-3xl mb-2">📄</div>
-        <div className="font-semibold">Documents</div>
-        <div className="text-gray-400 text-xs mt-1">{documentCount} {documentCount === 1 ? 'doc' : 'docs'}</div>
-      </Link>
-      <Link
-        href={`/project/${id}/sessions`}
-        className="bg-gray-800 hover:bg-gray-700 rounded-xl p-5 text-center transition-colors"
-      >
-        <div className="text-3xl mb-2">📼</div>
-        <div className="font-semibold">Sessions</div>
-        <div className="text-gray-400 text-xs mt-1">{sessionCount} {sessionCount === 1 ? 'session' : 'sessions'}</div>
-      </Link>
-      <Link
-        href={`/project/${id}/export`}
-        className="bg-gray-800 hover:bg-gray-700 rounded-xl p-5 text-center transition-colors"
-      >
-        <div className="text-3xl mb-2">📤</div>
-        <div className="font-semibold">Export</div>
-        <div className="text-gray-400 text-xs mt-1">Export work</div>
-      </Link>
+    <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+      {cards.map((card) => (
+        <Link key={card.href} href={card.href} className="group block">
+          <GlassCard
+            className={`h-full p-5 text-center transition group-hover:border-neon-lime/40 ${
+              card.featured ? 'border-neon-lime/30 bg-neon-lime-dim' : ''
+            }`}
+          >
+            <div className="mb-2 text-3xl">{card.icon}</div>
+            <div className="font-semibold text-app-fg">{card.label}</div>
+            <div className="mt-1 text-xs text-app-fg-muted">{card.detail}</div>
+          </GlassCard>
+        </Link>
+      ))}
     </div>
   );
 }
