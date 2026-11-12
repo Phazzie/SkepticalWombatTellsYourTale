@@ -14,12 +14,14 @@
 | `OPENAI_API_KEY` | app runtime | Engineering | AI analysis/transcription features |
 | `NEXTAUTH_SECRET` | app runtime | Engineering/Security | Session/JWT signing |
 | `NEXTAUTH_URL` | app runtime | Engineering | Canonical auth callback URL |
-| `VERCEL_STAGING_DEPLOY_HOOK_URL` | GitHub Actions secret | Platform/DevOps | Vercel staging deploy hook |
-| `STAGING_APP_URL` | GitHub Actions secret | Platform/DevOps | Smoke-test target for staging |
-| `VERCEL_PRODUCTION_DEPLOY_HOOK_URL` | GitHub Actions secret | Platform/DevOps | Vercel production deploy hook |
-| `PRODUCTION_APP_URL` | GitHub Actions secret | Platform/DevOps | Smoke-test target for production |
+| `VERCEL_STAGING_DEPLOY_HOOK_URL` | GitHub Actions secret and Depot secret | Platform/DevOps | Vercel staging deploy hook |
+| `STAGING_APP_URL` | GitHub Actions secret and Depot secret | Platform/DevOps | Smoke-test target for staging |
+| `VERCEL_PRODUCTION_DEPLOY_HOOK_URL` | GitHub Actions secret and Depot secret | Platform/DevOps | Vercel production deploy hook |
+| `PRODUCTION_APP_URL` | GitHub Actions secret and Depot secret | Platform/DevOps | Smoke-test target for production |
 
 ## CI/CD path
+
+Depot equivalents, including which GitHub jobs are dropped and which secrets to re-enter, are in `docs/origin-ci.md`. Until detach, the GitHub files below are still the ones in `.github/workflows/`.
 
 1. `CI` workflow enforces lint/build/unit tests and Prisma schema checks.
 2. `Security` workflow enforces CodeQL and dependency audit.

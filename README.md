@@ -78,6 +78,8 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## CI
 
+GitHub Actions files remain under `.github/workflows/`. They are not the active runner while Actions billing is locked. Depot CI for Origin lives in `.depot/workflows/` and is described in `docs/origin-ci.md`.
+
 This repository uses GitHub Actions for CI, security, and release-readiness checks.
 
 ### Required pull request checks

@@ -14,6 +14,13 @@
   - expanding targeted tests and rerunning full validation.
 - Remaining release work is now primarily in phases 6+ (CI run-history stability, security/risk gates, launch ops).
 
+## Update — 2026-11-12 (Origin CI)
+
+- Added Depot workflows under `.depot/workflows/` for quality (Node 20), npm audit, and Vercel deploy hooks. Mapping, dropped GitHub-only jobs, and Depot secrets are in `docs/origin-ci.md`.
+- GitHub Actions workflows are unchanged. Actions is not the expected runner while the account billing lock is in place.
+- Pull-request Grok review (`scripts/ai-review.mjs`) exits 0 when `XAI_API_KEY` or the `origin` CLI is missing.
+- `npm audit --audit-level=high` needed patch bumps (`next`/`eslint-config-next` `15.5.29`, `postcss` `8.5.32` override, `brace-expansion` `1.1.22` under `minimatch@3`). Moderate advisories remain. Next 16 was not adopted.
+
 ## Update — 2026-04-09 (Phase 6/7 hardening pass)
 - Hardened `POST /api/projects/[id]/questions` to reject malformed JSON with deterministic `400` (no fallback generation on parse failure).
 - Hardened `POST /api/transcribe` with strict upload guardrails before heavy processing:
