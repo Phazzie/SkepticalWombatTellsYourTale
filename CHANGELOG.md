@@ -7,6 +7,8 @@ The format is based on Keep a Changelog and versioning follows SemVer.
 ## [Unreleased]
 
 ### Added
+- Depot CI workflows in `.depot/workflows/` (`ci.yml`, `security.yml`, `deploy.yml`) and `docs/origin-ci.md`. Pull-request AI review is `scripts/ai-review.mjs` (skips when `XAI_API_KEY` is unset).
+- Security patches so `npm audit --audit-level=high` passes: `next` and `eslint-config-next` `15.5.15` to `15.5.29`, `postcss` `8.5.32` (override so Next's nested copy updates), and `brace-expansion` `1.1.22` under `minimatch@3`. Transitive fixes came from `npm audit fix` without a major upgrade.
 - Governance documentation: `docs/ROADMAP.md`, `docs/STATUS.md`, `docs/LESSONS_LEARNED.md`, `docs/UI_TOUR.md`.
 - `parseJsonBody` request helper test coverage in `src/lib/server/__tests__/validation.test.ts`.
 
